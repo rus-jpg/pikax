@@ -15,6 +15,8 @@ import {
 } from "@/lib/projects.functions";
 import { directGenerateStart, directGeneratePoll } from "@/lib/generate.functions";
 import { StudioToolbar } from "@/components/studio/studio-toolbar";
+import { AppSuggestionCard } from "@/components/studio/app-suggestion-card";
+import { suggestApp, type AppSuggestion } from "@/lib/app-suggest.functions";
 import {
   DEFAULT_MODEL_BY_KIND,
   SKILL_BY_ID,
