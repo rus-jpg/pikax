@@ -1117,11 +1117,11 @@ function ChatPanel({
               ))}
             </div>
           )}
-          {!busy && !activeCard && studioMode !== "agent" && skill !== null && history.length > 0 && !forceWizard && (
+          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
             <Button
               type="button"
               size="lg"
-              className="w-full rounded-2xl"
+              className="mt-4 w-full rounded-2xl"
               onClick={() => setForceWizard(true)}
             >
               <Sparkles className="mr-2 h-4 w-4" />
@@ -1137,10 +1137,9 @@ function ChatPanel({
               skill !== null;
             const hideComposer =
               !busy &&
-              !activeCard &&
               studioMode !== "agent" &&
               skill !== null &&
-              history.length > 0 &&
+              (history.length > 0 || !!activeCard) &&
               !forceWizard;
             if (wizardActive || hideComposer) return null;
             return (
