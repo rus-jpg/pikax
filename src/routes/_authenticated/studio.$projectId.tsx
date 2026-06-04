@@ -1081,6 +1081,7 @@ function ChatPanel({
                   busy={busy}
                   onSubmit={({ prompt, assets: uploaded }) => {
                     if (uploaded.length) onPatch({ assetsAppend: uploaded });
+                    setForceWizard(false);
                     void handleSend(prompt);
                   }}
                 />
