@@ -1111,7 +1111,7 @@ function ChatPanel({
             }
             return null;
           })()}
-          {!busy && activeCard && (
+          {!busy && activeCard && !(studioMode !== "agent" && skill !== null) && (
             <div className="mb-4">
               <GenerativeCard
                 key={activeCard.key}
@@ -1143,9 +1143,10 @@ function ChatPanel({
               onClick={() => setForceWizard(true)}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              Try again
+              Try App Again
             </Button>
           )}
+
           {(() => {
             const wizardActive =
               !busy &&
