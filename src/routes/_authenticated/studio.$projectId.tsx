@@ -2190,7 +2190,8 @@ function SceneRow({
       style={{ aspectRatio: ar }}
     >
       {scene.thumb ? (
-        <img src={scene.thumb} alt="" className="h-full w-full object-cover" />
+        <img src={resolveThumb(scene.thumb, assets)} alt="" className="h-full w-full object-cover" />
+
       ) : (
         <div className="grid h-full w-full place-items-center text-muted-foreground/50">
           <Film className="h-7 w-7" />
