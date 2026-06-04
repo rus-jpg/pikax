@@ -1052,31 +1052,42 @@ function ChatPanel({
               Create another
             </div>
           )}
-          <PromptInput
-            onSubmit={async (msg) => {
-              await handleSend(msg.text ?? input);
-            }}
-          >
-            <PromptInputTextarea
-              autoFocus
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={
-                studioMode === "agent"
-                  ? "Type freely…"
-                  : `Describe the ${studioMode} you want…`
-              }
-              className="text-lg"
-            />
-            <PromptInputFooter className="justify-between gap-2">
-              <StudioToolbar
-                mode={studioMode}
-                model={studioModel}
-                onChange={onToolbarChange}
-              />
-              <PromptInputSubmit status={status} disabled={busy && !input} />
-            </PromptInputFooter>
-          </PromptInput>
+          {(() => {
+            const wizardActive =
+              !busy &&
+              !activeCard &&
+              history.length === 0 &&
+              studioMode !== "agent" &&
+              skill !== null;
+            if (wizardActive) return null;
+            return (
+              <PromptInput
+                onSubmit={async (msg) => {
+                  await handleSend(msg.text ?? input);
+                }}
+              >
+                <PromptInputTextarea
+                  autoFocus
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={
+                    studioMode === "agent"
+                      ? "Type freely…"
+                      : `Describe the ${studioMode} you want…`
+                  }
+                  className="text-lg"
+                />
+                <PromptInputFooter className="justify-between gap-2">
+                  <StudioToolbar
+                    mode={studioMode}
+                    model={studioModel}
+                    onChange={onToolbarChange}
+                  />
+                  <PromptInputSubmit status={status} disabled={busy && !input} />
+                </PromptInputFooter>
+              </PromptInput>
+            );
+          })()}
         </div>
       </div>
 
