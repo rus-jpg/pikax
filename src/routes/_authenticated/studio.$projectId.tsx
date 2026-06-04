@@ -580,7 +580,6 @@ function StudioTopBar({
     <header className="pointer-events-none relative z-20 flex shrink-0 justify-center px-4 py-3">
       <div className="pointer-events-auto flex flex-col items-center gap-6 pt-6">
         <div className="flex items-center gap-3.5 rounded-full bg-foreground px-6 py-2.5 shadow-elegant">
-            <BrandMark className="h-7 w-7 brightness-0 invert" />
           <div className="flex items-baseline gap-2.5 leading-tight">
             <span className="text-base font-semibold tracking-tight text-background">{meta.title}</span>
             {!skill && (
