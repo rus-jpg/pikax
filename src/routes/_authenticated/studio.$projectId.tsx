@@ -1136,16 +1136,18 @@ function ChatPanel({
             </div>
           )}
           {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
-            <Button
-              type="button"
-              size="lg"
-              className="mt-4 w-full rounded-2xl"
-              onClick={() => setForceWizard(true)}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Try App Again
-            </Button>
+            <div className="mt-4 flex justify-center">
+              <Button
+                type="button"
+                className="h-14 rounded-2xl px-10 text-lg"
+                onClick={() => setForceWizard(true)}
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Try App Again
+              </Button>
+            </div>
           )}
+
 
           {(() => {
             const wizardActive =
