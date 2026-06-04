@@ -122,9 +122,7 @@ function AppsPage() {
               >
                 {suggestMut.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Wand2 className="h-4 w-4" />
-                )}
+                ) : null}
                 Find best App
               </Button>
             </div>
