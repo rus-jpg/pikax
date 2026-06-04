@@ -1152,8 +1152,9 @@ function ChatPanel({
                   onClick={() => setForceWizard(true)}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Change inputs
+                  Try App Again
                 </button>
+
               </div>
               {lastRun.referenceImageUrls.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">

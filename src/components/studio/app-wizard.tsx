@@ -52,13 +52,9 @@ async function fileToProjectAsset(
 
 function describeUpload(assets: ProjectAsset[]): string {
   if (!assets.length) return "(no file attached)";
-  return assets
-    .map((a) => {
-      const urlPart = a.url && /^https?:/.test(a.url) ? ` url=${a.url}` : "";
-      return `${a.name} [${a.id}]${urlPart}`;
-    })
-    .join(", ");
+  return assets.map((a) => a.name).join(", ");
 }
+
 
 export function AppWizard({
   recipe,
