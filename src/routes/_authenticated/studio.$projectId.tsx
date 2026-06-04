@@ -605,7 +605,6 @@ function StudioTopBar({
 // ---------- how it works (empty state for App-launched projects) ----------
 
 function HowItWorks({ skill }: { skill: Skill }) {
-  const Icon = skill.icon;
   const stepsByKind: Record<
     Skill["kind"],
     Array<{ title: string; desc: string }>
@@ -637,9 +636,7 @@ function HowItWorks({ skill }: { skill: Skill }) {
   return (
     <div className="flex flex-col items-center gap-10 pt-8 pb-2 text-center">
       <div className="flex flex-col items-center gap-5">
-        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-glow">
-          <Icon className="h-8 w-8" />
-        </div>
+
         <div className="flex flex-col items-center gap-2">
           <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
             {skill.category}
