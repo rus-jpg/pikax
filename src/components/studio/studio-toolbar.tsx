@@ -23,7 +23,6 @@ import {
 import {
   SKILLS,
   SKILLS_BY_KIND,
-  SKILL_CATEGORIES,
   STUDIO_MODES,
   type Skill,
   type StudioMode,
@@ -46,26 +45,32 @@ export type StudioToolbarProps = {
 export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
   const [skillsOpen, setSkillsOpen] = useState(false);
   const agent = mode === "agent";
-  // Many skills share the same underlying model (e.g. every Nano Banana Edit
-  // app points at `fal-ai/nano-banana/edit`). Dedupe by model so the Select
-  // doesn't render duplicate values — Radix shows EVERY item whose value
-  // matches as "selected", which both concatenates their labels in the
-  // trigger and shows multiple checkmarks in the menu.
+
+  // Raw Fal models for the current kind (exclude recipe Apps, which start
+  // with "app-"). Dedupe by model id.
   const kindModels = (() => {
-    if (mode === "agent") return [] as Skill[];
+    if (agent) return [] as Skill[];
     const seen = new Set<string>();
-    return SKILLS_BY_KIND(mode).filter((s) => {
-      if (seen.has(s.model)) return false;
-      seen.add(s.model);
-      return true;
-    });
+    return SKILLS_BY_KIND(mode)
+      .filter((s) => !s.id.startsWith("app-"))
+      .filter((s) => {
+        if (seen.has(s.model)) return false;
+        seen.add(s.model);
+        return true;
+      });
   })();
+
+  // Apps for the current mode. In agent mode show every App.
+  const apps = (() => {
+    const all = SKILLS.filter((s) => s.id.startsWith("app-"));
+    return agent ? all : all.filter((s) => s.kind === mode);
+  })();
+  const appCategories = Array.from(new Set(apps.map((a) => a.category)));
 
   const setMode = (next: StudioMode) => {
     if (!next || !STUDIO_MODES.some((m) => m.id === next)) return;
     if (next === "agent") return onChange({ mode: "agent", model: null });
-    const list = SKILLS_BY_KIND(next);
-    // Preserve current model if it still applies, else default to the first.
+    const list = SKILLS_BY_KIND(next).filter((s) => !s.id.startsWith("app-"));
     const stillValid = list.find((s) => s.model === model);
     onChange({
       mode: next,
@@ -83,11 +88,8 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/70 px-3 py-2 text-sm">
-      {/* Unified mode dropdown */}
-      <Select
-        value={mode}
-        onValueChange={(v) => setMode(v as StudioMode)}
-      >
+      {/* Mode dropdown */}
+      <Select value={mode} onValueChange={(v) => setMode(v as StudioMode)}>
         <SelectTrigger className="h-8 w-auto min-w-[140px] rounded-full bg-muted/60 px-3 text-xs">
           <div className="flex items-center gap-1.5">
             <ModeIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -109,7 +111,7 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
         </SelectContent>
       </Select>
 
-      {/* Model dropdown — to the right of mode selector */}
+      {/* Model dropdown — Fal models for this kind */}
       {!agent && kindModels.length > 0 && (
         <Select
           value={model ?? kindModels[0].model}
@@ -128,59 +130,64 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
         </Select>
       )}
 
-      <div className="flex-1" />
-
-      {/* Apps popover — full catalog regardless of current mode */}
-      <Popover open={skillsOpen} onOpenChange={setSkillsOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+      {/* Apps dropdown — next to the model selector, filtered by mode */}
+      {apps.length > 0 && (
+        <Popover open={skillsOpen} onOpenChange={setSkillsOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {agent ? "Apps" : `${currentLabel} apps`}
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-[360px] max-h-[60vh] overflow-y-auto p-0"
           >
-            <Sparkles className="h-3.5 w-3.5" /> Apps
-            <ChevronDown className="h-3 w-3" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          className="w-[360px] max-h-[60vh] overflow-y-auto p-0"
-        >
-          {SKILL_CATEGORIES.map((cat) => (
-            <div key={cat} className="border-b border-border/60 last:border-b-0">
-              <div className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {cat}
+            {appCategories.map((cat) => (
+              <div key={cat} className="border-b border-border/60 last:border-b-0">
+                <div className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {cat}
+                </div>
+                <ul className="px-1.5 pb-2">
+                  {apps
+                    .filter((s) => s.category === cat)
+                    .map((s) => {
+                      const Icon = s.icon;
+                      const active = s.model === model && s.kind === mode;
+                      return (
+                        <li key={s.id}>
+                          <button
+                            type="button"
+                            onClick={() => pickSkill(s)}
+                            className={`flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition ${
+                              active ? "bg-muted" : "hover:bg-muted/60"
+                            }`}
+                          >
+                            <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-foreground">
+                                {s.label}
+                              </div>
+                              <div className="truncate text-[11px] text-muted-foreground">
+                                {s.description}
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
               </div>
-              <ul className="px-1.5 pb-2">
-                {SKILLS.filter((s) => s.category === cat).map((s) => {
-                  const Icon = s.icon;
-                  const active = s.model === model && s.kind === mode;
-                  return (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        onClick={() => pickSkill(s)}
-                        className={`flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition ${
-                          active ? "bg-muted" : "hover:bg-muted/60"
-                        }`}
-                      >
-                        <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-foreground">
-                            {s.label}
-                          </div>
-                          <div className="truncate text-[11px] text-muted-foreground">
-                            {s.description}
-                          </div>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </PopoverContent>
-      </Popover>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
+
+      <div className="flex-1" />
     </div>
   );
 }
