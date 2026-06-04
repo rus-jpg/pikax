@@ -82,7 +82,7 @@ function AppsPage() {
         </header>
 
         {/* Intent composer */}
-        <div className="mb-12 rounded-3xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-12 border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Sparkles className="h-4 w-4 text-primary" />
             What do you want to create?
