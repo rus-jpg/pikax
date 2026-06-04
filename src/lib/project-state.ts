@@ -61,6 +61,22 @@ export type ProjectAsset = {
   duration?: number;
 };
 
+// A scene.thumb is usually a URL (https/blob/data) but agent patches sometimes
+// commit a bare asset id (UUID). Resolve to a usable URL by looking up the
+// matching ProjectAsset; fall back to the raw value so existing URLs pass
+// through unchanged.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function resolveThumb(thumb: string | undefined | null, assets: ProjectAsset[]): string {
+  if (!thumb) return "";
+  if (/^(https?:|blob:|data:|\/)/.test(thumb)) return thumb;
+  if (UUID_RE.test(thumb) || thumb.startsWith("ast_")) {
+    const hit = assets.find((a) => a.id === thumb);
+    if (hit?.url) return hit.url;
+  }
+  return thumb;
+}
+
+
 export type ProjectMeta = {
   title: string;
   format: string; // "Music video", "Short film", ...

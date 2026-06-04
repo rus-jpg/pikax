@@ -83,6 +83,8 @@ import {
 import {
   INITIAL_PROJECT,
   applyPatch,
+  resolveThumb,
+
   type Character,
   type Music,
   type ProjectAsset,
@@ -1640,11 +1642,13 @@ function StructurePanel({
                 scene={s}
                 active={s.id === activeSceneId}
                 aspectRatio={meta.aspectRatio}
+                assets={assets}
                 onClick={() => onSelect(s.id)}
                 onChange={(next) =>
                   setScenes(scenes.map((x) => (x.id === next.id ? next : x)))
                 }
               />
+
             ))}
             <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card/30 py-5 text-base font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground">
               <Plus className="h-5 w-5" /> Add shot
@@ -2105,15 +2109,18 @@ function SceneRow({
   scene,
   active,
   aspectRatio,
+  assets,
   onClick,
   onChange,
 }: {
   scene: Scene;
   active: boolean;
   aspectRatio?: string;
+  assets: ProjectAsset[];
   onClick: () => void;
   onChange: (s: Scene) => void;
 }) {
+
   const [editing, setEditing] = useState(false);
   // Parse "W:H" → aspect-ratio CSS value + orientation. Default to 16:9.
   const { ar, isHorizontal } = (() => {
@@ -2185,7 +2192,8 @@ function SceneRow({
       style={{ aspectRatio: ar }}
     >
       {scene.thumb ? (
-        <img src={scene.thumb} alt="" className="h-full w-full object-cover" />
+        <img src={resolveThumb(scene.thumb, assets)} alt="" className="h-full w-full object-cover" />
+
       ) : (
         <div className="grid h-full w-full place-items-center text-muted-foreground/50">
           <Film className="h-7 w-7" />

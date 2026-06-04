@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, Copy, Trash2, Music2, Mic, Volume2, Film } from "lucide-react";
-import type { Scene, Music, ProjectAsset } from "@/lib/project-state";
+import { type Scene, type Music, type ProjectAsset, resolveThumb } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 
 // pixels per second baseline; clamped by zoom
@@ -301,7 +301,8 @@ export function TimelinePanel({
                 return hit;
               }) ?? scenes[0];
               return cur?.thumb ? (
-                <img src={cur.thumb} alt={cur.title} className="max-h-full max-w-full object-contain" />
+                <img src={resolveThumb(cur.thumb, assets)} alt={cur.title} className="max-h-full max-w-full object-contain" />
+
               ) : (
                 <span className="text-sm">No preview yet — generate keyframes and clips.</span>
               );
@@ -366,11 +367,12 @@ export function TimelinePanel({
                 >
                   {s.thumb ? (
                     <img
-                      src={s.thumb}
+                      src={resolveThumb(s.thumb, assets)}
                       alt={s.title}
                       className="h-full w-full object-cover"
                       draggable={false}
                     />
+
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted text-[10px] text-muted-foreground">
                       {s.n}
