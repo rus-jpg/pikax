@@ -1,105 +1,82 @@
-
 ## Goal
 
-Make the bottom composer in `/studio` actually reflect the App's recipe (e.g. Pet Hero Portrait → upload pet → pick persona → generate), instead of a generic prompt box. Do this in a way that also sets up the future "publish your agent workflow as an App" feature.
+While in **Agent mode** in the studio, every user message also runs the App suggester in parallel. If the AI finds a strong match, an **inline suggestion card** appears in the chat. Clicking "Use this App" switches the project to that App and opens its wizard — without clearing the existing chat history.
 
-## Approach
+## UX flow
 
-Promote the per-App recipe from descriptive copy into a typed **step schema**. One schema drives three things: the "How it works" panel, the guided composer at the bottom, and (later) the publish-as-App format. Built-in Apps and user-published Apps end up being the same primitive.
+```text
+User (agent mode): "i want to turn my pet into a superhero"
+  ├─ Agent: streams its usual reply ("Great! Let's start by…")
+  └─ Suggester (parallel): returns { Pet Hero Portrait, 0.92 }
+                            ↓
+  [ ✨ Suggested App ─────────────────────────── ]
+  [  Pet Hero Portrait · 92% match               ]
+  [  "Upload a pet, pick a persona, get a hero   ]
+  [   portrait." [ Use this App ] [ Dismiss ]    ]
 
-Agent mode is unchanged — it keeps the freeform prompt box and `GenerativeCard` loop. App mode gets the wizard.
-
-## Step schema
-
-```ts
-type AppStep =
-  | { id: string; title: string; desc: string; kind: "upload"; accept: "image" | "video" | "audio"; required?: boolean }
-  | { id: string; title: string; desc: string; kind: "choice"; options: { id: string; label: string; hint?: string }[]; allowCustom?: boolean }
-  | { id: string; title: string; desc: string; kind: "prompt"; placeholder: string; minLength?: number }
-  | { id: string; title: string; desc: string; kind: "slider"; min: number; max: number; step?: number; unit?: string };
-
-type AppRecipe = {
-  steps: AppStep[];
-  // How collected inputs are assembled into the final generation call.
-  compose: (inputs: Record<string, unknown>) => { prompt: string; assets?: string[] };
-};
+User clicks "Use this App"
+  → toolbar flips to Image mode + Pet Portrait model
+  → chat history stays visible above
+  → AppWizard renders in the composer area (blank, step 1)
 ```
 
-`STEPS_BY_SKILL_ID` becomes `RECIPES_BY_SKILL_ID: Record<string, AppRecipe>`. The existing `{title, desc}` data is preserved as the first two fields of each step, so the diagram keeps working with zero copy changes.
+If confidence < threshold (0.6), no card is shown — silent.
+If the user dismisses, suppress further suggestions for that same skill in this session.
 
-## Wizard composer (App mode only)
+## Implementation
 
-New `AppWizard` component replaces the freeform `PromptInput` when:
-- `skill` is set (we're inside an App), AND
-- `history.length === 0` (no turns yet), AND
-- the skill has a `RECIPES_BY_SKILL_ID[skill.id]` entry.
+### 1. Reuse existing `suggestApp` server fn
 
-Behavior:
-- Renders the current step inline above (or in place of) the input. One step visible at a time, with a small `1 / 3` indicator and a `Back` affordance.
-- `upload` → drag-and-drop tile that pushes into the project's asset store and stores the asset id in wizard state.
-- `choice` → chip grid; `allowCustom: true` reveals a text field for "Other".
-- `prompt` → multi-line textarea (same look as today's `PromptInputTextarea`).
-- `slider` → labeled range.
-- Primary button reads `Continue` until the last step, then `Generate`.
-- On `Generate`: call `recipe.compose(inputs)`, then route through the existing `handleSend` path so the rest of the conversation rendering, busy state, and result cards stay identical.
+Already built in `src/lib/app-suggest.functions.ts` (used by /projects). No backend changes.
 
-After the first generation, the wizard collapses and the regular freeform `PromptInput` takes over for follow-ups ("Create another" path that already exists).
+### 2. Run suggester in parallel with `handleSend`
 
-## "How it works" diagram
+In `src/routes/_authenticated/studio.$projectId.tsx`, when `studioMode === "agent"` and the user submits a prompt:
+- Fire `suggestApp({ intent })` alongside the existing agent call (not awaited inline — let it resolve independently).
+- On result with `confidence >= 0.6` and `skillId` not in a `dismissed` set, store as `pendingSuggestion` state.
 
-`HowItWorks` reads from the same recipe (`recipe.steps`) instead of the legacy `STEPS_BY_SKILL_ID` / `STEPS_BY_KIND` maps. Visuals improve based on `step.kind`:
-- `upload` → upload-tile icon
-- `choice` → chip-cluster icon
-- `prompt` → text-cursor icon
-- `slider` → slider icon
-- final step → sparkle / output icon
+Cost note: this doubles LLM calls in agent mode. Acceptable for now (Gemini Flash, small catalog) — we can debounce later if it shows up in usage.
 
-This guarantees the diagram and the wizard can never describe different sequences.
+### 3. New `SuggestionCard` component in the chat stream
 
-## Migration of existing recipes
+Rendered inline in the message list as a pseudo-message (not persisted to `project_messages`). Lives next to the latest assistant reply.
+- Shows app icon, label, confidence %, one-line reason from the suggester.
+- Buttons: **Use this App** (primary) and **Dismiss**.
 
-Convert the ~25 entries in `STEPS_BY_SKILL_ID` to the new typed shape. Most map cleanly:
-- "Upload …" steps → `kind: "upload"`
-- "Pick a …" / "Set the style" → `kind: "choice"` with a small starter option set (free-text fallback via `allowCustom`)
-- "Describe …" / "Write …" → `kind: "prompt"`
-- Final "Generate / Render / Export" → not an interactive step; rendered as the diagram's terminal node and triggered by the wizard's submit button.
+### 4. Accept → switch + open wizard with history preserved
 
-For Apps without a hand-authored recipe, fall back to a kind-based default (`STEPS_BY_KIND` equivalent, also typed): one `prompt` step for image/audio/speech; one `upload?` + one `prompt` for video.
+Currently `showWizard` requires `history.length === 0`. Change to also open when a `forceWizard` flag is set:
 
-## Publishing agent workflows as Apps (groundwork only, not shipped this round)
+```ts
+const showWizard =
+  !busy && !activeCard && skill !== null && studioMode !== "agent" &&
+  (history.length === 0 || forceWizard);
+```
 
-Document the contract so the wizard schema is publish-ready:
-- Add a `source: "builtin" | "user"` field on the recipe.
-- `user_apps` table sketch (created later, not in this change):
-  ```
-  id uuid pk
-  owner_id uuid → auth user
-  name text, description text, icon text
-  kind text   -- image/video/audio/speech
-  recipe jsonb   -- AppStep[] + compose template
-  created_at timestamptz
-  ```
-- The `compose` function is the only non-serializable piece. Serialize it as a **prompt template string** with `{{stepId}}` placeholders (e.g. `"A {{persona}} portrait of the uploaded pet, gallery framing"`). Built-in recipes can use the same template format so user and built-in Apps are byte-identical at rest.
-- A future "Publish as App" button on a completed agent run will: replay the transcript, extract upload turns + decision-pill answers + the final prompt, and propose a draft `AppRecipe` the user can edit and save.
+On accept:
+1. `onToolbarChange({ mode: skill.kind, model: skill.model })` — flips toolbar and persists via existing `updateProjectStudioPrefs`.
+2. `setForceWizard(true)` — opens the wizard even though history exists.
+3. Clear `pendingSuggestion`.
 
-No backend changes in this change set — just the schema shape and a code comment marking where publish will hook in.
+The chat history stays scrollable above; the wizard takes over the composer. When the wizard submits, `forceWizard` resets so subsequent prompts use the normal PromptInput.
+
+### 5. Dismiss behavior
+
+`setDismissedSkills(prev => new Set(prev).add(skillId))` — prevents the same App from re-appearing this session. Other matches still surface.
+
+### 6. Mode change cancels stale suggestions
+
+If the user changes mode manually while a suggestion is pending, clear `pendingSuggestion`.
 
 ## Files touched
 
-- `src/routes/_authenticated/studio.$projectId.tsx`
-  - Replace `Step`, `STEPS_BY_KIND`, `STEPS_BY_SKILL_ID` with the typed `AppStep` / `AppRecipe` and `RECIPES_BY_SKILL_ID`.
-  - Update `HowItWorks` to read `recipe.steps` and pick icons per `step.kind`.
-  - Render new `AppWizard` in the composer slot when conditions above are met.
-- `src/components/studio/AppWizard.tsx` (new) — wizard UI, one component per step kind, internal state, submit handler.
-- `src/lib/app-recipes.ts` (new) — extract `RECIPES_BY_SKILL_ID` and helpers (`composeFromTemplate`) out of the route file so it stays under control and is reusable by a future publish flow.
+- `src/components/studio/suggestion-card.tsx` — new, ~40 lines.
+- `src/routes/_authenticated/studio.$projectId.tsx` — wire parallel `suggestApp` call, add `pendingSuggestion` / `dismissedSkills` / `forceWizard` state, render card in chat stream, relax `showWizard` condition.
 
-## Out of scope for this change
+No DB changes, no new server fns, no toolbar changes.
 
-- Actually building the "Publish as App" UI, the `user_apps` table, or the transcript-to-recipe extractor.
-- Changing Agent mode's composer.
-- Reworking how generated outputs render — wizard funnels into the existing `handleSend`/`GenerativeCard` pipeline.
+## Open follow-ups (not in scope here)
 
-## Open questions for you
-
-1. For Apps that today are a single freeform prompt (e.g. text-to-image, text-to-music), do you want the wizard to still wrap them as a one-step form, or just keep the plain prompt box? I'd default to **one-step form** for visual consistency, but it does add a click.
-2. For `choice` steps (e.g. Pet Portrait → "Pick a persona"), do you want me to author a starter set of 6–8 chips per App, or always start blank with just an "Other / describe" text field? Starter chips are friendlier but more work to maintain.
+- **Cheaper trigger**: keyword pre-filter on the client to skip the LLM call for short/non-intent prompts.
+- **Prefill the wizard** from chat content (the "wow" option you skipped) — easy to layer on later by passing extracted values into `AppWizard`.
+- **Persisted dismissals**: today dismissals are session-local; could store on the project.
