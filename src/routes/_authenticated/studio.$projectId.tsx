@@ -605,7 +605,6 @@ function StudioTopBar({
 // ---------- how it works (empty state for App-launched projects) ----------
 
 function HowItWorks({ skill }: { skill: Skill }) {
-  const Icon = skill.icon;
   const stepsByKind: Record<
     Skill["kind"],
     Array<{ title: string; desc: string }>
