@@ -15,6 +15,8 @@ import {
 } from "@/lib/projects.functions";
 import { directGenerateStart, directGeneratePoll } from "@/lib/generate.functions";
 import { StudioToolbar } from "@/components/studio/studio-toolbar";
+import { AppSuggestionCard } from "@/components/studio/app-suggestion-card";
+import { suggestApp, type AppSuggestion } from "@/lib/app-suggest.functions";
 import {
   DEFAULT_MODEL_BY_KIND,
   SKILL_BY_ID,
@@ -717,14 +719,71 @@ function ChatPanel({
 
   const runDirectStart = useServerFn(directGenerateStart);
   const runDirectPoll = useServerFn(directGeneratePoll);
+  const runSuggestApp = useServerFn(suggestApp);
   const [directBusy, setDirectBusy] = useState(false);
   const busy = status === "submitted" || status === "streaming" || directBusy;
+
+  // In-chat App suggestion (agent mode only). Runs in parallel with each
+  // user message; surfaces an inline card the user can accept to switch
+  // the project into that App's wizard without losing chat history.
+  const [pendingSuggestion, setPendingSuggestion] =
+    useState<AppSuggestion | null>(null);
+  const [dismissedSkills, setDismissedSkills] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [forceWizard, setForceWizard] = useState(false);
+  const SUGGEST_THRESHOLD = 0.6;
+
+  const handleAcceptSuggestion = (s: AppSuggestion) => {
+    const skillDef = SKILL_BY_ID[s.skillId];
+    if (!skillDef) return;
+    setPendingSuggestion(null);
+    setForceWizard(true);
+    onToolbarChange({ mode: skillDef.kind, model: skillDef.model });
+  };
+
+  const handleDismissSuggestion = (s: AppSuggestion) => {
+    setDismissedSkills((prev) => {
+      const next = new Set(prev);
+      next.add(s.skillId);
+      return next;
+    });
+    setPendingSuggestion(null);
+  };
+
+  // Wrap the toolbar onChange so manual mode/model changes clear any
+  // pending suggestion and reset the forced-wizard flag.
+  const handleToolbarChange = (next: {
+    mode: StudioMode;
+    model: string | null;
+  }) => {
+    setPendingSuggestion(null);
+    setForceWizard(false);
+    onToolbarChange(next);
+  };
 
   const handleSend = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setInput("");
     if (studioMode === "agent") {
+      // Fire the App suggester in parallel — don't block the chat reply.
+      void (async () => {
+        try {
+          const res = await runSuggestApp({ data: { intent: trimmed } });
+          const top = res.suggestions?.[0];
+          if (
+            top &&
+            top.confidence >= SUGGEST_THRESHOLD &&
+            !dismissedSkills.has(top.skillId) &&
+            SKILL_BY_ID[top.skillId]
+          ) {
+            setPendingSuggestion(top);
+          }
+        } catch {
+          // Silent — suggestion is best-effort.
+        }
+      })();
       await sendMessage({ text: trimmed });
       return;
     }
@@ -988,6 +1047,13 @@ function ChatPanel({
               {error.message ?? "Something went wrong with the AI gateway."}
             </div>
           )}
+          {pendingSuggestion && studioMode === "agent" && !busy && (
+            <AppSuggestionCard
+              suggestion={pendingSuggestion}
+              onAccept={() => handleAcceptSuggestion(pendingSuggestion)}
+              onDismiss={() => handleDismissSuggestion(pendingSuggestion)}
+            />
+          )}
           <div ref={bottomRef} className="h-4" />
         </ConversationContent>
         <ConversationScrollButton />
@@ -1003,7 +1069,7 @@ function ChatPanel({
             const showWizard =
               !busy &&
               !activeCard &&
-              history.length === 0 &&
+              (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
               skill !== null;
             if (showWizard) {
@@ -1015,6 +1081,7 @@ function ChatPanel({
                   busy={busy}
                   onSubmit={({ prompt, assets: uploaded }) => {
                     if (uploaded.length) onPatch({ assetsAppend: uploaded });
+                    setForceWizard(false);
                     void handleSend(prompt);
                   }}
                 />
@@ -1055,7 +1122,7 @@ function ChatPanel({
             const wizardActive =
               !busy &&
               !activeCard &&
-              history.length === 0 &&
+              (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
               skill !== null;
             if (wizardActive) return null;
@@ -1080,7 +1147,7 @@ function ChatPanel({
                   <StudioToolbar
                     mode={studioMode}
                     model={studioModel}
-                    onChange={onToolbarChange}
+                    onChange={handleToolbarChange}
                   />
                   <PromptInputSubmit status={status} disabled={busy && !input} />
                 </PromptInputFooter>
