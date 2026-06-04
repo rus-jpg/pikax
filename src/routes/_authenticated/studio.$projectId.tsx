@@ -83,6 +83,8 @@ import {
 import {
   INITIAL_PROJECT,
   applyPatch,
+  resolveThumb,
+
   type Character,
   type Music,
   type ProjectAsset,
