@@ -318,6 +318,20 @@ function Studio() {
             studioMode={studioMode}
             studioModel={studioModel}
             onToolbarChange={onToolbarChange}
+            onAcceptSuggestion={(skillDef) => {
+              setStudioMode(skillDef.kind);
+              setStudioModel(skillDef.model);
+              void persistPrefs({
+                data: {
+                  id: projectId,
+                  studioMode: skillDef.kind,
+                  studioModel: skillDef.model,
+                  skill: skillDef.id,
+                },
+              }).then(() => {
+                void queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+              });
+            }}
             skill={skill}
             registerSender={(fn) => {
               chatSendRef.current = fn;
@@ -689,6 +703,7 @@ function ChatPanel({
   studioMode,
   studioModel,
   onToolbarChange,
+  onAcceptSuggestion,
   skill,
   registerSender,
 }: {
@@ -699,6 +714,7 @@ function ChatPanel({
   studioMode: StudioMode;
   studioModel: string | null;
   onToolbarChange: (next: { mode: StudioMode; model: string | null }) => void;
+  onAcceptSuggestion: (skillDef: Skill) => void;
   skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
 }) {
@@ -739,8 +755,10 @@ function ChatPanel({
     if (!skillDef) return;
     setPendingSuggestion(null);
     setForceWizard(true);
-    onToolbarChange({ mode: skillDef.kind, model: skillDef.model });
+    onAcceptSuggestion(skillDef);
   };
+
+
 
   const handleDismissSuggestion = (s: AppSuggestion) => {
     setDismissedSkills((prev) => {
