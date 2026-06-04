@@ -703,6 +703,7 @@ function ChatPanel({
   studioMode,
   studioModel,
   onToolbarChange,
+  onAcceptSuggestion,
   skill,
   registerSender,
 }: {
@@ -713,6 +714,7 @@ function ChatPanel({
   studioMode: StudioMode;
   studioModel: string | null;
   onToolbarChange: (next: { mode: StudioMode; model: string | null }) => void;
+  onAcceptSuggestion: (skillDef: Skill) => void;
   skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
 }) {
