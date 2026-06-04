@@ -1122,7 +1122,7 @@ function ChatPanel({
             const wizardActive =
               !busy &&
               !activeCard &&
-              history.length === 0 &&
+              (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
               skill !== null;
             if (wizardActive) return null;
