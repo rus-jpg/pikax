@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, Copy, Trash2, Music2, Mic, Volume2, Film } from "lucide-react";
-import type { Scene, Music, ProjectAsset } from "@/lib/project-state";
+import { type Scene, type Music, type ProjectAsset, resolveThumb } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 
 // pixels per second baseline; clamped by zoom
