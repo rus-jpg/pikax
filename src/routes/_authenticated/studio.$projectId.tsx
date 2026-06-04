@@ -805,6 +805,7 @@ function ChatPanel({
           model,
           userMessageId: userId,
           assistantMessageId: assistantId,
+          referenceImageUrls: opts?.referenceImageUrls,
         },
       });
       if (!started.ok) {
