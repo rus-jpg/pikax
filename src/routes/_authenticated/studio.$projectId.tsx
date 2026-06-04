@@ -997,6 +997,32 @@ function ChatPanel({
       {/* Anchored composer: active card stacks directly above the input */}
       <div className="bg-background/80 backdrop-blur">
         <div className="mx-auto w-full max-w-3xl px-8 pb-8 pt-6">
+          {(() => {
+            // App-mode wizard: when an App is opened (non-agent mode) and the
+            // conversation hasn't started yet, render the recipe-driven
+            // wizard instead of the generic prompt box.
+            const showWizard =
+              !busy &&
+              !activeCard &&
+              history.length === 0 &&
+              studioMode !== "agent" &&
+              skill !== null;
+            if (showWizard) {
+              const recipe = getRecipeForSkill(skill);
+              return (
+                <AppWizard
+                  recipe={recipe}
+                  projectId={projectId}
+                  busy={busy}
+                  onSubmit={({ prompt, assets: uploaded }) => {
+                    if (uploaded.length) onPatch({ assetsAppend: uploaded });
+                    void handleSend(prompt);
+                  }}
+                />
+              );
+            }
+            return null;
+          })()}
           {!busy && activeCard && (
             <div className="mb-4">
               <GenerativeCard
