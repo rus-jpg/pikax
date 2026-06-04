@@ -1147,7 +1147,7 @@ function ChatPanel({
                   <StudioToolbar
                     mode={studioMode}
                     model={studioModel}
-                    onChange={onToolbarChange}
+                    onChange={handleToolbarChange}
                   />
                   <PromptInputSubmit status={status} disabled={busy && !input} />
                 </PromptInputFooter>
