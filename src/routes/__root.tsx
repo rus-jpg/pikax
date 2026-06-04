@@ -72,18 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AI Video Director" },
+      { title: "Pika X" },
       { name: "description", content: "Generate shorts, ads, music videos, and dramas up to 10 minutes — with generative UI." },
       { name: "author", content: "AI Video Director" },
-      { property: "og:title", content: "AI Video Director" },
+      { property: "og:title", content: "Pika X" },
       { property: "og:description", content: "Generate shorts, ads, music videos, and dramas up to 10 minutes — with generative UI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "AI Video Director" },
+      { name: "twitter:title", content: "Pika X" },
       { name: "twitter:description", content: "Generate shorts, ads, music videos, and dramas up to 10 minutes — with generative UI." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/519e0f00-2434-45e0-bba2-6b600ffa37ec/id-preview-3f2fb668--b2dc6fa0-78fe-4dc9-b1fd-09b9fb372ad7.lovable.app-1779913908569.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/519e0f00-2434-45e0-bba2-6b600ffa37ec/id-preview-3f2fb668--b2dc6fa0-78fe-4dc9-b1fd-09b9fb372ad7.lovable.app-1779913908569.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/pgaPfrcNjBWgWvbpNQViTHQz2752/social-images/social-1780600064774-Screenshot_2026-06-04_at_3.07.39_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/pgaPfrcNjBWgWvbpNQViTHQz2752/social-images/social-1780600064774-Screenshot_2026-06-04_at_3.07.39_PM.webp" },
     ],
     links: [
       {
