@@ -564,6 +564,7 @@ function StudioTopBar({
   panelOpen,
   canTogglePanel,
   onTogglePanel,
+  skill,
 }: {
   meta: { title: string; format: string; aspectRatio: string };
   duration: number;
@@ -571,6 +572,7 @@ function StudioTopBar({
   panelOpen: boolean;
   canTogglePanel: boolean;
   onTogglePanel: () => void;
+  skill: Skill | null;
 }) {
   return (
     <header className="pointer-events-none relative z-20 flex shrink-0 justify-center px-4 py-3">
@@ -579,9 +581,11 @@ function StudioTopBar({
             <BrandMark className="h-7 w-7" />
           <div className="flex items-baseline gap-2.5 leading-tight">
             <span className="text-base font-semibold tracking-tight text-background">{meta.title}</span>
-            <span className="text-xs text-background/60">
-              {meta.format} · {meta.aspectRatio} · {sceneCount} shots · {formatDuration(duration)}
-            </span>
+            {!skill && (
+              <span className="text-xs text-background/60">
+                {meta.format} · {meta.aspectRatio} · {sceneCount} shots · {formatDuration(duration)}
+              </span>
+            )}
           </div>
         </div>
       </div>
