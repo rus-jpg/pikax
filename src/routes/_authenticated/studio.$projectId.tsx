@@ -1069,7 +1069,7 @@ function ChatPanel({
             const showWizard =
               !busy &&
               !activeCard &&
-              history.length === 0 &&
+              (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
               skill !== null;
             if (showWizard) {
