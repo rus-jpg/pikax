@@ -102,10 +102,8 @@ function AppsPage() {
               }
             }}
           />
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">
-              Press ⌘↵ to find the best App
-            </div>
+          <div className="mt-4 flex items-center justify-end">
+
             <div className="flex gap-2">
               <Button
                 variant="ghost"
