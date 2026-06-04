@@ -638,9 +638,6 @@ function HowItWorks({ skill }: { skill: Skill }) {
       <div className="flex flex-col items-center gap-5">
 
         <div className="flex flex-col items-center gap-2">
-          <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-            {skill.category}
-          </div>
           <h1 className="font-display text-5xl font-semibold tracking-tight">
             How it works
           </h1>
