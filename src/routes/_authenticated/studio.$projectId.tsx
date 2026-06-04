@@ -1047,6 +1047,13 @@ function ChatPanel({
               {error.message ?? "Something went wrong with the AI gateway."}
             </div>
           )}
+          {pendingSuggestion && studioMode === "agent" && !busy && (
+            <AppSuggestionCard
+              suggestion={pendingSuggestion}
+              onAccept={() => handleAcceptSuggestion(pendingSuggestion)}
+              onDismiss={() => handleDismissSuggestion(pendingSuggestion)}
+            />
+          )}
           <div ref={bottomRef} className="h-4" />
         </ConversationContent>
         <ConversationScrollButton />
