@@ -1142,28 +1142,18 @@ function ChatPanel({
             </div>
           )}
           {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
-            <div className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-elegant">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                  Edit prompt &amp; regenerate
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setForceWizard(true)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Try App Again
-                </button>
-
+            <div className="mt-4 rounded-2xl border border-border/60 bg-muted/30 p-3">
+              <div className="mb-2 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                Tweak prompt &amp; regenerate
               </div>
               {lastRun.referenceImageUrls.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
+                <div className="mb-2 flex flex-wrap gap-1.5">
                   {lastRun.referenceImageUrls.map((url) => (
                     <img
                       key={url}
                       src={url}
                       alt=""
-                      className="h-14 w-14 rounded-xl object-cover"
+                      className="h-10 w-10 rounded-lg object-cover"
                     />
                   ))}
                 </div>
@@ -1171,12 +1161,14 @@ function ChatPanel({
               <textarea
                 value={editedPrompt}
                 onChange={(e) => setEditedPrompt(e.target.value)}
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+                rows={2}
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:border-primary"
               />
-              <div className="mt-3 flex justify-end">
+              <div className="mt-2 flex justify-end">
                 <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   disabled={!editedPrompt.trim()}
                   onClick={() => {
                     const prompt = editedPrompt.trim();
@@ -1185,13 +1177,13 @@ function ChatPanel({
                     void handleSend(prompt, { referenceImageUrls: lastRun.referenceImageUrls });
                   }}
                 >
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                   Regenerate
                 </Button>
               </div>
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && !lastRun && (
+          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
             <div className="mt-4 flex justify-center">
               <Button
                 type="button"
@@ -1203,6 +1195,7 @@ function ChatPanel({
               </Button>
             </div>
           )}
+
 
 
 
