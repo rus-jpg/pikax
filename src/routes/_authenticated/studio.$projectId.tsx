@@ -1083,7 +1083,10 @@ function ChatPanel({
                   onSubmit={({ prompt, assets: uploaded }) => {
                     if (uploaded.length) onPatch({ assetsAppend: uploaded });
                     setForceWizard(false);
-                    void handleSend(prompt);
+                    const refUrls = uploaded
+                      .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
+                      .map((a) => a.url);
+                    void handleSend(prompt, { referenceImageUrls: refUrls });
                   }}
                 />
               );
