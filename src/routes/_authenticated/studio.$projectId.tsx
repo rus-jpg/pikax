@@ -677,10 +677,6 @@ function HowItWorks({ skill }: { skill: Skill }) {
           );
         })}
       </div>
-
-      <div className="text-xs text-muted-foreground">
-        Powered by <span className="font-mono">{skill.model}</span>
-      </div>
     </div>
   );
 }
