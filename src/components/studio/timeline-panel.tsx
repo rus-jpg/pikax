@@ -301,7 +301,8 @@ export function TimelinePanel({
                 return hit;
               }) ?? scenes[0];
               return cur?.thumb ? (
-                <img src={cur.thumb} alt={cur.title} className="max-h-full max-w-full object-contain" />
+                <img src={resolveThumb(cur.thumb, assets)} alt={cur.title} className="max-h-full max-w-full object-contain" />
+
               ) : (
                 <span className="text-sm">No preview yet — generate keyframes and clips.</span>
               );
