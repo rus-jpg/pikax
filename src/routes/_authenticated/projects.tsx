@@ -65,7 +65,7 @@ function ProjectsPage() {
             disabled={createMut.isPending}
             className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
           >
-            <Plus className="h-4 w-4" /> New Project
+            New Project
           </Button>
 
         </div>
