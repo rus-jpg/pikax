@@ -17,6 +17,8 @@ import { directGenerateStart, directGeneratePoll } from "@/lib/generate.function
 import { StudioToolbar } from "@/components/studio/studio-toolbar";
 import {
   DEFAULT_MODEL_BY_KIND,
+  SKILL_BY_ID,
+  type Skill,
   type StudioMode,
 } from "@/lib/skills";
 // "Shots" still routes through the chat AI (it asks the director to fill in
