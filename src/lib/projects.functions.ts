@@ -252,7 +252,11 @@ export const updateProjectStudioPrefs = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const userId = context.userId;
-    const update: Record<string, unknown> = {
+    const update: {
+      studio_mode: string;
+      studio_model: string | null;
+      skill?: string | null;
+    } = {
       studio_mode: data.studioMode,
       studio_model: data.studioModel,
     };
@@ -265,6 +269,7 @@ export const updateProjectStudioPrefs = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 
 // ---------- update state (patch) ----------
