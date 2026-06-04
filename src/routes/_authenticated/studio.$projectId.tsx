@@ -202,6 +202,8 @@ function Studio() {
     window.addEventListener("mouseup", onUp);
   };
   const { scenes, cast, music, meta, assets } = project;
+  const skillId = projectQuery.data?.project.skill ?? null;
+  const skill: Skill | null = (skillId && SKILL_BY_ID[skillId]) || null;
   const hasPanelContent =
     scenes.length > 0 || cast.length > 0 || !!music || assets.length > 0;
   const panelOpen = hasPanelContent && (userPanelPref ?? true);
