@@ -2105,15 +2105,18 @@ function SceneRow({
   scene,
   active,
   aspectRatio,
+  assets,
   onClick,
   onChange,
 }: {
   scene: Scene;
   active: boolean;
   aspectRatio?: string;
+  assets: ProjectAsset[];
   onClick: () => void;
   onChange: (s: Scene) => void;
 }) {
+
   const [editing, setEditing] = useState(false);
   // Parse "W:H" → aspect-ratio CSS value + orientation. Default to 16:9.
   const { ar, isHorizontal } = (() => {
