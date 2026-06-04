@@ -28,6 +28,8 @@ const InputSchema = z.object({
   // back to the client and useChat can splice them into state.
   userMessageId: z.string().min(1).max(64),
   assistantMessageId: z.string().min(1).max(64),
+  // Optional reference images (e.g. nano-banana/edit requires `image_urls`).
+  referenceImageUrls: z.array(z.string().url()).max(8).optional(),
 });
 
 function fallbackMimeFor(mode: z.infer<typeof ModeSchema>): string {
@@ -83,10 +85,18 @@ export const directGenerateStart = createServerFn({ method: "POST" })
 
     // Build the fal input by mode.
     let body: Record<string, unknown>;
+    const refImageUrls = (data.referenceImageUrls ?? []).filter((u) =>
+      /^https?:/.test(u),
+    );
     if (data.mode === "image") {
       body = { prompt: data.prompt, aspect_ratio: aspect, num_images: 1 };
+      // Edit-style models (nano-banana/edit, etc.) require `image_urls`.
+      if (refImageUrls.length > 0) {
+        body.image_urls = refImageUrls;
+      }
     } else if (data.mode === "video") {
       body = { prompt: data.prompt, aspect_ratio: aspect, duration: "5" };
+      if (refImageUrls.length > 0) body.image_url = refImageUrls[0];
     } else if (data.mode === "audio") {
       body = { prompt: data.prompt, duration: 30 };
     } else {
