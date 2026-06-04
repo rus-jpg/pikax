@@ -625,6 +625,7 @@ function ChatPanel({
   studioMode,
   studioModel,
   onToolbarChange,
+  skill,
   registerSender,
 }: {
   projectId: string;
@@ -634,6 +635,7 @@ function ChatPanel({
   studioMode: StudioMode;
   studioModel: string | null;
   onToolbarChange: (next: { mode: StudioMode; model: string | null }) => void;
+  skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
