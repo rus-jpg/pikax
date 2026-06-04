@@ -301,6 +301,7 @@ function Studio() {
           panelOpen={panelOpen}
           canTogglePanel={hasPanelContent}
           onTogglePanel={() => setUserPanelPref(!panelOpen)}
+          skill={skill}
         />
         <div className="min-h-0 flex-1">
           <ChatPanel
@@ -311,6 +312,7 @@ function Studio() {
             studioMode={studioMode}
             studioModel={studioModel}
             onToolbarChange={onToolbarChange}
+            skill={skill}
             registerSender={(fn) => {
               chatSendRef.current = fn;
             }}
