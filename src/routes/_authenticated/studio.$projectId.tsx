@@ -1015,7 +1015,8 @@ function ChatPanel({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, activeCard?.key, busy]);
+  }, [messages.length, activeCard?.key, busy, forceWizard]);
+
 
   return (
     <div className="relative flex h-full flex-col">
