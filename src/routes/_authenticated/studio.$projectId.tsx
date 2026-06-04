@@ -719,14 +719,71 @@ function ChatPanel({
 
   const runDirectStart = useServerFn(directGenerateStart);
   const runDirectPoll = useServerFn(directGeneratePoll);
+  const runSuggestApp = useServerFn(suggestApp);
   const [directBusy, setDirectBusy] = useState(false);
   const busy = status === "submitted" || status === "streaming" || directBusy;
+
+  // In-chat App suggestion (agent mode only). Runs in parallel with each
+  // user message; surfaces an inline card the user can accept to switch
+  // the project into that App's wizard without losing chat history.
+  const [pendingSuggestion, setPendingSuggestion] =
+    useState<AppSuggestion | null>(null);
+  const [dismissedSkills, setDismissedSkills] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [forceWizard, setForceWizard] = useState(false);
+  const SUGGEST_THRESHOLD = 0.6;
+
+  const handleAcceptSuggestion = (s: AppSuggestion) => {
+    const skillDef = SKILL_BY_ID[s.skillId];
+    if (!skillDef) return;
+    setPendingSuggestion(null);
+    setForceWizard(true);
+    onToolbarChange({ mode: skillDef.kind, model: skillDef.model });
+  };
+
+  const handleDismissSuggestion = (s: AppSuggestion) => {
+    setDismissedSkills((prev) => {
+      const next = new Set(prev);
+      next.add(s.skillId);
+      return next;
+    });
+    setPendingSuggestion(null);
+  };
+
+  // Wrap the toolbar onChange so manual mode/model changes clear any
+  // pending suggestion and reset the forced-wizard flag.
+  const handleToolbarChange = (next: {
+    mode: StudioMode;
+    model: string | null;
+  }) => {
+    setPendingSuggestion(null);
+    setForceWizard(false);
+    onToolbarChange(next);
+  };
 
   const handleSend = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setInput("");
     if (studioMode === "agent") {
+      // Fire the App suggester in parallel — don't block the chat reply.
+      void (async () => {
+        try {
+          const res = await runSuggestApp({ data: { intent: trimmed } });
+          const top = res.suggestions?.[0];
+          if (
+            top &&
+            top.confidence >= SUGGEST_THRESHOLD &&
+            !dismissedSkills.has(top.skillId) &&
+            SKILL_BY_ID[top.skillId]
+          ) {
+            setPendingSuggestion(top);
+          }
+        } catch {
+          // Silent — suggestion is best-effort.
+        }
+      })();
       await sendMessage({ text: trimmed });
       return;
     }
