@@ -241,8 +241,8 @@ export const directGeneratePoll = createServerFn({ method: "POST" })
         },
       ],
     };
-    const proseLine = `Here's a fresh ${data.mode} from ${data.model.split("/").pop()}.`;
-    const assistantText = `<div data-card data-card-title="${data.mode} result"><p data-prose>${proseLine}</p><script type="application/json" data-project-patch>${JSON.stringify(patch)}</script></div>`;
+    const assistantText = `<div data-card data-card-title="${data.mode} result"><script type="application/json" data-project-patch>${JSON.stringify(patch)}</script></div>`;
+
 
     await supabaseAdmin.from("project_messages").upsert(
       {
