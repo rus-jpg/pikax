@@ -762,7 +762,7 @@ function ChatPanel({
     onToolbarChange(next);
   };
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, opts?: { referenceImageUrls?: string[] }) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
     setInput("");
