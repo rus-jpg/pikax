@@ -1640,11 +1640,13 @@ function StructurePanel({
                 scene={s}
                 active={s.id === activeSceneId}
                 aspectRatio={meta.aspectRatio}
+                assets={assets}
                 onClick={() => onSelect(s.id)}
                 onChange={(next) =>
                   setScenes(scenes.map((x) => (x.id === next.id ? next : x)))
                 }
               />
+
             ))}
             <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card/30 py-5 text-base font-semibold text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground">
               <Plus className="h-5 w-5" /> Add shot
