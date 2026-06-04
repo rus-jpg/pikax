@@ -17,6 +17,8 @@ import { directGenerateStart, directGeneratePoll } from "@/lib/generate.function
 import { StudioToolbar } from "@/components/studio/studio-toolbar";
 import {
   DEFAULT_MODEL_BY_KIND,
+  SKILL_BY_ID,
+  type Skill,
   type StudioMode,
 } from "@/lib/skills";
 // "Shots" still routes through the chat AI (it asks the director to fill in
@@ -45,6 +47,10 @@ import {
   Loader2,
   History,
   RotateCw,
+  ArrowRight,
+  Pencil,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TimelinePanel } from "@/components/studio/timeline-panel";
@@ -196,6 +202,8 @@ function Studio() {
     window.addEventListener("mouseup", onUp);
   };
   const { scenes, cast, music, meta, assets } = project;
+  const skillId = projectQuery.data?.project.skill ?? null;
+  const skill: Skill | null = (skillId && SKILL_BY_ID[skillId]) || null;
   const hasPanelContent =
     scenes.length > 0 || cast.length > 0 || !!music || assets.length > 0;
   const panelOpen = hasPanelContent && (userPanelPref ?? true);
@@ -295,6 +303,7 @@ function Studio() {
           panelOpen={panelOpen}
           canTogglePanel={hasPanelContent}
           onTogglePanel={() => setUserPanelPref(!panelOpen)}
+          skill={skill}
         />
         <div className="min-h-0 flex-1">
           <ChatPanel
@@ -305,6 +314,7 @@ function Studio() {
             studioMode={studioMode}
             studioModel={studioModel}
             onToolbarChange={onToolbarChange}
+            skill={skill}
             registerSender={(fn) => {
               chatSendRef.current = fn;
             }}
@@ -554,6 +564,7 @@ function StudioTopBar({
   panelOpen,
   canTogglePanel,
   onTogglePanel,
+  skill,
 }: {
   meta: { title: string; format: string; aspectRatio: string };
   duration: number;
@@ -561,6 +572,7 @@ function StudioTopBar({
   panelOpen: boolean;
   canTogglePanel: boolean;
   onTogglePanel: () => void;
+  skill: Skill | null;
 }) {
   return (
     <header className="pointer-events-none relative z-20 flex shrink-0 justify-center px-4 py-3">
@@ -569,9 +581,11 @@ function StudioTopBar({
             <BrandMark className="h-7 w-7" />
           <div className="flex items-baseline gap-2.5 leading-tight">
             <span className="text-base font-semibold tracking-tight text-background">{meta.title}</span>
-            <span className="text-xs text-background/60">
-              {meta.format} · {meta.aspectRatio} · {sceneCount} shots · {formatDuration(duration)}
-            </span>
+            {!skill && (
+              <span className="text-xs text-background/60">
+                {meta.format} · {meta.aspectRatio} · {sceneCount} shots · {formatDuration(duration)}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -585,6 +599,95 @@ function StudioTopBar({
         </button>
       )}
     </header>
+  );
+}
+
+// ---------- how it works (empty state for App-launched projects) ----------
+
+function HowItWorks({ skill }: { skill: Skill }) {
+  const Icon = skill.icon;
+  const stepsByKind: Record<
+    Skill["kind"],
+    Array<{ title: string; desc: string }>
+  > = {
+    image: [
+      { title: "Describe it", desc: "Type what you want to see — subject, mood, style, details." },
+      { title: "Generate", desc: `${skill.label} renders a fresh image with ${skill.model.split("/").pop()}.` },
+      { title: "Save or remix", desc: "Download, drop it into a project, or iterate with another prompt." },
+    ],
+    video: [
+      { title: "Set the scene", desc: "Write a motion prompt — or attach a still you want to animate." },
+      { title: "Animate", desc: `${skill.label} produces a short cinematic clip.` },
+      { title: "Export", desc: "Preview, then download the clip or send it to your timeline." },
+    ],
+    audio: [
+      { title: "Describe the vibe", desc: "Genre, tempo, instruments, mood — tell it what you want to hear." },
+      { title: "Compose", desc: `${skill.label} generates an original audio bed.` },
+      { title: "Use it", desc: "Listen, download, or layer it under your video." },
+    ],
+    speech: [
+      { title: "Write your script", desc: "Paste the line or paragraph you want spoken." },
+      { title: "Synthesize", desc: `${skill.label} renders studio-grade voiceover.` },
+      { title: "Listen & save", desc: "Download the audio or drop it into a project." },
+    ],
+  };
+  const steps = stepsByKind[skill.kind];
+  const stepIcons = [Pencil, Sparkles, CheckCircle2];
+
+  return (
+    <div className="flex flex-col items-center gap-10 pt-8 pb-2 text-center">
+      <div className="flex flex-col items-center gap-5">
+        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-glow">
+          <Icon className="h-8 w-8" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+            {skill.category}
+          </div>
+          <h1 className="font-display text-5xl font-semibold tracking-tight">
+            How it works
+          </h1>
+          <p className="max-w-xl text-base text-muted-foreground">
+            {skill.description}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex w-full flex-col items-stretch gap-4 md:flex-row md:items-stretch md:justify-center md:gap-3">
+        {steps.map((s, i) => {
+          const StepIcon = stepIcons[i] ?? Sparkles;
+          return (
+            <div key={i} className="flex flex-1 items-stretch">
+              <div className="flex flex-1 flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5 text-left shadow-elegant">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-muted text-foreground">
+                    <StepIcon className="h-4 w-4" />
+                  </div>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                    Step {i + 1}
+                  </div>
+                </div>
+                <div className="text-base font-semibold tracking-tight">
+                  {s.title}
+                </div>
+                <div className="text-sm leading-relaxed text-muted-foreground">
+                  {s.desc}
+                </div>
+              </div>
+              {i < steps.length - 1 && (
+                <div className="hidden items-center px-1 text-muted-foreground md:flex">
+                  <ArrowRight className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="text-xs text-muted-foreground">
+        Powered by <span className="font-mono">{skill.model}</span>
+      </div>
+    </div>
   );
 }
 
@@ -611,6 +714,7 @@ function ChatPanel({
   studioMode,
   studioModel,
   onToolbarChange,
+  skill,
   registerSender,
 }: {
   projectId: string;
@@ -620,6 +724,7 @@ function ChatPanel({
   studioMode: StudioMode;
   studioModel: string | null;
   onToolbarChange: (next: { mode: StudioMode; model: string | null }) => void;
+  skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
@@ -862,10 +967,16 @@ function ChatPanel({
     <div className="relative flex h-full flex-col">
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-3xl gap-5 px-8 py-12">
-          <div className="flex flex-col items-start gap-6 pt-6">
-            <BrandMark className="h-12 w-12" />
-            <AssistantMessage text="What are we making? Type one word below — I'll take it from there." />
-          </div>
+          {history.length === 0 && !activeCard && (
+            skill ? (
+              <HowItWorks skill={skill} />
+            ) : (
+              <div className="flex flex-col items-start gap-6 pt-6">
+                <BrandMark className="h-12 w-12" />
+                <AssistantMessage text="What are we making? Type one word below — I'll take it from there." />
+              </div>
+            )
+          )}
           {history.map((it) =>
             it.kind === "user" ? (
               <UserBubble key={it.key} text={it.text} assets={assets} />
