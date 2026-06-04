@@ -1107,8 +1107,11 @@ function ChatPanel({
                     const refUrls = uploaded
                       .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
                       .map((a) => a.url);
+                    setLastRun({ prompt, referenceImageUrls: refUrls });
+                    setEditedPrompt(prompt);
                     void handleSend(prompt, { referenceImageUrls: refUrls });
                   }}
+
                 />
               );
             }
