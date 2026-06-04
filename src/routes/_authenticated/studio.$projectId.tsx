@@ -739,8 +739,20 @@ function ChatPanel({
     if (!skillDef) return;
     setPendingSuggestion(null);
     setForceWizard(true);
-    onToolbarChange({ mode: skillDef.kind, model: skillDef.model });
+    setStudioMode(skillDef.kind);
+    setStudioModel(skillDef.model);
+    void persistPrefs({
+      data: {
+        id: projectId,
+        studioMode: skillDef.kind,
+        studioModel: skillDef.model,
+        skill: skillDef.id,
+      },
+    }).then(() => {
+      void queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+    });
   };
+
 
   const handleDismissSuggestion = (s: AppSuggestion) => {
     setDismissedSkills((prev) => {
