@@ -61,13 +61,13 @@ function ProjectsPage() {
             </p>
           </div>
           <Button
-            variant="outline"
             onClick={() => createMut.mutate()}
             disabled={createMut.isPending}
-            className="rounded-full"
+            className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
           >
             <Plus className="h-4 w-4" /> Blank project
           </Button>
+
         </div>
 
         {q.isLoading && (
