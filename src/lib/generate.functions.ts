@@ -28,6 +28,8 @@ const InputSchema = z.object({
   // back to the client and useChat can splice them into state.
   userMessageId: z.string().min(1).max(64),
   assistantMessageId: z.string().min(1).max(64),
+  // Optional reference images (e.g. nano-banana/edit requires `image_urls`).
+  referenceImageUrls: z.array(z.string().url()).max(8).optional(),
 });
 
 function fallbackMimeFor(mode: z.infer<typeof ModeSchema>): string {
