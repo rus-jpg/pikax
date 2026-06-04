@@ -88,6 +88,8 @@ import {
   type ProjectState,
   type Scene,
 } from "@/lib/project-state";
+import { getRecipeForSkill } from "@/lib/app-recipes";
+import { AppWizard } from "@/components/studio/app-wizard";
 export const Route = createFileRoute("/_authenticated/studio/$projectId")({
   component: Studio,
 });
