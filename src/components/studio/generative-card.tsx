@@ -638,23 +638,27 @@ export function UserBubble({
   assets?: ProjectAsset[];
 }) {
   // Pull asset ids out of the summary so we can render attachments inline.
-  const ids = Array.from(text.matchAll(/\[(ast_[a-z0-9]+)\]/gi)).map((m) => m[1]);
+  // Asset IDs are UUIDs (or legacy `ast_…` strings).
+  const ID_RE = /\[((?:ast_[a-z0-9]+)|(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))\]/gi;
+  const ids = Array.from(text.matchAll(ID_RE)).map((m) => m[1]);
   const byId = new Map((assets ?? []).map((a) => [a.id, a]));
   const refs = ids.map((id) => byId.get(id)).filter(Boolean) as ProjectAsset[];
 
-  // Strip "<kind>: name WxH [ast_xxx]" descriptors (and bare [ast_xxx])
-  // so the bubble shows clean prose instead of the raw asset summary.
+  // Strip "<label>: filename [id] url=…" descriptors so the bubble shows clean
+  // prose instead of the raw wizard summary.
+  const DESCRIPTOR_RE = new RegExp(
+    "(?:^|\\s|·|;)\\s*[^:;·\\n]+:\\s*[^;·\\n]*?\\[(?:(?:ast_[a-z0-9]+)|(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))\\](?:\\s+url=\\S+)?",
+    "gi",
+  );
   let cleaned = text
-    .replace(
-      /(?:^|\s|·|;)\s*(?:[a-z /]+):\s*[^;·\n]*?\[ast_[a-z0-9]+\](?:\s+url=\S+)?/gi,
-      "",
-    )
-    .replace(/\[ast_[a-z0-9]+\]/gi, "")
+    .replace(DESCRIPTOR_RE, "")
+    .replace(ID_RE, "")
     .replace(/\s*url=\S+/gi, "")
     .replace(/^\s*attached\s*[—-]\s*/i, "")
     .replace(/\s*·\s*·\s*/g, " · ")
     .replace(/^[\s·;,-]+|[\s·;,-]+$/g, "")
     .trim();
+
 
   const images = refs.filter((a) => a.mime.startsWith("image/"));
   const others = refs.filter((a) => !a.mime.startsWith("image/"));
