@@ -748,7 +748,10 @@ function ChatPanel({
     () => new Set(),
   );
   const [forceWizard, setForceWizard] = useState(false);
+  const [lastRun, setLastRun] = useState<{ prompt: string; referenceImageUrls: string[] } | null>(null);
+  const [editedPrompt, setEditedPrompt] = useState<string>("");
   const SUGGEST_THRESHOLD = 0.6;
+
 
   const handleAcceptSuggestion = (s: AppSuggestion) => {
     const skillDef = SKILL_BY_ID[s.skillId];
