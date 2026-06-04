@@ -1117,10 +1117,16 @@ function ChatPanel({
               ))}
             </div>
           )}
-          {!busy && studioMode !== "agent" && history.length > 0 && (
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Create another
-            </div>
+          {!busy && !activeCard && studioMode !== "agent" && skill !== null && history.length > 0 && !forceWizard && (
+            <Button
+              type="button"
+              size="lg"
+              className="w-full rounded-2xl"
+              onClick={() => setForceWizard(true)}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Try again
+            </Button>
           )}
           {(() => {
             const wizardActive =
@@ -1129,7 +1135,14 @@ function ChatPanel({
               (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
               skill !== null;
-            if (wizardActive) return null;
+            const hideComposer =
+              !busy &&
+              !activeCard &&
+              studioMode !== "agent" &&
+              skill !== null &&
+              history.length > 0 &&
+              !forceWizard;
+            if (wizardActive || hideComposer) return null;
             return (
               <PromptInput
                 onSubmit={async (msg) => {
@@ -1158,6 +1171,7 @@ function ChatPanel({
               </PromptInput>
             );
           })()}
+
         </div>
       </div>
 
