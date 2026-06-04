@@ -1141,7 +1141,56 @@ function ChatPanel({
               ))}
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
+          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
+            <div className="mt-4 rounded-3xl border border-border bg-card p-4 shadow-elegant">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  Edit prompt &amp; regenerate
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForceWizard(true)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Change inputs
+                </button>
+              </div>
+              {lastRun.referenceImageUrls.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {lastRun.referenceImageUrls.map((url) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt=""
+                      className="h-14 w-14 rounded-xl object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+              <textarea
+                value={editedPrompt}
+                onChange={(e) => setEditedPrompt(e.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+              />
+              <div className="mt-3 flex justify-end">
+                <Button
+                  type="button"
+                  disabled={!editedPrompt.trim()}
+                  onClick={() => {
+                    const prompt = editedPrompt.trim();
+                    if (!prompt) return;
+                    setLastRun({ prompt, referenceImageUrls: lastRun.referenceImageUrls });
+                    void handleSend(prompt, { referenceImageUrls: lastRun.referenceImageUrls });
+                  }}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Regenerate
+                </Button>
+              </div>
+            </div>
+          )}
+          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && !lastRun && (
             <div className="mt-4 flex justify-center">
               <Button
                 type="button"
@@ -1153,6 +1202,7 @@ function ChatPanel({
               </Button>
             </div>
           )}
+
 
 
           {(() => {
