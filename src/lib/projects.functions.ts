@@ -240,28 +240,32 @@ export const getProject = createServerFn({ method: "GET" })
 export const updateProjectStudioPrefs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { id: string; studioMode: string; studioModel: string | null }) =>
+    (data: { id: string; studioMode: string; studioModel: string | null; skill?: string | null }) =>
       z
         .object({
           id: z.string().uuid(),
           studioMode: z.enum(["agent", "image", "video", "audio", "speech"]),
           studioModel: z.string().max(255).nullable(),
+          skill: z.string().max(255).nullable().optional(),
         })
         .parse(data),
   )
   .handler(async ({ data, context }) => {
     const userId = context.userId;
+    const update: Record<string, unknown> = {
+      studio_mode: data.studioMode,
+      studio_model: data.studioModel,
+    };
+    if (data.skill !== undefined) update.skill = data.skill;
     const { error } = await supabaseAdmin
       .from("projects")
-      .update({
-        studio_mode: data.studioMode,
-        studio_model: data.studioModel,
-      })
+      .update(update)
       .eq("id", data.id)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 // ---------- update state (patch) ----------
 
