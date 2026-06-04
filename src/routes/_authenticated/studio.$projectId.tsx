@@ -1495,6 +1495,7 @@ function StructurePanel({
   return (
     <div className="relative flex h-full flex-col">
       <Tabs
+        key={studioMode === "agent" ? "agent" : "app"}
         defaultValue={studioMode === "agent" ? "shots" : "gallery"}
         className="flex h-full flex-col"
       >
