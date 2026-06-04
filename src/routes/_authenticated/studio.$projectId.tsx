@@ -318,6 +318,20 @@ function Studio() {
             studioMode={studioMode}
             studioModel={studioModel}
             onToolbarChange={onToolbarChange}
+            onAcceptSuggestion={(skillDef) => {
+              setStudioMode(skillDef.kind);
+              setStudioModel(skillDef.model);
+              void persistPrefs({
+                data: {
+                  id: projectId,
+                  studioMode: skillDef.kind,
+                  studioModel: skillDef.model,
+                  skill: skillDef.id,
+                },
+              }).then(() => {
+                void queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+              });
+            }}
             skill={skill}
             registerSender={(fn) => {
               chatSendRef.current = fn;
