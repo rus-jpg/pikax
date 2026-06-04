@@ -367,11 +367,12 @@ export function TimelinePanel({
                 >
                   {s.thumb ? (
                     <img
-                      src={s.thumb}
+                      src={resolveThumb(s.thumb, assets)}
                       alt={s.title}
                       className="h-full w-full object-cover"
                       draggable={false}
                     />
+
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted text-[10px] text-muted-foreground">
                       {s.n}
