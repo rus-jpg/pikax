@@ -47,6 +47,10 @@ import {
   Loader2,
   History,
   RotateCw,
+  ArrowRight,
+  Pencil,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TimelinePanel } from "@/components/studio/timeline-panel";
