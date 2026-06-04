@@ -1206,19 +1206,11 @@ function ChatPanel({
 
 
           {(() => {
-            const wizardActive =
-              !busy &&
-              !activeCard &&
-              (history.length === 0 || forceWizard) &&
-              studioMode !== "agent" &&
-              skill !== null;
-            const hideComposer =
-              !busy &&
-              studioMode !== "agent" &&
-              skill !== null &&
-              (history.length > 0 || !!activeCard) &&
-              !forceWizard;
-            if (wizardActive || hideComposer) return null;
+            // In app mode (non-agent with a selected skill), never show the
+            // free-form composer + toolbar — the wizard or the inline retry
+            // editor owns the input surface.
+            if (studioMode !== "agent" && skill !== null) return null;
+
             return (
               <PromptInput
                 onSubmit={async (msg) => {
