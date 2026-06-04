@@ -1,102 +1,105 @@
-# Plan: Navigation, Skills, Studio controls, My Library
 
-## 1. Main navigation
+## Goal
 
-Add a persistent top nav inside `_authenticated.tsx` (above `<Outlet/>`) with three tabs:
+Make the bottom composer in `/studio` actually reflect the App's recipe (e.g. Pet Hero Portrait → upload pet → pick persona → generate), instead of a generic prompt box. Do this in a way that also sets up the future "publish your agent workflow as an App" feature.
 
-- **Projects** → existing `/projects`
-- **Skills** → new `/skills`
-- **My Library** → new `/library`
+## Approach
 
-Uses TanStack `<Link>` with `activeProps` for the active state. Logo on the left, `AccountPopover` on the right (it already mounts globally — leave as is).
+Promote the per-App recipe from descriptive copy into a typed **step schema**. One schema drives three things: the "How it works" panel, the guided composer at the bottom, and (later) the publish-as-App format. Built-in Apps and user-published Apps end up being the same primitive.
 
-## 2. Skills catalog (`/skills`)
+Agent mode is unchanged — it keeps the freeform prompt box and `GenerativeCard` loop. App mode gets the wizard.
 
-A new route showing a grid of "skills" — each one is a Fal-powered capability. Clicking a skill:
+## Step schema
 
-1. Calls `createProject` server fn (already exists) with a skill-seeded title + a default `skill` field on the project.
-2. Navigates to `/studio/$projectId` with that skill preselected as the studio's active mode/model.
+```ts
+type AppStep =
+  | { id: string; title: string; desc: string; kind: "upload"; accept: "image" | "video" | "audio"; required?: boolean }
+  | { id: string; title: string; desc: string; kind: "choice"; options: { id: string; label: string; hint?: string }[]; allowCustom?: boolean }
+  | { id: string; title: string; desc: string; kind: "prompt"; placeholder: string; minLength?: number }
+  | { id: string; title: string; desc: string; kind: "slider"; min: number; max: number; step?: number; unit?: string };
 
-### Skill registry (static, client-safe)
-
-New file `src/lib/skills.ts` — a typed catalog grouped by category:
-
-```text
-Image
-  - Nano Banana (text→image)         fal-ai/nano-banana
-  - Nano Banana Edit (image edit)    fal-ai/nano-banana/edit
-  - Flux Pro 1.1                     fal-ai/flux-pro/v1.1
-  - Ideogram v2                      fal-ai/ideogram/v2
-Video
-  - Kling 2.1 (image→video)          fal-ai/kling-video/v2.1/standard/image-to-video
-  - Veo 3 (text→video)               fal-ai/veo3
-  - Luma Dream Machine               fal-ai/luma-dream-machine
-Audio / Music
-  - Cassette Music                   fal-ai/cassetteai/music-generator
-  - Stable Audio                     fal-ai/stable-audio
-Speech
-  - ElevenLabs Multilingual TTS      fal-ai/elevenlabs/tts/multilingual-v2
-  - PlayHT TTS                       fal-ai/playht/tts/v3
+type AppRecipe = {
+  steps: AppStep[];
+  // How collected inputs are assembled into the final generation call.
+  compose: (inputs: Record<string, unknown>) => { prompt: string; assets?: string[] };
+};
 ```
 
-Each entry: `{ id, label, description, category, model, kind: 'image'|'video'|'audio'|'speech', icon }`.
+`STEPS_BY_SKILL_ID` becomes `RECIPES_BY_SKILL_ID: Record<string, AppRecipe>`. The existing `{title, desc}` data is preserved as the first two fields of each step, so the diagram keeps working with zero copy changes.
 
-Skills page renders category sections with cards (reuse `Card`). Card click → `createProject({ title: skill.label, skill: skill.id })` → navigate to studio.
+## Wizard composer (App mode only)
 
-## 3. Project schema additions
+New `AppWizard` component replaces the freeform `PromptInput` when:
+- `skill` is set (we're inside an App), AND
+- `history.length === 0` (no turns yet), AND
+- the skill has a `RECIPES_BY_SKILL_ID[skill.id]` entry.
 
-Migration adds two columns to `projects`:
+Behavior:
+- Renders the current step inline above (or in place of) the input. One step visible at a time, with a small `1 / 3` indicator and a `Back` affordance.
+- `upload` → drag-and-drop tile that pushes into the project's asset store and stores the asset id in wizard state.
+- `choice` → chip grid; `allowCustom: true` reveals a text field for "Other".
+- `prompt` → multi-line textarea (same look as today's `PromptInputTextarea`).
+- `slider` → labeled range.
+- Primary button reads `Continue` until the last step, then `Generate`.
+- On `Generate`: call `recipe.compose(inputs)`, then route through the existing `handleSend` path so the rest of the conversation rendering, busy state, and result cards stay identical.
 
-- `skill text null` — the skill id selected at creation (optional)
-- (we'll keep using existing `mode` if present; otherwise add `mode text default 'agent'`)
+After the first generation, the wizard collapses and the regular freeform `PromptInput` takes over for follow-ups ("Create another" path that already exists).
 
-And the `createProject` server fn accepts optional `skill` and stores it.
+## "How it works" diagram
 
-## 4. Studio input toolbar
+`HowItWorks` reads from the same recipe (`recipe.steps`) instead of the legacy `STEPS_BY_SKILL_ID` / `STEPS_BY_KIND` maps. Visuals improve based on `step.kind`:
+- `upload` → upload-tile icon
+- `choice` → chip-cluster icon
+- `prompt` → text-cursor icon
+- `slider` → slider icon
+- final step → sparkle / output icon
 
-In `src/routes/_authenticated/studio.$projectId.tsx`, above the prompt input, add a compact toolbar row:
+This guarantees the diagram and the wizard can never describe different sequences.
 
-- **Agent mode toggle** (Switch) — when on, AI runs the multi-tool agent (current behavior). When off, the prompt goes straight to the selected mode's single-shot generator.
-- **Mode selector** — segmented control: Agent | Image | Video | Audio | Speech
-- **Model dropdown** — only shown when mode ≠ Agent. Options filtered from the skills registry by `kind`.
-- **Skills button** — opens a popover with the full skill list (same data as `/skills`); clicking one sets mode+model in place (does not create a new project).
+## Migration of existing recipes
 
-State is local to the studio for now and seeded from `project.skill` if set. Choice persists per-project via a lightweight `studio_mode` / `studio_model` column on `projects` (added in the same migration) so reloads keep the selection.
+Convert the ~25 entries in `STEPS_BY_SKILL_ID` to the new typed shape. Most map cleanly:
+- "Upload …" steps → `kind: "upload"`
+- "Pick a …" / "Set the style" → `kind: "choice"` with a small starter option set (free-text fallback via `allowCustom`)
+- "Describe …" / "Write …" → `kind: "prompt"`
+- Final "Generate / Render / Export" → not an interactive step; rendered as the diagram's terminal node and triggered by the wizard's submit button.
 
-### Chat behavior wiring
+For Apps without a hand-authored recipe, fall back to a kind-based default (`STEPS_BY_KIND` equivalent, also typed): one `prompt` step for image/audio/speech; one `upload?` + one `prompt` for video.
 
-`src/routes/api/chat.ts` already accepts a body; extend it to accept `mode` and `model`. When `mode !== 'agent'`, skip the tool-calling loop and call the matching helper in `fal.server.ts` directly with the user's prompt, then return the resulting asset URL as an assistant message (stored in `project_messages` and `project_assets` like today). Agent mode is unchanged.
+## Publishing agent workflows as Apps (groundwork only, not shipped this round)
 
-## 5. My Library (`/library`)
+Document the contract so the wizard schema is publish-ready:
+- Add a `source: "builtin" | "user"` field on the recipe.
+- `user_apps` table sketch (created later, not in this change):
+  ```
+  id uuid pk
+  owner_id uuid → auth user
+  name text, description text, icon text
+  kind text   -- image/video/audio/speech
+  recipe jsonb   -- AppStep[] + compose template
+  created_at timestamptz
+  ```
+- The `compose` function is the only non-serializable piece. Serialize it as a **prompt template string** with `{{stepId}}` placeholders (e.g. `"A {{persona}} portrait of the uploaded pet, gallery framing"`). Built-in recipes can use the same template format so user and built-in Apps are byte-identical at rest.
+- A future "Publish as App" button on a completed agent run will: replay the transcript, extract upload turns + decision-pill answers + the final prompt, and propose a draft `AppRecipe` the user can edit and save.
 
-New route with two tabs:
+No backend changes in this change set — just the schema shape and a code comment marking where publish will hook in.
 
-- **References** — all `project_assets` for this user where `kind = 'reference'` (uploaded images). Grid with thumbnails.
-- **Generations** — all `project_assets` where `kind in ('image','video','audio')` — most recent first. Each card shows the source project, mode/model, and a download/preview action.
-- **Queue** — top section listing in-flight `render_jobs` and any `render_scene_outputs` with `status in ('queued','running')` across all the user's projects, with a live realtime subscription (same pattern as studio).
+## Files touched
 
-New server fn `listLibrary()` in `src/lib/library.functions.ts` returns `{ references, generations, queue }` scoped to `auth.uid()` via existing RLS.
+- `src/routes/_authenticated/studio.$projectId.tsx`
+  - Replace `Step`, `STEPS_BY_KIND`, `STEPS_BY_SKILL_ID` with the typed `AppStep` / `AppRecipe` and `RECIPES_BY_SKILL_ID`.
+  - Update `HowItWorks` to read `recipe.steps` and pick icons per `step.kind`.
+  - Render new `AppWizard` in the composer slot when conditions above are met.
+- `src/components/studio/AppWizard.tsx` (new) — wizard UI, one component per step kind, internal state, submit handler.
+- `src/lib/app-recipes.ts` (new) — extract `RECIPES_BY_SKILL_ID` and helpers (`composeFromTemplate`) out of the route file so it stays under control and is reusable by a future publish flow.
 
-## Files
+## Out of scope for this change
 
-**New**
-- `src/routes/_authenticated/skills.tsx`
-- `src/routes/_authenticated/library.tsx`
-- `src/lib/skills.ts`
-- `src/lib/library.functions.ts`
-- `src/components/app-nav.tsx`
-- `supabase/migrations/<ts>_projects_skill_mode.sql` (adds `skill`, `studio_mode`, `studio_model`)
+- Actually building the "Publish as App" UI, the `user_apps` table, or the transcript-to-recipe extractor.
+- Changing Agent mode's composer.
+- Reworking how generated outputs render — wizard funnels into the existing `handleSend`/`GenerativeCard` pipeline.
 
-**Edited**
-- `src/routes/_authenticated.tsx` — mount `<AppNav/>`
-- `src/routes/_authenticated/studio.$projectId.tsx` — toolbar above input
-- `src/routes/api/chat.ts` — accept `mode`/`model`, route non-agent calls to Fal directly
-- `src/lib/projects.functions.ts` — `createProject` accepts `skill`, and a new `updateProjectStudioPrefs` fn
+## Open questions for you
 
-## Out of scope for this turn
-
-- Persisting generation history across projects beyond what `project_assets` already gives us.
-- Building a full uploader UI for references on the Library page (we'll surface what's already uploaded). I'll add an upload button only if you confirm.
-- Per-model parameter UIs (aspect ratio, duration, voice, etc.) — for now we'll use sensible defaults; we can add per-mode controls in a follow-up.
-
-Confirm and I'll build it. If you'd like the upload button on My Library in this same pass, say so and I'll include it.
+1. For Apps that today are a single freeform prompt (e.g. text-to-image, text-to-music), do you want the wizard to still wrap them as a one-step form, or just keep the plain prompt box? I'd default to **one-step form** for visual consistency, but it does add a click.
+2. For `choice` steps (e.g. Pet Portrait → "Pick a persona"), do you want me to author a starter set of 6–8 chips per App, or always start blank with just an "Other / describe" text field? Starter chips are friendlier but more work to maintain.
