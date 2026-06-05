@@ -233,7 +233,7 @@ export async function falGenerateMusic(args: {
 }): Promise<string> {
   const dur = Math.max(10, Math.min(180, Math.round(args.durationSeconds)));
   const out = await falRun(
-    "fal-ai/cassetteai/music-generator",
+    "cassetteai/music-generator",
     { prompt: args.prompt, duration: dur },
     { label: "music-generator" },
   );

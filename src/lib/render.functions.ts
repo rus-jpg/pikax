@@ -14,6 +14,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   applyPatch,
   INITIAL_PROJECT,
+  resolveThumb,
   type ProjectState,
   type Scene,
 } from "@/lib/project-state";
@@ -747,12 +748,16 @@ async function runStep(opts: {
     state = (fresh.project_state ?? state) as ProjectState;
     const fs = state.scenes.find((s) => s.id === scene.id);
     if (!fs?.thumb) throw new Error("Shot image not ready yet");
+    const thumbUrl = resolveThumb(fs.thumb, state.assets ?? []);
+    if (!/^https?:/i.test(thumbUrl)) {
+      throw new Error(`Shot image is not a valid URL (got "${thumbUrl.slice(0, 60)}")`);
+    }
     const stored = await animateAndStoreClip({
       projectId,
       userId,
       sceneTitle: fs.title,
       motionPrompt: (fs.motionPrompt || fs.prompt || fs.title).trim(),
-      thumbUrl: fs.thumb,
+      thumbUrl,
       durationSeconds: fs.duration || 5,
       aspect,
     });

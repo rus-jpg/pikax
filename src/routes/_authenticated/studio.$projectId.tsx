@@ -276,6 +276,7 @@ function Studio() {
   // but need to dispatch into the chat (which owns the AI SDK session).
   // We expose a ref the ChatPanel registers its sender into.
   const chatSendRef = useRef<((text: string) => void) | null>(null);
+  const appendAssistantRef = useRef<((text: string) => void) | null>(null);
 
   const setScenes = (next: Scene[]) =>
     setProject((prev) => ({ ...prev, scenes: next }));
@@ -344,6 +345,9 @@ function Studio() {
             registerSender={(fn) => {
               chatSendRef.current = fn;
             }}
+            registerAppendAssistant={(fn) => {
+              appendAssistantRef.current = fn;
+            }}
           />
         </div>
       </div>
@@ -380,6 +384,7 @@ function Studio() {
             onSelect={setActiveSceneId}
             totalDuration={totalDuration}
             onChatCommand={(text) => chatSendRef.current?.(text)}
+            onRenderComplete={(text) => appendAssistantRef.current?.(text)}
             studioMode={studioMode}
           />
         </div>
@@ -714,6 +719,7 @@ function ChatPanel({
   onAcceptSuggestion,
   skill,
   registerSender,
+  registerAppendAssistant,
 }: {
   projectId: string;
   initialMessages: UIMessage[];
@@ -725,6 +731,7 @@ function ChatPanel({
   onAcceptSuggestion: (skillDef: Skill) => void;
   skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
+  registerAppendAssistant?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
   // Local skill override so the wizard appears instantly when a suggestion
@@ -916,6 +923,26 @@ function ChatPanel({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registerSender, busy]);
+
+  // Expose an "append assistant message" channel for non-chat flows (e.g.
+  // the Render Final pipeline) to post their result into the conversation.
+  useEffect(() => {
+    registerAppendAssistant?.((text: string) => {
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id,
+          role: "assistant",
+          parts: [{ type: "text", text }],
+        } as UIMessage,
+      ]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registerAppendAssistant]);
 
   // Card answers can also carry uploaded assets. Patch them into project
   // state immediately so the panel reflects the upload, then send a
@@ -1477,6 +1504,7 @@ function StructurePanel({
   onSelect,
   totalDuration,
   onChatCommand,
+  onRenderComplete,
   studioMode,
 }: {
   projectId: string;
@@ -1498,12 +1526,23 @@ function StructurePanel({
   onSelect: (id: string) => void;
   totalDuration: number;
   onChatCommand?: (text: string) => void;
+  onRenderComplete?: (assistantText: string) => void;
   studioMode: StudioMode;
 }) {
   const [renderMsg, setRenderMsg] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
   const [renderJobId, setRenderJobId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(
+    studioMode === "agent" ? "shots" : "gallery",
+  );
   const runFinal = useServerFn(renderFinalVideo);
+  const fetchRenders = useServerFn(listProjectRenders);
+  const queryClient = useQueryClient();
+
+  // Reset to the natural default tab when switching agent/app modes.
+  useEffect(() => {
+    setActiveTab(studioMode === "agent" ? "shots" : "gallery");
+  }, [studioMode]);
 
   // While a render job is active: subscribe to its row and tick the
   // background pipeline every few seconds (belt-and-suspenders with the
@@ -1536,6 +1575,7 @@ function StructurePanel({
           if (cancelled) return;
           const row = payload.new as { status?: string; error?: string | null };
           if (row.status === "done") {
+            const jobIdForPost = renderJobId;
             setRenderMsg(
               row.error
                 ? `Final video ready — ${row.error}.`
@@ -1543,6 +1583,36 @@ function StructurePanel({
             );
             setRendering(false);
             setRenderJobId(null);
+            // Fetch the final asset URL and drop it into chat.
+            void (async () => {
+              try {
+                const res = await fetchRenders({ data: { projectId } });
+                const job = res.jobs.find((j) => j.id === jobIdForPost);
+                if (job?.finalUrl) {
+                  const patch = {
+                    assetsAppend: [
+                      {
+                        id: `final-${job.id}`,
+                        kind: "final",
+                        mime: job.finalMime || "video/mp4",
+                        name: `${meta.title || "Final video"}.mp4`,
+                        url: job.finalUrl,
+                        label: "Final video",
+                      },
+                    ],
+                  };
+                  const text = `Your final video is ready.<div data-card data-card-title="Final video"><script type="application/json" data-project-patch>${JSON.stringify(
+                    patch,
+                  )}</script></div>`;
+                  onRenderComplete?.(text);
+                }
+                void queryClient.invalidateQueries({
+                  queryKey: ["project-renders", projectId],
+                });
+              } catch {
+                /* swallow — RendersPanel will still update */
+              }
+            })();
           } else if (row.status === "failed") {
             setRenderMsg(`Render failed: ${row.error ?? "unknown error"}`);
             setRendering(false);
@@ -1557,6 +1627,7 @@ function StructurePanel({
       window.clearInterval(interval);
       void supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [renderJobId]);
 
   const missingShotImages = scenes.filter((s) => !s.thumb).length;
@@ -1589,6 +1660,7 @@ function StructurePanel({
       setRenderMsg("Draft at least one shot first.");
       return;
     }
+    setActiveTab("renders");
     setRendering(true);
     setRenderMsg(
       `Rendering final video — generating any missing shot images, animating shots, scoring music, recording voiceover, then stitching. This can take several minutes.`,
@@ -1609,7 +1681,8 @@ function StructurePanel({
     <div className="relative flex h-full flex-col">
       <Tabs
         key={studioMode === "agent" ? "agent" : "app"}
-        defaultValue={studioMode === "agent" ? "shots" : "gallery"}
+        value={activeTab}
+        onValueChange={setActiveTab}
         className="flex h-full flex-col"
       >
         <div className="px-8 pt-8">
