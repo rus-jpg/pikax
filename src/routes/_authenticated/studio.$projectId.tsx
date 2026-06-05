@@ -345,6 +345,9 @@ function Studio() {
             registerSender={(fn) => {
               chatSendRef.current = fn;
             }}
+            registerAppendAssistant={(fn) => {
+              appendAssistantRef.current = fn;
+            }}
           />
         </div>
       </div>
