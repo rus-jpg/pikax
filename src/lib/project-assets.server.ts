@@ -91,9 +91,26 @@ export async function downloadAndStoreUrl(
       `fetch source failed ${res.status}: ${await res.text().catch(() => "")}`,
     );
   }
+  const headerMime = res.headers.get("content-type")?.split(";")[0]?.trim();
+  // Many CDNs (e.g. fal.media's ffmpeg-compose output) serve files as
+  // application/octet-stream. When that happens, prefer the caller's
+  // fallbackMime (which knows the expected media kind) so the asset is
+  // playable inline instead of triggering a download.
+  const urlExt = args.sourceUrl.split("?")[0].split(".").pop()?.toLowerCase();
+  const extMime =
+    urlExt === "mp4" ? "video/mp4"
+    : urlExt === "webm" ? "video/webm"
+    : urlExt === "mov" ? "video/quicktime"
+    : urlExt === "mp3" ? "audio/mpeg"
+    : urlExt === "wav" ? "audio/wav"
+    : urlExt === "png" ? "image/png"
+    : urlExt === "jpg" || urlExt === "jpeg" ? "image/jpeg"
+    : urlExt === "webp" ? "image/webp"
+    : undefined;
   const mime =
-    res.headers.get("content-type")?.split(";")[0]?.trim() ||
-    args.fallbackMime ||
+    (headerMime && headerMime !== "application/octet-stream"
+      ? headerMime
+      : extMime || args.fallbackMime || headerMime) ||
     "application/octet-stream";
   const buf = new Uint8Array(await res.arrayBuffer());
   const stored = await storeAsset({
