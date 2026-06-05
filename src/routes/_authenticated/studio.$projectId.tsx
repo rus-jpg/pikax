@@ -276,6 +276,7 @@ function Studio() {
   // but need to dispatch into the chat (which owns the AI SDK session).
   // We expose a ref the ChatPanel registers its sender into.
   const chatSendRef = useRef<((text: string) => void) | null>(null);
+  const appendAssistantRef = useRef<((text: string) => void) | null>(null);
 
   const setScenes = (next: Scene[]) =>
     setProject((prev) => ({ ...prev, scenes: next }));
