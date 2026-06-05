@@ -1172,7 +1172,7 @@ function ChatPanel({
               ))}
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
+          {!busy && studioMode !== "agent" && effectiveSkill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
             <div className="mt-4 rounded-2xl border border-border/60 bg-muted/30 p-3">
               <div className="mb-2 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 Tweak prompt &amp; regenerate
@@ -1214,7 +1214,7 @@ function ChatPanel({
               </div>
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
+          {!busy && studioMode !== "agent" && effectiveSkill !== null && (history.length > 0 || activeCard) && !forceWizard && (
             <div className="mt-4 flex justify-center">
               <Button
                 type="button"
@@ -1234,7 +1234,7 @@ function ChatPanel({
             // In app mode (non-agent with a selected skill), never show the
             // free-form composer + toolbar — the wizard or the inline retry
             // editor owns the input surface.
-            if (studioMode !== "agent" && skill !== null) return null;
+            if (studioMode !== "agent" && effectiveSkill !== null) return null;
 
             return (
               <PromptInput
