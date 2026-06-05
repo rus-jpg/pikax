@@ -1504,6 +1504,7 @@ function StructurePanel({
   onSelect,
   totalDuration,
   onChatCommand,
+  onRenderComplete,
   studioMode,
 }: {
   projectId: string;
@@ -1525,6 +1526,7 @@ function StructurePanel({
   onSelect: (id: string) => void;
   totalDuration: number;
   onChatCommand?: (text: string) => void;
+  onRenderComplete?: (assistantText: string) => void;
   studioMode: StudioMode;
 }) {
   const [renderMsg, setRenderMsg] = useState<string | null>(null);
