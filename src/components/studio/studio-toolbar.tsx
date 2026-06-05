@@ -136,7 +136,7 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
             >
               <Sparkles className="h-3.5 w-3.5" />
               {agent ? "Apps" : `${currentLabel} apps`}
