@@ -1141,8 +1141,7 @@ function ChatPanel({
             // wizard instead of the generic prompt box.
             const showWizard =
               !busy &&
-              !activeCard &&
-              (history.length === 0 || forceWizard) &&
+              (forceWizard || (!activeCard && history.length === 0)) &&
               studioMode !== "agent" &&
               effectiveSkill !== null;
             if (showWizard) {
