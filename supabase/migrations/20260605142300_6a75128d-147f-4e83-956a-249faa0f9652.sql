@@ -1,0 +1,1 @@
+UPDATE public.project_assets SET mime = 'video/mp4' WHERE kind = 'final' AND mime = 'application/octet-stream';
