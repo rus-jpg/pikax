@@ -117,7 +117,7 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
           value={model ?? kindModels[0].model}
           onValueChange={(v) => onChange({ mode, model: v })}
         >
-          <SelectTrigger className="h-8 w-auto max-w-[220px] min-w-[160px] rounded-full bg-muted/60 px-3 text-xs">
+          <SelectTrigger className="h-7 w-auto max-w-[220px] min-w-0 gap-1 border-0 bg-transparent px-2 text-xs shadow-none hover:bg-muted/50 focus:ring-0 focus:ring-offset-0">
             <SelectValue placeholder="Pick a model" className="truncate" />
           </SelectTrigger>
           <SelectContent>
