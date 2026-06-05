@@ -923,6 +923,26 @@ function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registerSender, busy]);
 
+  // Expose an "append assistant message" channel for non-chat flows (e.g.
+  // the Render Final pipeline) to post their result into the conversation.
+  useEffect(() => {
+    registerAppendAssistant?.((text: string) => {
+      const id =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id,
+          role: "assistant",
+          parts: [{ type: "text", text }],
+        } as UIMessage,
+      ]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registerAppendAssistant]);
+
   // Card answers can also carry uploaded assets. Patch them into project
   // state immediately so the panel reflects the upload, then send a
   // human-readable summary to the model (with asset ids it can reference).
