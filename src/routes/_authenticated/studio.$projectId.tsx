@@ -1532,7 +1532,12 @@ function StructurePanel({
   const [renderMsg, setRenderMsg] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
   const [renderJobId, setRenderJobId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(
+    studioMode === "agent" ? "shots" : "gallery",
+  );
   const runFinal = useServerFn(renderFinalVideo);
+  const fetchRenders = useServerFn(listProjectRenders);
+  const queryClient = useQueryClient();
 
   // While a render job is active: subscribe to its row and tick the
   // background pipeline every few seconds (belt-and-suspenders with the
