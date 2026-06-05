@@ -87,7 +87,7 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
   const currentLabel = STUDIO_MODES.find((m) => m.id === mode)?.label ?? mode;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/70 px-3 py-2 text-sm">
+    <div className="flex flex-wrap items-center gap-1 text-sm">
       {/* Mode dropdown */}
       <Select value={mode} onValueChange={(v) => setMode(v as StudioMode)}>
         <SelectTrigger className="h-8 w-auto min-w-[140px] rounded-full bg-muted/60 px-3 text-xs">
