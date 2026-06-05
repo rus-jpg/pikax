@@ -14,7 +14,7 @@ export type AppSuggestion = {
 
 export const suggestApp = createServerFn({ method: "POST" })
   .inputValidator((data: { intent: string }) =>
-    z.object({ intent: z.string().min(1).max(500) }).parse(data),
+    z.object({ intent: z.string().min(1).max(4000) }).parse(data),
   )
   .handler(async ({ data }): Promise<{ suggestions: AppSuggestion[] }> => {
     const apiKey = process.env.LOVABLE_API_KEY;
