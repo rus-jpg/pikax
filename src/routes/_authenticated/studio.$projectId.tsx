@@ -721,6 +721,10 @@ function ChatPanel({
   registerSender?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
+  // Local skill override so the wizard appears instantly when a suggestion
+  // is accepted — before the project refetch reflects the new skill.
+  const [acceptedSkill, setAcceptedSkill] = useState<Skill | null>(null);
+  const effectiveSkill: Skill | null = skill ?? acceptedSkill;
   const { messages, sendMessage, setMessages, status, error } = useChat({
     id: projectId,
     messages: initialMessages,
@@ -759,6 +763,7 @@ function ChatPanel({
     const skillDef = SKILL_BY_ID[s.skillId];
     if (!skillDef) return;
     setPendingSuggestion(null);
+    setAcceptedSkill(skillDef);
     setForceWizard(true);
     onAcceptSuggestion(skillDef);
   };
@@ -774,6 +779,15 @@ function ChatPanel({
     setPendingSuggestion(null);
   };
 
+  // Cancel out of an accepted App and return to agent mode.
+  const handleCancelApp = () => {
+    setAcceptedSkill(null);
+    setForceWizard(false);
+    setLastRun(null);
+    setEditedPrompt("");
+    onToolbarChange({ mode: "agent", model: null });
+  };
+
   // Wrap the toolbar onChange so manual mode/model changes clear any
   // pending suggestion and reset the forced-wizard flag.
   const handleToolbarChange = (next: {
@@ -782,6 +796,7 @@ function ChatPanel({
   }) => {
     setPendingSuggestion(null);
     setForceWizard(false);
+    if (next.mode === "agent") setAcceptedSkill(null);
     onToolbarChange(next);
   };
 
@@ -1096,31 +1111,44 @@ function ChatPanel({
               !activeCard &&
               (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
-              skill !== null;
+              effectiveSkill !== null;
             if (showWizard) {
-              const recipe = getRecipeForSkill(skill);
+              const recipe = getRecipeForSkill(effectiveSkill);
               return (
-                <AppWizard
-                  recipe={recipe}
-                  projectId={projectId}
-                  busy={busy}
-                  onSubmit={({ prompt, assets: uploaded }) => {
-                    if (uploaded.length) onPatch({ assetsAppend: uploaded });
-                    setForceWizard(false);
-                    const refUrls = uploaded
-                      .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
-                      .map((a) => a.url);
-                    setLastRun({ prompt, referenceImageUrls: refUrls });
-                    setEditedPrompt(prompt);
-                    void handleSend(prompt, { referenceImageUrls: refUrls });
-                  }}
-
-                />
+                <div>
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                      {effectiveSkill.label}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCancelApp}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel · back to agent
+                    </button>
+                  </div>
+                  <AppWizard
+                    recipe={recipe}
+                    projectId={projectId}
+                    busy={busy}
+                    onSubmit={({ prompt, assets: uploaded }) => {
+                      if (uploaded.length) onPatch({ assetsAppend: uploaded });
+                      setForceWizard(false);
+                      const refUrls = uploaded
+                        .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
+                        .map((a) => a.url);
+                      setLastRun({ prompt, referenceImageUrls: refUrls });
+                      setEditedPrompt(prompt);
+                      void handleSend(prompt, { referenceImageUrls: refUrls });
+                    }}
+                  />
+                </div>
               );
             }
             return null;
           })()}
-          {!busy && activeCard && !(studioMode !== "agent" && skill !== null) && (
+          {!busy && activeCard && !(studioMode !== "agent" && effectiveSkill !== null) && (
             <div className="mb-4">
               <GenerativeCard
                 key={activeCard.key}
@@ -1144,7 +1172,7 @@ function ChatPanel({
               ))}
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
+          {!busy && studioMode !== "agent" && effectiveSkill !== null && (history.length > 0 || activeCard) && !forceWizard && lastRun && (
             <div className="mt-4 rounded-2xl border border-border/60 bg-muted/30 p-3">
               <div className="mb-2 text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 Tweak prompt &amp; regenerate
@@ -1186,7 +1214,7 @@ function ChatPanel({
               </div>
             </div>
           )}
-          {!busy && studioMode !== "agent" && skill !== null && (history.length > 0 || activeCard) && !forceWizard && (
+          {!busy && studioMode !== "agent" && effectiveSkill !== null && (history.length > 0 || activeCard) && !forceWizard && (
             <div className="mt-4 flex justify-center">
               <Button
                 type="button"
@@ -1206,7 +1234,7 @@ function ChatPanel({
             // In app mode (non-agent with a selected skill), never show the
             // free-form composer + toolbar — the wizard or the inline retry
             // editor owns the input surface.
-            if (studioMode !== "agent" && skill !== null) return null;
+            if (studioMode !== "agent" && effectiveSkill !== null) return null;
 
             return (
               <PromptInput
