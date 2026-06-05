@@ -691,7 +691,7 @@ export function UserBubble({
         </div>
       )}
       {cleaned && (
-        <div className="rounded-3xl bg-secondary px-5 py-3.5 text-base leading-snug text-foreground shadow-elegant">
+        <div className="rounded-3xl bg-secondary px-5 py-3.5 text-base leading-snug text-foreground">
           {cleaned}
         </div>
       )}
