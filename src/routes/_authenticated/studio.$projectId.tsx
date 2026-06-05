@@ -721,6 +721,10 @@ function ChatPanel({
   registerSender?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
+  // Local skill override so the wizard appears instantly when a suggestion
+  // is accepted — before the project refetch reflects the new skill.
+  const [acceptedSkill, setAcceptedSkill] = useState<Skill | null>(null);
+  const effectiveSkill: Skill | null = skill ?? acceptedSkill;
   const { messages, sendMessage, setMessages, status, error } = useChat({
     id: projectId,
     messages: initialMessages,
