@@ -110,7 +110,13 @@ function Studio() {
     queryKey: ["project", projectId],
     queryFn: () => fetchProject({ data: { id: projectId } }),
     staleTime: Infinity,
+    retry: false,
   });
+  useEffect(() => {
+    if (projectQuery.error) {
+      void navigate({ to: "/projects" });
+    }
+  }, [projectQuery.error, navigate]);
 
   const [project, setProject] = useState<ProjectState>(INITIAL_PROJECT);
   useEffect(() => {
