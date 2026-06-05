@@ -718,6 +718,7 @@ function ChatPanel({
   onAcceptSuggestion,
   skill,
   registerSender,
+  registerAppendAssistant,
 }: {
   projectId: string;
   initialMessages: UIMessage[];
@@ -729,6 +730,7 @@ function ChatPanel({
   onAcceptSuggestion: (skillDef: Skill) => void;
   skill: Skill | null;
   registerSender?: (fn: (text: string) => void) => void;
+  registerAppendAssistant?: (fn: (text: string) => void) => void;
 }) {
   const [input, setInput] = useState("");
   // Local skill override so the wizard appears instantly when a suggestion
