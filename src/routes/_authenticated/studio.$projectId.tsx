@@ -763,6 +763,7 @@ function ChatPanel({
     const skillDef = SKILL_BY_ID[s.skillId];
     if (!skillDef) return;
     setPendingSuggestion(null);
+    setAcceptedSkill(skillDef);
     setForceWizard(true);
     onAcceptSuggestion(skillDef);
   };
@@ -778,6 +779,15 @@ function ChatPanel({
     setPendingSuggestion(null);
   };
 
+  // Cancel out of an accepted App and return to agent mode.
+  const handleCancelApp = () => {
+    setAcceptedSkill(null);
+    setForceWizard(false);
+    setLastRun(null);
+    setEditedPrompt("");
+    onToolbarChange({ mode: "agent", model: null });
+  };
+
   // Wrap the toolbar onChange so manual mode/model changes clear any
   // pending suggestion and reset the forced-wizard flag.
   const handleToolbarChange = (next: {
@@ -786,6 +796,7 @@ function ChatPanel({
   }) => {
     setPendingSuggestion(null);
     setForceWizard(false);
+    if (next.mode === "agent") setAcceptedSkill(null);
     onToolbarChange(next);
   };
 
