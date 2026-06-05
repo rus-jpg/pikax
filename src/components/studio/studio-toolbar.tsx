@@ -90,7 +90,7 @@ export function StudioToolbar({ mode, model, onChange }: StudioToolbarProps) {
     <div className="flex flex-wrap items-center gap-1 text-sm">
       {/* Mode dropdown */}
       <Select value={mode} onValueChange={(v) => setMode(v as StudioMode)}>
-        <SelectTrigger className="h-8 w-auto min-w-[140px] rounded-full bg-muted/60 px-3 text-xs">
+        <SelectTrigger className="h-7 w-auto min-w-0 gap-1 border-0 bg-transparent px-2 text-xs shadow-none hover:bg-muted/50 focus:ring-0 focus:ring-offset-0">
           <div className="flex items-center gap-1.5">
             <ModeIcon className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-semibold">{currentLabel}</span>
