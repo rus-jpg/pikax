@@ -1111,31 +1111,44 @@ function ChatPanel({
               !activeCard &&
               (history.length === 0 || forceWizard) &&
               studioMode !== "agent" &&
-              skill !== null;
+              effectiveSkill !== null;
             if (showWizard) {
-              const recipe = getRecipeForSkill(skill);
+              const recipe = getRecipeForSkill(effectiveSkill);
               return (
-                <AppWizard
-                  recipe={recipe}
-                  projectId={projectId}
-                  busy={busy}
-                  onSubmit={({ prompt, assets: uploaded }) => {
-                    if (uploaded.length) onPatch({ assetsAppend: uploaded });
-                    setForceWizard(false);
-                    const refUrls = uploaded
-                      .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
-                      .map((a) => a.url);
-                    setLastRun({ prompt, referenceImageUrls: refUrls });
-                    setEditedPrompt(prompt);
-                    void handleSend(prompt, { referenceImageUrls: refUrls });
-                  }}
-
-                />
+                <div>
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                      {effectiveSkill.label}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCancelApp}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel · back to agent
+                    </button>
+                  </div>
+                  <AppWizard
+                    recipe={recipe}
+                    projectId={projectId}
+                    busy={busy}
+                    onSubmit={({ prompt, assets: uploaded }) => {
+                      if (uploaded.length) onPatch({ assetsAppend: uploaded });
+                      setForceWizard(false);
+                      const refUrls = uploaded
+                        .filter((a) => a.mime.startsWith("image/") && a.url && /^https?:/.test(a.url))
+                        .map((a) => a.url);
+                      setLastRun({ prompt, referenceImageUrls: refUrls });
+                      setEditedPrompt(prompt);
+                      void handleSend(prompt, { referenceImageUrls: refUrls });
+                    }}
+                  />
+                </div>
               );
             }
             return null;
           })()}
-          {!busy && activeCard && !(studioMode !== "agent" && skill !== null) && (
+          {!busy && activeCard && !(studioMode !== "agent" && effectiveSkill !== null) && (
             <div className="mb-4">
               <GenerativeCard
                 key={activeCard.key}
