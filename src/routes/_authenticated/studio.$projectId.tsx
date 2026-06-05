@@ -1539,6 +1539,11 @@ function StructurePanel({
   const fetchRenders = useServerFn(listProjectRenders);
   const queryClient = useQueryClient();
 
+  // Reset to the natural default tab when switching agent/app modes.
+  useEffect(() => {
+    setActiveTab(studioMode === "agent" ? "shots" : "gallery");
+  }, [studioMode]);
+
   // While a render job is active: subscribe to its row and tick the
   // background pipeline every few seconds (belt-and-suspenders with the
   // pg_cron-driven server-side tick).
