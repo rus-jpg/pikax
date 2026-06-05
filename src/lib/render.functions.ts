@@ -14,6 +14,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   applyPatch,
   INITIAL_PROJECT,
+  resolveThumb,
   type ProjectState,
   type Scene,
 } from "@/lib/project-state";
