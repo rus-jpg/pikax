@@ -1654,6 +1654,7 @@ function StructurePanel({
       setRenderMsg("Draft at least one shot first.");
       return;
     }
+    setActiveTab("renders");
     setRendering(true);
     setRenderMsg(
       `Rendering final video — generating any missing shot images, animating shots, scoring music, recording voiceover, then stitching. This can take several minutes.`,
@@ -1674,7 +1675,8 @@ function StructurePanel({
     <div className="relative flex h-full flex-col">
       <Tabs
         key={studioMode === "agent" ? "agent" : "app"}
-        defaultValue={studioMode === "agent" ? "shots" : "gallery"}
+        value={activeTab}
+        onValueChange={setActiveTab}
         className="flex h-full flex-col"
       >
         <div className="px-8 pt-8">
