@@ -1627,6 +1627,7 @@ function StructurePanel({
       window.clearInterval(interval);
       void supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [renderJobId]);
 
   const missingShotImages = scenes.filter((s) => !s.thumb).length;
