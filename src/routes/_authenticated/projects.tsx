@@ -63,7 +63,8 @@ function ProjectsPage() {
           <Button
             onClick={() => createMut.mutate()}
             disabled={createMut.isPending}
-            className="rounded-full bg-yellow-400 text-black hover:bg-yellow-300"
+            size="lg"
+            className="rounded-full bg-yellow-400 px-8 py-6 text-base font-semibold text-black shadow-none hover:bg-yellow-300 hover:shadow-none"
           >
             New Project
           </Button>
