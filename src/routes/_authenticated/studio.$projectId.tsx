@@ -1570,6 +1570,7 @@ function StructurePanel({
           if (cancelled) return;
           const row = payload.new as { status?: string; error?: string | null };
           if (row.status === "done") {
+            const jobIdForPost = renderJobId;
             setRenderMsg(
               row.error
                 ? `Final video ready — ${row.error}.`
@@ -1577,6 +1578,36 @@ function StructurePanel({
             );
             setRendering(false);
             setRenderJobId(null);
+            // Fetch the final asset URL and drop it into chat.
+            void (async () => {
+              try {
+                const res = await fetchRenders({ data: { projectId } });
+                const job = res.jobs.find((j) => j.id === jobIdForPost);
+                if (job?.finalUrl) {
+                  const patch = {
+                    assetsAppend: [
+                      {
+                        id: `final-${job.id}`,
+                        kind: "final",
+                        mime: job.finalMime || "video/mp4",
+                        name: `${meta.title || "Final video"}.mp4`,
+                        url: job.finalUrl,
+                        label: "Final video",
+                      },
+                    ],
+                  };
+                  const text = `Your final video is ready.<div data-card data-card-title="Final video"><script type="application/json" data-project-patch>${JSON.stringify(
+                    patch,
+                  )}</script></div>`;
+                  onRenderComplete?.(text);
+                }
+                void queryClient.invalidateQueries({
+                  queryKey: ["project-renders", projectId],
+                });
+              } catch {
+                /* swallow — RendersPanel will still update */
+              }
+            })();
           } else if (row.status === "failed") {
             setRenderMsg(`Render failed: ${row.error ?? "unknown error"}`);
             setRendering(false);
