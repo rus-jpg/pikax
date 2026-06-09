@@ -1,7 +1,11 @@
 // Catalogue of Pika model APIs exposed via fal.ai. Static metadata used by
 // the V2 "API" surface (list + detail pages).
 
-export type PikaCategory = "image-to-video" | "text-to-video" | "video-to-video";
+export type PikaCategory =
+  | "image-to-video"
+  | "text-to-video"
+  | "video-to-video"
+  | "audio-to-video";
 
 export type PikaApi = {
   /** URL-safe slug used as the splat param, e.g. "v2.2/pikaframes". */
