@@ -392,7 +392,7 @@ function EmptyPickAnApp() {
   return (
     <div className="grid h-full place-items-center p-8 text-center">
       <div className="max-w-sm">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[22%] bg-brand-gradient text-primary-foreground shadow-elegant">
           <Sparkles className="h-6 w-6" />
         </div>
         <h2 className="font-display text-xl font-semibold tracking-tight">
