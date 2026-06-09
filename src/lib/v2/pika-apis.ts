@@ -661,7 +661,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "FLUX 1.1 [pro] ultra delivers 4MP high-resolution images with exceptional prompt adherence and detail.",
-      cover: thumb("fal-ai/flux-pro/v1.1-ultra"),
+      cover:
+        "https://storage.googleapis.com/falserverless/flux-lora/example-images/knight.jpeg",
       tags: ["flux", "bfl", "high-res"],
       pricing: "Per-image pricing",
       inputs: ["Prompt", "Aspect ratio"],
