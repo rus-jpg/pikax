@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
-import { AppRunner } from "@/components/v2/apps/app-runner";
+import { AppRunner, type AppRunResult } from "@/components/v2/apps/app-runner";
+import { AppResultView } from "@/components/v2/apps/app-result-view";
 import { HowItWorksV2 } from "@/components/v2/apps/how-it-works";
 import { cn } from "@/lib/utils";
 
