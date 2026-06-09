@@ -122,11 +122,8 @@ export function ProjectOutputsPanel({
 
   const selectProject = (id: string) => {
     void navigate({
-      to: "/v2/apps",
-      search: (prev: { app?: string; projectId?: string }) => ({
-        ...prev,
-        projectId: id,
-      }),
+      to: "/v2/projects/$projectId",
+      params: { projectId: id },
     });
   };
 
@@ -188,9 +185,12 @@ export function ProjectOutputsPanel({
 
         {projectId && (
           <Button asChild variant="ghost" size="sm">
-            <Link to="/v2/projects" search={{ p: projectId }}>
+            <Link
+              to="/v2/projects/$projectId"
+              params={{ projectId }}
+            >
               <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-              Open in timeline
+              Open project
             </Link>
           </Button>
         )}
