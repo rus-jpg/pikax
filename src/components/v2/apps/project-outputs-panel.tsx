@@ -63,6 +63,8 @@ export function ProjectOutputsPanel({
   onUseInApp,
   onNewProject,
   onDismissRun,
+  timelineOpen,
+  onToggleTimeline,
 }: {
   projectId?: string;
   activeRuns: ActiveRunView[];
@@ -71,7 +73,10 @@ export function ProjectOutputsPanel({
   onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
   onNewProject: () => void;
   onDismissRun: (id: string) => void;
+  timelineOpen?: boolean;
+  onToggleTimeline?: () => void;
 }) {
+
   const navigate = useNavigate();
   const fetchList = useServerFn(listProjects);
   const fetchProject = useServerFn(getProject);
