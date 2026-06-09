@@ -4,7 +4,7 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AppNavV2 } from "@/components/v2/app-nav";
+import { VerticalNavV2 } from "@/components/v2/vertical-nav";
 
 export const Route = createFileRoute("/_authenticated-v2")({
   beforeLoad: async ({ location }) => {
@@ -22,9 +22,9 @@ export const Route = createFileRoute("/_authenticated-v2")({
 
 function AuthedV2Layout() {
   return (
-    <div className="theme-v2 flex min-h-screen w-full flex-col bg-background">
-      <AppNavV2 />
-      <div className="flex-1">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      <VerticalNavV2 />
+      <div className="flex-1 overflow-hidden">
         <Outlet />
       </div>
     </div>
