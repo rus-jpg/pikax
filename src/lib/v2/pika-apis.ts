@@ -33,6 +33,8 @@ export type PikaApi = {
   falUrl: string;
   /** External link to fal.ai OpenAPI schema. */
   schemaUrl: string;
+  /** Optional example output. If a video URL, it autoplays muted; otherwise treated as an image. Falls back to `cover` when omitted. */
+  exampleVideo?: string;
 };
 
 const base = (slug: string) => ({
