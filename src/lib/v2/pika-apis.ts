@@ -138,6 +138,10 @@ export const PIKA_APIS: PikaApi[] = [
     outputs: ["MP4 video up to 25 seconds total"],
     exampleVideo:
       "https://v3b.fal.media/files/b/lion/0KxHFdw-mp0OzGsLrQLIy_tmpjfwlno11.mp4",
+    exampleImages: [
+      "https://v3b.fal.media/files/b/tiger/-YohU0xcPcWe_eiUB9_i6_keyframes-apple-start.png",
+      "https://v3b.fal.media/files/b/tiger/LarvwQGEFqEmF8fkgDB8R_keyframes-apple-end.png",
+    ],
   },
   {
     slug: "v2.2/image-to-video",
