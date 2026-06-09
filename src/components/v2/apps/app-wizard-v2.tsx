@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Sparkles, Upload as UploadIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
