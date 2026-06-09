@@ -597,7 +597,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "GPT Image 2, OpenAI's latest image model, is capable of creating extremely detailed images with pixel-perfect text rendering and brand-consistent product photography.",
-      cover: thumb("openai/gpt-image-2"),
+      cover:
+        "https://v3b.fal.media/files/b/0a981c3d/hdg8iaY8yShEwChTPjFah_OZUgg7Z4.jpg",
       tags: ["openai", "text-to-image", "typography"],
       pricing: "Token-based — text $5/1M in · $10/1M out; image $8/1M in · $30/1M out",
       inputs: ["Prompt", "Optional reference images", "Size, quality"],
