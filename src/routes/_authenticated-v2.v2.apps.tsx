@@ -323,7 +323,7 @@ function AppsV2() {
         ) : result ? (
           <AppResultView
             result={result}
-            skill={selected ?? SKILL_BY_ID[result.projectId] ?? showcase!}
+            skill={selected ?? showcase!}
             onRunAgain={() => setResult(null)}
           />
         ) : showcase ? (
