@@ -5,7 +5,7 @@ export function HowItWorksV2({ skill }: { skill: Skill }) {
   const recipe = getRecipeForSkill(skill);
   const Icon = skill.icon;
   return (
-    <div className="mx-auto max-w-2xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-8 py-12">
       <div className="mb-8 flex items-center gap-4">
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
           <Icon className="h-6 w-6" />
@@ -18,18 +18,18 @@ export function HowItWorksV2({ skill }: { skill: Skill }) {
         </div>
       </div>
 
-      <p className="text-base text-foreground">{skill.description}</p>
+      <p className="max-w-2xl text-base text-foreground">{skill.description}</p>
 
       <h3 className="mt-10 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         How it works
       </h3>
-      <ol className="space-y-3">
+      <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {recipe.steps.map((step, i) => (
           <li
             key={step.id}
-            className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4"
+            className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-4"
           >
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-foreground text-sm font-bold text-background">
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-foreground text-sm font-bold text-background">
               {i + 1}
             </div>
             <div>
