@@ -1,18 +1,23 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { z } from "zod";
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
-import { AppRunner, type AppRunResult } from "@/components/v2/apps/app-runner";
-import { AppResultView } from "@/components/v2/apps/app-result-view";
-import { HowItWorksV2 } from "@/components/v2/apps/how-it-works";
+import { AppRunner } from "@/components/v2/apps/app-runner";
+import {
+  ProjectOutputsPanel,
+  type OutputMeta,
+} from "@/components/v2/apps/project-outputs-panel";
 import {
   directGenerateStart,
   directGeneratePoll,
 } from "@/lib/generate.functions";
-import { updateProjectState } from "@/lib/projects.functions";
+import {
+  createProject,
+  updateProjectState,
+} from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 
@@ -74,15 +79,14 @@ function AppsV2() {
   const runStart = useServerFn(directGenerateStart);
   const runPoll = useServerFn(directGeneratePoll);
   const updateState = useServerFn(updateProjectState);
+  const createProj = useServerFn(createProject);
 
   const [tab, setTab] = useState<Tab>("Featured");
-  const [hovered, setHovered] = useState<Skill | null>(null);
   const [run, setRun] = useState<RunStatus>({ phase: "idle" });
-  const [result, setResult] = useState<AppRunResult | null>(null);
+  const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
 
   const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
-  const showcase = selected ?? hovered ?? filtered[0] ?? null;
 
   const isRunning = run.phase === "starting" || run.phase === "polling";
 
@@ -93,13 +97,16 @@ function AppsV2() {
     });
   };
 
-  const setProjectIdInUrl = (id: string) => {
-    if (projectId === id) return;
+  const setProjectIdInUrl = (id: string | undefined) => {
     void navigate({
       to: "/v2/apps",
       search: { app: appId, projectId: id },
       replace: true,
     });
+  };
+
+  const handleNewProject = () => {
+    setProjectIdInUrl(undefined);
   };
 
   const startRun = async ({
@@ -113,8 +120,6 @@ function AppsV2() {
     prompt: string;
     assets: ProjectAsset[];
   }) => {
-    // Clear previous result so the new generating view takes over.
-    setResult(null);
     setRun({ phase: "starting", skill, projectId: pid, prompt });
     setProjectIdInUrl(pid);
 
@@ -200,12 +205,18 @@ function AppsV2() {
         }
       }
 
-      setResult({ ...finalAsset, projectId: pid, prompt });
+      // Remember meta so we can regenerate this output later.
+      setOutputMeta((prev) => ({
+        ...prev,
+        [finalAsset!.assetId]: { prompt, skillId: skill.id },
+      }));
+
       setRun({ phase: "idle" });
       void qc.invalidateQueries({ queryKey: ["v2-library"] });
       void qc.invalidateQueries({ queryKey: ["v2-library-picker"] });
       void qc.invalidateQueries({ queryKey: ["v2-projects"] });
       void qc.invalidateQueries({ queryKey: ["v2-project", pid] });
+      void qc.invalidateQueries({ queryKey: ["v2-jobs"] });
     } catch (e) {
       setRun((prev) => {
         if (prev.phase === "idle") return prev;
@@ -220,13 +231,47 @@ function AppsV2() {
     }
   };
 
-  // If user switches to a new app, hide the stale "result" pane so the
-  // showcase / new run takes over the right column.
-  useEffect(() => {
-    if (result && selected && result.projectId !== projectId) {
-      setResult(null);
+  const handleRegenerate = async ({
+    skill,
+    prompt,
+    projectId: pid,
+  }: {
+    skill: Skill;
+    prompt: string;
+    projectId: string;
+  }) => {
+    if (isRunning) return;
+    await startRun({ skill, projectId: pid, prompt, assets: [] });
+  };
+
+  const handleStartFromWizard = async ({
+    skill,
+    projectId: pidFromRunner,
+    prompt,
+    assets,
+  }: {
+    skill: Skill;
+    projectId: string;
+    prompt: string;
+    assets: ProjectAsset[];
+  }) => {
+    // Always ensure we're running against the currently-selected project in
+    // the URL. The runner returns whatever projectId it had; if there's none
+    // (user clicked New Project), create one now.
+    let pid = projectId ?? pidFromRunner;
+    if (!pid) {
+      const out = await createProj({
+        data: {
+          title: skill.label,
+          skill: skill.id,
+          studioMode: skill.kind,
+          studioModel: skill.model,
+        },
+      });
+      pid = out.id;
     }
-  }, [selected, projectId, result]);
+    await startRun({ skill, projectId: pid, prompt, assets });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -239,7 +284,7 @@ function AppsV2() {
             busy={isRunning}
             onBack={() => selectApp(null)}
             onProjectReady={(id) => setProjectIdInUrl(id)}
-            onStartRun={(args) => void startRun(args)}
+            onStartRun={(args) => void handleStartFromWizard(args)}
           />
         ) : (
           <>
@@ -278,8 +323,6 @@ function AppsV2() {
                     <button
                       key={s.id}
                       onClick={() => selectApp(s)}
-                      onMouseEnter={() => setHovered(s)}
-                      onMouseLeave={() => setHovered(null)}
                       className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
                     >
                       <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
@@ -305,88 +348,26 @@ function AppsV2() {
         )}
       </div>
 
-      {/* Right column — generating, result, or how-it-works */}
-      <div className="flex-1 overflow-y-auto bg-background">
-        {run.phase === "starting" || run.phase === "polling" ? (
-          <GeneratingView
-            skill={run.skill}
-            prompt={run.prompt}
-            phase={run.phase}
-            onBackToApps={() => selectApp(null)}
-          />
-        ) : run.phase === "error" ? (
+      {/* Right column — project outputs view */}
+      <div className="flex-1 overflow-hidden bg-background">
+        {run.phase === "error" ? (
           <ErrorView
             skill={run.skill}
             error={run.error}
             onDismiss={() => setRun({ phase: "idle" })}
           />
-        ) : result ? (
-          <AppResultView
-            result={result}
-            skill={selected ?? showcase!}
-            onRunAgain={() => setResult(null)}
-          />
-        ) : showcase ? (
-          <HowItWorksV2 skill={showcase} />
         ) : (
-          <div className="grid h-full place-items-center text-sm text-muted-foreground">
-            Pick an app to get started.
-          </div>
+          <ProjectOutputsPanel
+            projectId={projectId}
+            pendingProjectId={isRunning ? run.projectId : undefined}
+            pendingPrompt={isRunning ? run.prompt : undefined}
+            pendingSkill={isRunning ? run.skill : undefined}
+            pendingPhase={isRunning ? run.phase : undefined}
+            outputMeta={outputMeta}
+            onRegenerate={(args) => void handleRegenerate(args)}
+            onNewProject={handleNewProject}
+          />
         )}
-      </div>
-    </div>
-  );
-}
-
-function GeneratingView({
-  skill,
-  prompt,
-  phase,
-  onBackToApps,
-}: {
-  skill: Skill;
-  prompt: string;
-  phase: "starting" | "polling";
-  onBackToApps: () => void;
-}) {
-  const Icon = skill.icon;
-  return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col items-center justify-center px-8 py-12 text-center">
-      <div className="relative mb-8">
-        <div className="absolute inset-0 animate-pulse rounded-3xl bg-brand-gradient opacity-30 blur-2xl" />
-        <div className="relative grid h-24 w-24 place-items-center rounded-3xl bg-brand-gradient text-primary-foreground shadow-elegant">
-          <Sparkles className="h-10 w-10" />
-        </div>
-      </div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
-        {skill.label}
-      </div>
-      <h2 className="font-display text-3xl font-semibold tracking-tight">
-        {phase === "starting" ? "Submitting your job…" : "Generating…"}
-      </h2>
-      <p className="mt-3 max-w-md text-sm text-muted-foreground">
-        This usually takes a minute or two. You can pick another app and queue
-        more media in the same project — this one keeps running.
-      </p>
-      {prompt && (
-        <p className="mt-6 line-clamp-3 max-w-xl rounded-2xl border border-border/60 bg-card px-4 py-3 text-xs italic text-muted-foreground">
-          “{prompt}”
-        </p>
-      )}
-      <div className="mt-8 flex items-center gap-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {phase === "starting" ? "Starting" : "Working"}
-        </div>
-        <span className="text-muted-foreground/40">·</span>
-        <button
-          type="button"
-          onClick={onBackToApps}
-          className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          Browse more apps
-        </button>
       </div>
     </div>
   );
