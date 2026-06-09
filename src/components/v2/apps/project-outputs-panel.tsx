@@ -9,6 +9,7 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
