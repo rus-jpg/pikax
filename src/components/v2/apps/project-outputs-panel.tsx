@@ -164,12 +164,14 @@ export function ProjectOutputsPanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/v2/projects" search={{ p: projectId }}>
-            <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-            Open in timeline
-          </Link>
-        </Button>
+        {projectId && (
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/v2/projects" search={{ p: projectId }}>
+              <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+              Open in timeline
+            </Link>
+          </Button>
+        )}
       </header>
 
       {/* Outputs scrollable list */}
