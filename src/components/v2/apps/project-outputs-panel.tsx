@@ -355,3 +355,51 @@ function RunCard({
   );
 }
 
+
+function UseInAppMenu({
+  asset,
+  onUseInApp,
+}: {
+  asset: ProjectAsset;
+  onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
+}) {
+  const apps = useMemo(() => appsAcceptingMime(asset.mime), [asset.mime]);
+  if (apps.length === 0) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+          Use in app
+          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-h-[60vh] w-64 overflow-y-auto">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Apply an app to this asset
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {apps.map((s) => {
+          const Icon = s.icon;
+          return (
+            <DropdownMenuItem
+              key={s.id}
+              onSelect={() => onUseInApp({ skill: s, asset })}
+              className="flex items-start gap-2"
+            >
+              <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-brand-gradient text-primary-foreground">
+                <Icon className="h-3 w-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm">{s.label}</div>
+                <div className="line-clamp-1 text-[10px] text-muted-foreground">
+                  {s.description}
+                </div>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
