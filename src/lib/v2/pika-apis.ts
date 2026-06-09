@@ -35,7 +35,85 @@ export type PikaApi = {
   schemaUrl: string;
   /** Optional example output. If a video URL, it autoplays muted; otherwise treated as an image. Falls back to `cover` when omitted. */
   exampleVideo?: string;
+  /** Pre-filled prompt for the playground. */
+  examplePrompt?: string;
+  /** Pre-filled input image URLs. */
+  exampleImages?: string[];
+  /** Pre-filled audio URL. */
+  exampleAudio?: string;
+  /** Pre-filled source video URL (for video-to-video). */
+  exampleVideoSource?: string;
 };
+
+/** Resolved example payload used by the playground UI. */
+export type ResolvedExample = {
+  prompt: string;
+  images: string[];
+  audio?: string;
+  videoSource?: string;
+  resultVideo?: string;
+  resultImagePoster: string;
+  logs: string[];
+};
+
+const DEFAULT_PROMPTS: Record<string, string> = {
+  "v2.2/pikaframes":
+    "Smooth cinematic transition between the keyframes, soft camera dolly, gentle motion blur.",
+  "v2.2/image-to-video":
+    "Cinematic slow zoom in, golden hour light, subtle wind on the subject, 24fps.",
+  "v2.2/text-to-video":
+    "A neon-lit Tokyo alley at night, light rain on the pavement, reflective puddles, cinematic.",
+  "v2.2/pikascenes":
+    "Stitch the scenes together with seamless transitions and consistent lighting.",
+  "v1.5/pikaffects":
+    "inflate",
+  "v2/turbo/image-to-video":
+    "Energetic forward dolly, bright punchy colors, snappy motion.",
+  "v2/turbo/text-to-video":
+    "A golden retriever puppy chasing bubbles in a sunny backyard, slow motion.",
+  "v2/pikadditions":
+    "Add a small playful corgi running alongside the subject, matching shadows and lighting.",
+  "v2.1/text-to-video":
+    "An astronaut riding a horse across a Martian canyon at sunset, cinematic wide shot.",
+  "v2.1/image-to-video":
+    "Subtle parallax camera move, soft cinematic grade, gentle ambient motion.",
+  "pikaformance/lipsync":
+    "Warm, expressive delivery — smile slightly between phrases, natural eye contact.",
+};
+
+const EXAMPLE_AUDIO =
+  "https://storage.googleapis.com/falserverless/example_inputs/sample_audio.wav";
+
+export function resolveExample(api: PikaApi): ResolvedExample {
+  const prompt = api.examplePrompt ?? DEFAULT_PROMPTS[api.slug] ?? "";
+  const images = api.exampleImages ?? (api.category === "text-to-video" ? [] : [api.cover]);
+  const audio = api.exampleAudio ?? (api.category === "audio-to-video" ? EXAMPLE_AUDIO : undefined);
+  const videoSource = api.exampleVideoSource ?? (api.category === "video-to-video" ? api.cover : undefined);
+
+  const jobId = `req_${api.slug.replace(/[^a-z0-9]/gi, "").slice(0, 10)}_8f3c`;
+  const logs = [
+    `[12:04:01.121] POST /run  endpoint=${api.endpointId}`,
+    `[12:04:01.184] queued job ${jobId}`,
+    `[12:04:01.611] validating inputs  ok`,
+    `[12:04:01.998] loading model weights  cached=true`,
+    `[12:04:02.413] generating  resolution=720p fps=24`,
+    `[12:04:18.704] progress 24/120 frames`,
+    `[12:04:31.220] progress 72/120 frames`,
+    `[12:04:42.901] progress 120/120 frames  encoding mp4`,
+    `[12:04:45.317] upload  outputs/${jobId}.mp4 (1.51 MB)`,
+    `[12:04:45.402] completed in 44.28s  status=COMPLETED`,
+  ];
+
+  return {
+    prompt,
+    images,
+    audio,
+    videoSource,
+    resultVideo: api.exampleVideo,
+    resultImagePoster: api.cover,
+    logs,
+  };
+}
 
 const base = (slug: string) => ({
   endpointId: `fal-ai/pika/${slug}`,
@@ -60,6 +138,10 @@ export const PIKA_APIS: PikaApi[] = [
     outputs: ["MP4 video up to 25 seconds total"],
     exampleVideo:
       "https://v3b.fal.media/files/b/lion/0KxHFdw-mp0OzGsLrQLIy_tmpjfwlno11.mp4",
+    exampleImages: [
+      "https://v3b.fal.media/files/b/tiger/-YohU0xcPcWe_eiUB9_i6_keyframes-apple-start.png",
+      "https://v3b.fal.media/files/b/tiger/LarvwQGEFqEmF8fkgDB8R_keyframes-apple-end.png",
+    ],
   },
   {
     slug: "v2.2/image-to-video",
