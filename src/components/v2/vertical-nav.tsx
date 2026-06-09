@@ -54,8 +54,22 @@ export function VerticalNavV2() {
         <JobsNavItem />
       </nav>
 
-      <div className="flex flex-col items-center gap-3 pt-2">
-        <AccountPopoverV2 />
+      <div className="flex w-full flex-col items-stretch gap-2 px-2 pt-2">
+        <Link
+          to="/v2/api"
+          className={cn(
+            "group flex w-full flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[9px] font-medium uppercase tracking-wider transition",
+            pathname.startsWith("/v2/api")
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground/70 hover:bg-muted hover:text-foreground",
+          )}
+        >
+          <Code2 className="h-4 w-4" />
+          <span>API</span>
+        </Link>
+        <div className="flex items-center justify-center pt-1">
+          <AccountPopoverV2 />
+        </div>
       </div>
     </aside>
   );
