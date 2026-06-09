@@ -1,19 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, ArrowLeft } from "lucide-react";
 import type { Skill } from "@/lib/skills";
-import { DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { AppWizardV2 } from "@/components/v2/apps/app-wizard-v2";
-import {
-  directGenerateStart,
-  directGeneratePoll,
-} from "@/lib/generate.functions";
-import {
-  createProject,
-  updateProjectState,
-} from "@/lib/projects.functions";
+import { createProject } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 
 export type AppRunResult = {
@@ -27,29 +18,39 @@ export type AppRunResult = {
 export function AppRunner({
   skill,
   projectId: existingProjectId,
+  busy,
   onBack,
-  onResult,
+  onProjectReady,
+  onStartRun,
 }: {
   skill: Skill;
   projectId?: string;
+  /** Disable submit (a generation is already in flight). */
+  busy: boolean;
   onBack: () => void;
-  onResult?: (result: AppRunResult) => void;
+  /** Called when a project has been ensured for this app session. */
+  onProjectReady?: (projectId: string) => void;
+  /** Page-level orchestrator handles the actual generation. */
+  onStartRun: (args: {
+    skill: Skill;
+    projectId: string;
+    prompt: string;
+    assets: ProjectAsset[];
+  }) => void;
 }) {
   const recipe = getRecipeForSkill(skill);
-  const runStart = useServerFn(directGenerateStart);
-  const runPoll = useServerFn(directGeneratePoll);
   const createProj = useServerFn(createProject);
-  const updateState = useServerFn(updateProjectState);
-  const qc = useQueryClient();
 
   const [draftProjectId, setDraftProjectId] = useState<string | null>(
     existingProjectId ?? null,
   );
-  const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<
-    "idle" | "starting" | "polling" | "error"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
+
+  // Sync when parent reports a new project id (e.g. after first run).
+  useEffect(() => {
+    if (existingProjectId && existingProjectId !== draftProjectId) {
+      setDraftProjectId(existingProjectId);
+    }
+  }, [existingProjectId, draftProjectId]);
 
   const creatingRef = useRef<Promise<string> | null>(null);
   const ensureProject = async (): Promise<string> => {
@@ -65,6 +66,7 @@ export function AppRunner({
         },
       });
       setDraftProjectId(out.id);
+      onProjectReady?.(out.id);
       return out.id;
     })();
     try {
@@ -86,104 +88,8 @@ export function AppRunner({
     prompt: string;
     assets: ProjectAsset[];
   }) => {
-    setError(null);
-    setBusy(true);
-    setPhase("starting");
-    try {
-      const projectId = await ensureProject();
-      const userId = crypto.randomUUID();
-      const assistantId = crypto.randomUUID();
-      const refUrls = assets
-        .filter((a) => a.mime.startsWith("image/"))
-        .map((a) => a.url)
-        .filter((u) => /^https?:/.test(u));
-
-      const started = await runStart({
-        data: {
-          projectId,
-          prompt,
-          mode: skill.kind,
-          model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
-          userMessageId: userId,
-          assistantMessageId: assistantId,
-          referenceImageUrls: refUrls.length ? refUrls : undefined,
-        },
-      });
-      if (!started.ok) {
-        throw new Error(started.assistantText ?? "Failed to start");
-      }
-      setPhase("polling");
-
-      const deadline = Date.now() + 10 * 60_000;
-      let finalAsset: { assetId: string; assetUrl: string; mime: string } | null =
-        null;
-      while (Date.now() < deadline) {
-        await new Promise((r) => setTimeout(r, 3000));
-        const tick = await runPoll({
-          data: {
-            projectId,
-            mode: skill.kind,
-            model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
-            prompt,
-            assistantMessageId: assistantId,
-            statusUrl: started.statusUrl,
-            responseUrl: started.responseUrl,
-          },
-        });
-        if (tick.status === "done") {
-          if (tick.ok) {
-            const t = tick as { assetId: string; assetUrl: string; mime: string };
-            finalAsset = { assetId: t.assetId, assetUrl: t.assetUrl, mime: t.mime };
-          } else {
-            const t = tick as { error?: string; assistantText?: string };
-            throw new Error(t.assistantText ?? t.error ?? "Generation failed");
-          }
-          break;
-        }
-      }
-      if (!finalAsset) throw new Error("Generation timed out.");
-
-      const isVisual =
-        finalAsset.mime.startsWith("image/") ||
-        finalAsset.mime.startsWith("video/");
-      if (isVisual) {
-        try {
-          await updateState({
-            data: {
-              id: projectId,
-              patch: {
-                scenesAppend: [
-                  {
-                    title: prompt.slice(0, 60) || skill.label,
-                    prompt,
-                    duration: 5,
-                    thumb: finalAsset.assetId,
-                    clipUrl: finalAsset.mime.startsWith("video/")
-                      ? finalAsset.assetUrl
-                      : undefined,
-                    status: "ready",
-                  },
-                ],
-              },
-            },
-          });
-        } catch (e) {
-          console.error("[v2] scene append failed", e);
-        }
-      }
-
-      setPhase("idle");
-      onResult?.({ ...finalAsset, projectId, prompt });
-      void qc.invalidateQueries({ queryKey: ["v2-library"] });
-      void qc.invalidateQueries({ queryKey: ["v2-library-picker"] });
-      void qc.invalidateQueries({ queryKey: ["v2-projects"] });
-      void qc.invalidateQueries({ queryKey: ["v2-project", projectId] });
-    } catch (e) {
-      setPhase("error");
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
+    const projectId = await ensureProject();
+    onStartRun({ skill, projectId, prompt, assets });
   };
 
   const Icon = skill.icon;
@@ -194,7 +100,7 @@ export function AppRunner({
         <button
           onClick={onBack}
           className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
-          aria-label="Back"
+          aria-label="Back to apps"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -210,14 +116,7 @@ export function AppRunner({
       </div>
 
       <div className="flex-1 overflow-y-auto p-5">
-        {phase === "polling" || phase === "starting" ? (
-          <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
-            <Loader2 className="mb-3 h-6 w-6 animate-spin" />
-            {phase === "starting"
-              ? "Submitting…"
-              : "Generating… this can take a minute or two."}
-          </div>
-        ) : !draftProjectId ? (
+        {!draftProjectId ? (
           <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
             <Loader2 className="mb-3 h-6 w-6 animate-spin" />
             Preparing workspace…
@@ -229,11 +128,6 @@ export function AppRunner({
             busy={busy}
             onSubmit={handleSubmit}
           />
-        )}
-        {error && (
-          <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {error}
-          </p>
         )}
       </div>
     </div>
