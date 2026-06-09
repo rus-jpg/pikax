@@ -30,22 +30,30 @@ function ProjectsV2() {
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(q.data ?? []).map((p) => (
-            <Link
-              key={p.id}
-              to="/v2/studio/$projectId"
-              params={{ projectId: p.id }}
-              className="rounded-2xl border border-border/60 bg-card p-5 transition hover:border-border hover:bg-muted/40"
-            >
-              <div className="text-sm font-semibold">{p.title ?? "Untitled"}</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {new Date(p.updated_at).toLocaleDateString()}
-              </div>
-            </Link>
-          ))}
-          {(q.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">No projects yet.</p>
-          )}
+          {(() => {
+            const data = q.data;
+            const projects = Array.isArray(data) ? data : (data?.projects ?? []);
+            if (projects.length === 0) {
+              return (
+                <p className="text-sm text-muted-foreground">No projects yet.</p>
+              );
+            }
+            return projects.map((p) => (
+              <Link
+                key={p.id}
+                to="/v2/studio/$projectId"
+                params={{ projectId: p.id }}
+                className="rounded-2xl border border-border/60 bg-card p-5 transition hover:border-border hover:bg-muted/40"
+              >
+                <div className="text-sm font-semibold">
+                  {p.title ?? "Untitled"}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {new Date(p.updatedAt).toLocaleDateString()}
+                </div>
+              </Link>
+            ));
+          })()}
         </div>
       )}
     </main>
