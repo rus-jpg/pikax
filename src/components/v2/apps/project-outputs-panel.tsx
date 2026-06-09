@@ -117,7 +117,7 @@ export function ProjectOutputsPanel({
           <DropdownMenuTrigger asChild>
             <button className="group flex min-w-0 items-center gap-2 rounded-xl px-2 py-1 -ml-2 hover:bg-muted">
               <h2 className="truncate font-display text-xl font-semibold tracking-tight">
-                {project?.title ?? "Loading…"}
+                {projectId ? project?.title ?? "Loading…" : "New project"}
               </h2>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </button>
