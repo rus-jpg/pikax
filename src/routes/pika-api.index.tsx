@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { PIKA_APIS, PIKA_CATEGORIES, type PikaCategory } from "@/lib/v2/pika-apis";
+import { PIKA_APIS, PIKA_CATEGORIES, isPikaModel, type PikaFilter } from "@/lib/v2/pika-apis";
 import { cn } from "@/lib/utils";
 import { ApiFaq } from "@/components/v2/api/faq";
 import { ApiContactForm } from "@/components/v2/api/contact-form";
