@@ -57,11 +57,15 @@ export function AppWizardV2({
   recipe,
   projectId,
   busy,
+  seedAsset,
+  onSeedConsumed,
   onSubmit,
 }: {
   recipe: AppRecipe;
   projectId: string;
   busy: boolean;
+  seedAsset?: ProjectAsset | null;
+  onSeedConsumed?: () => void;
   onSubmit: (args: { prompt: string; assets: ProjectAsset[] }) => void;
 }) {
   const interactive = useMemo(
@@ -74,6 +78,22 @@ export function AppWizardV2({
   const [uploads, setUploads] = useState<StepUploads>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [pickerStepId, setPickerStepId] = useState<string | null>(null);
+
+  // When a seed asset arrives (e.g. "Use in app" from an output), drop it
+  // into the first upload step that accepts this kind of asset.
+  const seededRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!seedAsset) return;
+    if (seededRef.current === seedAsset.id) return;
+    const target = recipe.steps.find((s) => s.kind === "upload");
+    if (!target) return;
+    seededRef.current = seedAsset.id;
+    setUploads((prev) => ({
+      ...prev,
+      [target.id]: [...(prev[target.id] ?? []), seedAsset],
+    }));
+    onSeedConsumed?.();
+  }, [seedAsset, recipe, onSeedConsumed]);
 
   const stepIsComplete = (step: AppStep): boolean => {
     if (step.kind === "upload") return (uploads[step.id] ?? []).length > 0;
