@@ -28,6 +28,32 @@ import {
 import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 
+const APP_SWATCHES: { bg: string; fg: string }[] = [
+  { bg: "#111111", fg: "#ffffff" },
+  { bg: "#2a2a2a", fg: "#ffffff" },
+  { bg: "#e0d8c8", fg: "#111111" },
+  { bg: "#f7f0e3", fg: "#111111" },
+  { bg: "#f5f3ee", fg: "#111111" },
+  { bg: "#ffffff", fg: "#111111" },
+  { bg: "#c9bff5", fg: "#1a1a3a" },
+  { bg: "#d4cdf5", fg: "#1a1a3a" },
+  { bg: "#f0e9a8", fg: "#3a3300" },
+  { bg: "#fbf6c2", fg: "#3a3300" },
+  { bg: "#c5edb0", fg: "#0f3a14" },
+  { bg: "#f3d4f0", fg: "#3a0f3a" },
+  { bg: "#e23b2b", fg: "#ffffff" },
+  { bg: "#5fbf78", fg: "#0f2a14" },
+  { bg: "#e84d8a", fg: "#ffffff" },
+  { bg: "#e26464", fg: "#ffffff" },
+];
+
+function getAppSwatch(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return APP_SWATCHES[h % APP_SWATCHES.length];
+}
+
+
 
 const TABS = [
   "Featured",
@@ -348,16 +374,20 @@ export function AppsWorkspace({
               <div className="flex-1 overflow-y-auto p-3">
                 <div className={cn("grid gap-3", appsGridCols)}>
                   {filtered.map((s) => {
-                    const Icon = s.icon;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => onSelectApp(s.id)}
-                        className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
-                      >
-                        <div className="grid h-9 w-9 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground">
-                          <Icon className="h-4 w-4" />
-                        </div>
+                     const Icon = s.icon;
+                     const swatch = getAppSwatch(s.id);
+                     return (
+                       <button
+                         key={s.id}
+                         onClick={() => onSelectApp(s.id)}
+                         className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                       >
+                         <div
+                           className="grid h-9 w-9 place-items-center rounded-[30%]"
+                           style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                         >
+                           <Icon className="h-4 w-4" />
+                         </div>
                         <div className="text-sm font-semibold leading-tight text-foreground">
                           {s.label}
                         </div>
