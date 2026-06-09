@@ -352,8 +352,10 @@ function fal(endpointId: string) {
   };
 }
 
-function thumb(endpointId: string) {
-  return `https://fal.ai/api/models/thumbnail/${endpointId}`;
+function thumb(_endpointId: string) {
+  // Intentionally empty — cards render the Pika brand mark as a placeholder
+  // when no real example media is available.
+  return "";
 }
 
 function thirdPartyFalModels(): PikaApi[] {
