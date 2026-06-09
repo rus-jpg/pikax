@@ -238,10 +238,15 @@ export function AppRunner({
                 <Loader2 className="mb-3 h-6 w-6 animate-spin" />
                 {phase === "starting" ? "Submitting…" : "Generating… this can take a minute or two."}
               </div>
+            ) : !draftProjectId ? (
+              <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
+                <Loader2 className="mb-3 h-6 w-6 animate-spin" />
+                Preparing workspace…
+              </div>
             ) : (
               <AppWizard
                 recipe={recipe}
-                projectId={draftProjectId ?? "00000000-0000-0000-0000-000000000000"}
+                projectId={draftProjectId}
                 busy={busy}
                 onSubmit={handleSubmit}
               />
