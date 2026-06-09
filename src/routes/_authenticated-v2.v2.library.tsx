@@ -53,6 +53,30 @@ function LibraryV2() {
     });
   }, [q.data, filter, search]);
 
+  const grouped = useMemo(() => {
+    const map = new Map<
+      string,
+      { projectId: string; projectTitle: string; items: typeof items; latest: string }
+    >();
+    for (const item of items) {
+      const existing = map.get(item.projectId);
+      if (existing) {
+        existing.items.push(item);
+        if (item.createdAt > existing.latest) existing.latest = item.createdAt;
+      } else {
+        map.set(item.projectId, {
+          projectId: item.projectId,
+          projectTitle: item.projectTitle,
+          items: [item],
+          latest: item.createdAt,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.latest < b.latest ? 1 : -1,
+    );
+  }, [items]);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <header className="border-b border-border/50 px-8 pb-4 pt-6">
