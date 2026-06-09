@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, FolderOpen, Sparkles, LibraryBig, Loader2 } from "lucide-react";
+import { Activity, Code2, FolderOpen, Sparkles, LibraryBig, Loader2 } from "lucide-react";
+
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BrandMark } from "@/components/pika-mark";
