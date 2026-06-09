@@ -47,10 +47,16 @@ function AppsV2() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Featured");
   const [hovered, setHovered] = useState<Skill | null>(null);
+  const [result, setResult] = useState<AppRunResult | null>(null);
 
   const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const showcase = selected ?? hovered ?? filtered[0] ?? null;
+
+  // Clear result when switching apps.
+  useEffect(() => {
+    setResult(null);
+  }, [appId]);
 
   const selectApp = (s: Skill | null) => {
     void navigate({
@@ -68,6 +74,7 @@ function AppsV2() {
             skill={selected}
             projectId={projectId}
             onBack={() => selectApp(null)}
+            onResult={(r) => setResult(r)}
           />
         ) : (
           <>
