@@ -5,7 +5,10 @@ export type PikaCategory =
   | "image-to-video"
   | "text-to-video"
   | "video-to-video"
-  | "audio-to-video";
+  | "audio-to-video"
+  | "text-to-image"
+  | "image-to-image"
+  | "text-to-audio";
 
 export type PikaApi = {
   /** URL-safe slug used as the splat param, e.g. "v2.2/pikaframes". */
