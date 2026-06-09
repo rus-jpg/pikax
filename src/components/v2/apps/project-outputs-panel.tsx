@@ -80,7 +80,10 @@ export function ProjectOutputsPanel({
   const selectProject = (id: string) => {
     void navigate({
       to: "/v2/apps",
-      search: (prev) => ({ ...prev, projectId: id }),
+      search: (prev: { app?: string; projectId?: string }) => ({
+        ...prev,
+        projectId: id,
+      }),
     });
   };
 
