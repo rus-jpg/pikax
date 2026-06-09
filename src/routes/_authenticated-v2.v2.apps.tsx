@@ -358,7 +358,7 @@ function AppsV2() {
           />
         ) : (
           <ProjectOutputsPanel
-            projectId={projectId}
+            projectId={projectId ?? (isRunning ? run.projectId : undefined)}
             pendingProjectId={isRunning ? run.projectId : undefined}
             pendingPrompt={isRunning ? run.prompt : undefined}
             pendingSkill={isRunning ? run.skill : undefined}
