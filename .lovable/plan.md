@@ -1,96 +1,144 @@
-# Alternate Frontend (v2) — Plan
+# V2 Redesign Plan
 
-Set up a parallel `/v2/*` route tree for a full redesign that shares all backend logic with v1, plus a persistent toggle in the account/nav menu.
+A descoped, opinionated frontend. Same backend, same server functions, same database — only routes and components under `/v2/*` and `src/components/v2/**` change.
 
-## Goals
+## Core mental model
 
-- Both versions live side-by-side, independently editable.
-- Zero duplication of server functions, lib code, Supabase integration, or schemas.
-- A user can flip between v1 and v2 at any time; their choice persists and auto-routes them on subsequent visits.
+- **One project = one timeline.** Every project owns exactly one timeline composition. All generated assets land on it.
+- **Apps are the entry point.** A user picks an app, runs a wizard, and the output either starts a new project or is appended to an open one.
+- **Library is the asset pool.** Every generated asset lives there too, and can be fed back into any app via a "Pick from Library" picker on each wizard input.
+- **No Agent mode in v2.** Removed entirely.
 
-## Route structure
+## Layout shell
 
-Mirror the existing authenticated routes under a new layout segment. TanStack file-based routing makes this clean:
+Persistent **vertical left nav** (~64px collapsed icons, ~220px expanded). Top to bottom:
+
+1. Logo / brand mark
+2. Projects (folder icon)
+3. Apps (sparkles icon)
+4. Library (grid icon)
+5. (spacer)
+6. Jobs indicator — shows running generations with a badge count; clicking opens a popover with progress
+7. Account avatar (popover with settings, switch to classic layout, sign out)
+
+The nav is always visible. Everything else is a 2- or 3-column workspace to its right.
+
+## Page layouts
+
+### Projects — 3 columns
+
+```text
+[ nav ] [ project list  ] [ project detail = timeline editor      ]
+        | search          | preview canvas at top                 |
+        | + New project   | timeline track at bottom              |
+        | project A *     | right-side inspector for selected clip|
+        | project B       |                                       |
+```
+
+- First project auto-selected on load.
+- Middle column: searchable list, sorted by updated. Inline rename, delete via context menu.
+- Right column: the timeline editor (reuse existing `TimelinePanel` logic, redesigned chrome). A "+ Add from app" button inside the editor opens the Apps picker scoped to add-to-this-project.
+
+### Apps — 3 columns with tabs
+
+```text
+[ nav ] [ apps column                ] [ main column            ]
+        | Tabs: Featured | Video |    | Default: "How it works" |
+        |       Image | Audio | ...   | for selected app        |
+        | app card grid               | After run: results +    |
+        | (click app -> wizard loads  | "Add to project" / "Save|
+        |  inline in this column)     | to Library" actions     |
+```
+
+- Tabs across the top of the middle column filter the app grid by category.
+- Clicking an app swaps the grid for that app's wizard inline (back button returns to grid).
+- Main (third) column shows the app's "How it works" doc by default, then live results once the user runs it.
+- Each wizard input that accepts an asset has a **"Pick from Library"** button → opens a library picker modal filtered to the accepted asset type.
+- After a result is generated: two CTAs — "Add to a project" (picks/creates a project and appends to its timeline) and "Save to Library only".
+
+### Library — 2 columns
+
+```text
+[ nav ] [ library main view                                      ]
+        | filter chips: All | Image | Video | Audio | Character  |
+        | search                                                  |
+        | masonry/grid of assets                                  |
+        | item click -> side drawer with metadata, "Use in app", |
+        | "Add to project", download, delete                     |
+```
+
+No third column — full-width grid as requested.
+
+## Timeline editor as the engagement hook
+
+Every app result becomes a clip on the project's timeline. The editor (reused from v1, redesigned) supports:
+
+- Images → still clip, animatable via an "Animate" action that opens the image-to-video app pre-filled.
+- Videos → video clip, trim/reorder.
+- Audio → audio track (music or voice).
+- Characters → reference asset rail (not a timeline clip; used as input to image/video apps).
+
+The editor surfaces a persistent "+ Add" affordance to encourage multi-shot composition. Export button → render full timeline to MP4 (reuses existing `render.functions.ts`).
+
+## Cross-cutting features
+
+- **Jobs indicator** in nav: subscribes to in-flight generations, shows toast on completion with "View in project / library" actions. Critical because video gens take minutes.
+- **Library picker modal**: shared component, filterable by `kind`, used by every app wizard input.
+- **Empty states** for each page (no projects, no apps category match, empty library).
+- **Mobile/narrow (<900px)**: project list and apps grid collapse into a top drawer; main column stays full-width. Nav becomes bottom tab bar.
+- **Account popover** keeps the "Switch to classic layout" toggle from v1.
+
+## Out of scope for this pass
+
+- v1↔v2 default swap (revisit once v2 reaches parity)
+- Collaboration / sharing
+- Folders/tags in library (filter chips only for now)
+- Keyboard shortcuts
+- Onboarding tour
+- Credits/billing UI changes
+
+## Technical structure
 
 ```text
 src/routes/
-  _authenticated.tsx                   (v1 layout — AppNav + Outlet)
-  _authenticated/
-    projects.tsx                       (v1)
-    apps.tsx                           (v1)
-    library.tsx                        (v1)
-    studio.index.tsx                   (v1)
-    studio.$projectId.tsx              (v1)
+  _authenticated-v2.tsx                  # existing shell, swap to vertical nav
+  _authenticated-v2.v2.projects.tsx      # 3-col, project list + timeline
+  _authenticated-v2.v2.apps.tsx          # 3-col, tabs + wizard + how-it-works
+  _authenticated-v2.v2.library.tsx       # 2-col grid
 
-  _authenticated-v2.tsx                (NEW — v2 layout, own AppNavV2)
-  _authenticated-v2/
-    v2.projects.tsx                    → /v2/projects
-    v2.apps.tsx                        → /v2/apps
-    v2.library.tsx                     → /v2/library
-    v2.studio.index.tsx                → /v2/studio
-    v2.studio.$projectId.tsx           → /v2/studio/$projectId
+src/components/v2/
+  app-shell.tsx                  # vertical nav + content slot
+  vertical-nav.tsx               # icons, jobs badge, account
+  jobs-popover.tsx
+  library-picker-modal.tsx       # shared input picker
+  projects/
+    project-list.tsx
+    timeline-editor.tsx          # wraps existing TimelinePanel
+    add-from-app-menu.tsx
+  apps/
+    app-tabs.tsx
+    app-grid.tsx
+    app-wizard-panel.tsx         # wraps existing AppWizard
+    how-it-works.tsx
+    results-panel.tsx
+  library/
+    library-grid.tsx
+    library-filters.tsx
+    asset-drawer.tsx
 ```
 
-The `_authenticated-v2` pathless layout reuses the same auth gate logic as `_authenticated` (copy the `beforeLoad` redirect). Children share URL prefix `/v2`.
+- **Backend untouched.** All v2 components import the same `projects.functions.ts`, `generate.functions.ts`, `library.functions.ts`, `render.functions.ts`, and project-state types.
+- **Routing.** Stays under `/v2/*`. Account popover keeps the "Switch to classic" toggle. Default swap deferred.
+- **Agent mode.** Studio toolbar's agent code is not deleted — v2 just doesn't surface it. v1 keeps working.
 
-## Component structure
+## Build order
 
-```text
-src/components/
-  app-nav.tsx                          (v1, unchanged)
-  v2/
-    app-nav.tsx                        (NEW v2 nav)
-    studio/                            (NEW v2 versions of studio pieces)
-      studio-toolbar.tsx
-      generative-card.tsx
-      app-wizard.tsx
-      timeline-panel.tsx
-    ...                                (any other redesigned components)
-```
+1. Shell: vertical nav, app-shell, account/jobs slots (jobs as stub badge).
+2. Library page (simplest, single column) + library-picker-modal.
+3. Apps page: tabs, grid, wizard panel, results panel, how-it-works.
+4. Projects page: list, timeline editor wrapper, add-from-app entry point.
+5. Wire app results → "Add to project" / "Save to library" flows.
+6. Real jobs indicator subscribing to in-flight generations.
+7. Responsive collapse for <900px.
 
-Rule: v2 components live under `src/components/v2/**` and import from the same `src/lib/**`, `src/integrations/**`, `src/hooks/**` as v1. No backend forking.
-
-## Shared vs forked
-
-| Layer | Shared | Forked |
-|---|---|---|
-| Server functions (`src/lib/*.functions.ts`) | ✅ | — |
-| Supabase client, auth middleware | ✅ | — |
-| `src/lib/skills.ts`, `app-recipes.ts`, project state | ✅ | — |
-| Route files | — | ✅ (v2.* siblings) |
-| Layout (`_authenticated*`) | — | ✅ |
-| Page components / studio UI | — | ✅ (under `components/v2/`) |
-| `src/styles.css` design tokens | ✅ base, v2 can add `.theme-v2` scope | optional |
-
-## Version toggle
-
-1. Add a `layoutVersion: "v1" | "v2"` preference stored in `localStorage` under key `pikax.layoutVersion`.
-2. New hook `src/hooks/use-layout-version.ts` reads/writes the preference and exposes `{ version, setVersion }`.
-3. Extend `src/components/account-popover.tsx` (and a new `src/components/v2/account-popover.tsx`) with a "Switch to classic / new layout" item that:
-   - Saves the new preference.
-   - Navigates to the equivalent path in the other tree (e.g. `/projects` ↔ `/v2/projects`).
-4. Optional auto-redirect on `_authenticated` root load: if `version === "v2"` and the user lands on a v1 URL via bookmark, redirect once to the v2 equivalent (and vice versa). Keep this opt-out friendly — only redirect on the index landing, not deep links.
-
-## Implementation steps
-
-1. Create `src/hooks/use-layout-version.ts` with localStorage-backed state and a `getMirrorPath(pathname)` helper that maps `/foo` ↔ `/v2/foo`.
-2. Create `src/routes/_authenticated-v2.tsx` (copy auth gate from `_authenticated.tsx`, render `<AppNavV2 />` + `<Outlet />`).
-3. Create `src/components/v2/app-nav.tsx` — a fresh nav matching the v2 design (placeholder styling at first; iterate later).
-4. Scaffold v2 route leaves: `src/routes/_authenticated-v2/v2.projects.tsx`, `v2.apps.tsx`, `v2.library.tsx`, `v2.studio.index.tsx`, `v2.studio.$projectId.tsx`. Each renders a minimal placeholder that imports the same data hooks/server functions as v1.
-5. Add `src/components/v2/account-popover.tsx` (or extend the existing one with a conditional toggle item) wired to `useLayoutVersion`.
-6. Optional: add a `.theme-v2 { ... }` block in `src/styles.css` so v2 layout root can opt into different design tokens without touching v1.
-7. Verify the route tree regenerates cleanly and both `/projects` and `/v2/projects` render.
-
-## Technical notes
-
-- **Auth gate duplication**: copy the `beforeLoad` from `_authenticated.tsx` verbatim into `_authenticated-v2.tsx`. Don't try to share — TanStack route configs aren't composable that way and the duplication is ~10 lines.
-- **`createFileRoute` strings**: must match generated IDs exactly. Files under `_authenticated-v2/` with `v2.projects.tsx` produce `createFileRoute("/_authenticated-v2/v2/projects")` with URL `/v2/projects`.
-- **No SSR for the toggle**: localStorage is browser-only. Read inside `useEffect` or guard with `typeof window !== "undefined"` to avoid hydration mismatch.
-- **Backend untouched**: zero changes to `src/lib/*`, `src/integrations/*`, Supabase migrations, or env vars.
-- **Deletion path**: when v2 is the winner, delete `_authenticated.tsx` + `_authenticated/**` and rename `_authenticated-v2*` back. Or vice versa.
-
-## Out of scope (for this scaffolding pass)
-
-- Actual v2 visual design — this plan sets up the empty shell. After approval I'll either ask for design directions or build whatever v2 look you describe.
-- Per-user persistence in the database (localStorage is enough to start).
-- Analytics/feature flag wiring.
+Each step is independently shippable behind `/v2/*`.

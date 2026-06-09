@@ -1,0 +1,52 @@
+import type { Skill } from "@/lib/skills";
+import { getRecipeForSkill } from "@/lib/app-recipes";
+
+export function HowItWorksV2({ skill }: { skill: Skill }) {
+  const recipe = getRecipeForSkill(skill);
+  const Icon = skill.icon;
+  return (
+    <div className="mx-auto max-w-2xl px-8 py-12">
+      <div className="mb-8 flex items-center gap-4">
+        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <h2 className="font-display text-2xl font-semibold tracking-tight">
+            {skill.label}
+          </h2>
+          <p className="text-sm text-muted-foreground">{skill.category}</p>
+        </div>
+      </div>
+
+      <p className="text-base text-foreground">{skill.description}</p>
+
+      <h3 className="mt-10 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        How it works
+      </h3>
+      <ol className="space-y-3">
+        {recipe.steps.map((step, i) => (
+          <li
+            key={step.id}
+            className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4"
+          >
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-foreground text-sm font-bold text-background">
+              {i + 1}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-foreground">
+                {step.title}
+              </div>
+              <div className="mt-0.5 text-sm text-muted-foreground">
+                {step.desc}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <p className="mt-10 text-xs text-muted-foreground">
+        Model: <span className="font-mono">{skill.model}</span>
+      </p>
+    </div>
+  );
+}
