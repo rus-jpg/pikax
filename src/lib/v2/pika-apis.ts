@@ -352,8 +352,9 @@ function fal(endpointId: string) {
   };
 }
 
-const thumb = (endpointId: string) =>
-  `https://fal.ai/api/models/thumbnail/${endpointId}`;
+function thumb(endpointId: string) {
+  return `https://fal.ai/api/models/thumbnail/${endpointId}`;
+}
 
 function thirdPartyFalModels(): PikaApi[] {
   return [
