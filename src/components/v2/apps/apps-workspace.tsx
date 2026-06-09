@@ -377,7 +377,7 @@ export function AppsWorkspace({
             onDismissRun={dismissRun}
           />
         ) : selected ? (
-          <div className="h-full overflow-y-auto">
+          <div className="grid h-full place-items-center overflow-y-auto p-6">
             <HowItWorksV2 skill={selected} />
           </div>
         ) : (
