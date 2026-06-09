@@ -379,7 +379,7 @@ export function AppsWorkspace({
         </div>
       </ResizablePanel>
 
-      <ResizableHandle withHandle />
+      <ResizableHandle />
 
       {/* Middle column — outputs */}
       <ResizablePanel defaultSize={showTimeline ? "42%" : "72%"} minSize="30%">
@@ -408,7 +408,7 @@ export function AppsWorkspace({
 
       {showTimeline && (
         <>
-          <ResizableHandle withHandle />
+          <ResizableHandle />
           {/* Right column — timeline */}
           <ResizablePanel defaultSize="30%" minSize="20%" maxSize="50%">
             <ProjectTimelinePanel
