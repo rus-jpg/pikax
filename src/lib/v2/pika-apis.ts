@@ -742,7 +742,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-audio",
       description:
         "Stable Audio 2.5 from Stability AI generates high-quality music and sound effects with enterprise-grade creative control.",
-      cover: thumb("fal-ai/stable-audio-25/audio-to-audio"),
+      cover:
+        "https://fal.media/files/lion/N_r3ILjHQBEDIf8umQMMd_f51771186f184c43ab1257350772d2f6.jpg",
       tags: ["stability", "music", "sfx"],
       pricing: "$0.20 per audio",
       inputs: ["Prompt or reference audio", "Duration"],
