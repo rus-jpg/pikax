@@ -96,6 +96,8 @@ export function AppsWorkspace({
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+
 
   const handleUseInApp = ({
     skill,
