@@ -21,13 +21,6 @@ function pickerAcceptFor(accept: AppStep["accept"]): PickerAccept {
   return "any";
 }
 
-function acceptAttr(accept: AppStep["accept"]): string {
-    case "audio":
-      return "audio/*";
-    default:
-      return "*/*";
-  }
-}
 
 function kindForUpload(accept: AppStep["accept"]): AssetKind {
   if (accept === "audio") return "audio";
