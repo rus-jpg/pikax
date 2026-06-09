@@ -76,12 +76,16 @@ function PikaApiIndex() {
                   playsInline
                   className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                 />
-              ) : (
+              ) : api.cover ? (
                 <img
                   src={api.cover}
                   alt={api.name}
                   className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                 />
+              ) : (
+                <div className="grid h-full w-full place-items-center bg-muted">
+                  <BrandMark className="h-10 w-auto opacity-40" />
+                </div>
               )}
             </div>
             <div className="p-4">
