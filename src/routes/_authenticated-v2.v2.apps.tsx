@@ -376,6 +376,7 @@ function AppsV2() {
           activeRuns={activeRuns}
           outputMeta={outputMeta}
           onRegenerate={(args) => void handleRegenerate(args)}
+          onUseInApp={handleUseInApp}
           onNewProject={handleNewProject}
           onDismissRun={dismissRun}
         />
