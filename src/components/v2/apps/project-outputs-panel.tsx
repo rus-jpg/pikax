@@ -258,7 +258,7 @@ export function ProjectOutputsPanel({
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <UseInAppMenu asset={o} onUseInApp={onUseInApp} />
-                      {meta && skill && (
+                      {meta && skill && projectId && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -266,7 +266,7 @@ export function ProjectOutputsPanel({
                             onRegenerate({
                               skill,
                               prompt: meta.prompt,
-                              projectId: projectId!,
+                              projectId,
                             })
                           }
                         >
@@ -370,7 +370,7 @@ function UseInAppMenu({
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="outline">
           <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-          Use in app
+          Edit with app
           <ChevronDown className="ml-1 h-3.5 w-3.5" />
         </Button>
       </DropdownMenuTrigger>
