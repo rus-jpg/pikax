@@ -74,28 +74,53 @@ function ApiDetail() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto grid max-w-5xl gap-6 px-8 py-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="overflow-hidden rounded-3xl border border-border/60 bg-card">
-            <img
-              src={api.cover}
-              alt={api.name}
-              className="aspect-video w-full object-cover"
-            />
-            <div className="space-y-3 p-5">
-              <h2 className="font-display text-lg font-semibold tracking-tight">
-                About
-              </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {api.description}
-              </p>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {api.tags.map((t: string) => (
-                  <span
-                    key={t}
-                    className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-                  >
-                    {t}
-                  </span>
-                ))}
+          <div className="flex flex-col gap-6">
+            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card">
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+                <h2 className="font-display text-sm font-semibold tracking-tight">
+                  Output example
+                </h2>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {api.exampleVideo ? "Sample render" : "Reference still"}
+                </span>
+              </div>
+              {api.exampleVideo ? (
+                <video
+                  src={api.exampleVideo}
+                  poster={api.cover}
+                  controls
+                  loop
+                  muted
+                  playsInline
+                  className="aspect-video w-full bg-black object-contain"
+                />
+              ) : (
+                <img
+                  src={api.cover}
+                  alt={`${api.name} example`}
+                  className="aspect-video w-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card">
+              <div className="space-y-3 p-5">
+                <h2 className="font-display text-lg font-semibold tracking-tight">
+                  About
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {api.description}
+                </p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {api.tags.map((t: string) => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
