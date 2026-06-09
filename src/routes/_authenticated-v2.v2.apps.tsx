@@ -307,7 +307,7 @@ function AppsV2() {
 
       {/* Right column — generating, result, or how-it-works */}
       <div className="flex-1 overflow-y-auto bg-background">
-        {isRunning ? (
+        {run.phase === "starting" || run.phase === "polling" ? (
           <GeneratingView
             skill={run.skill}
             prompt={run.prompt}
