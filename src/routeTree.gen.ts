@@ -29,9 +29,7 @@ import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenti
 import { Route as AuthenticatedV2V2JobsRouteImport } from './routes/_authenticated-v2.v2.jobs'
 import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
 import { Route as AuthenticatedV2V2StudioIndexRouteImport } from './routes/_authenticated-v2.v2.studio.index'
-import { Route as AuthenticatedV2V2ApiIndexRouteImport } from './routes/_authenticated-v2.v2.api.index'
 import { Route as AuthenticatedV2V2StudioProjectIdRouteImport } from './routes/_authenticated-v2.v2.studio.$projectId'
-import { Route as AuthenticatedV2V2ApiSplatRouteImport } from './routes/_authenticated-v2.v2.api.$'
 
 const PikaApiRoute = PikaApiRouteImport.update({
   id: '/pika-api',
@@ -136,22 +134,10 @@ const AuthenticatedV2V2StudioIndexRoute =
     path: '/v2/studio/',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
-const AuthenticatedV2V2ApiIndexRoute =
-  AuthenticatedV2V2ApiIndexRouteImport.update({
-    id: '/v2/api/',
-    path: '/v2/api/',
-    getParentRoute: () => AuthenticatedV2Route,
-  } as any)
 const AuthenticatedV2V2StudioProjectIdRoute =
   AuthenticatedV2V2StudioProjectIdRouteImport.update({
     id: '/v2/studio/$projectId',
     path: '/v2/studio/$projectId',
-    getParentRoute: () => AuthenticatedV2Route,
-  } as any)
-const AuthenticatedV2V2ApiSplatRoute =
-  AuthenticatedV2V2ApiSplatRouteImport.update({
-    id: '/v2/api/$',
-    path: '/v2/api/$',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
 
@@ -173,9 +159,7 @@ export interface FileRoutesByFullPath {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
-  '/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/v2/api/': typeof AuthenticatedV2V2ApiIndexRoute
   '/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesByTo {
@@ -195,9 +179,7 @@ export interface FileRoutesByTo {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
-  '/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/v2/api': typeof AuthenticatedV2V2ApiIndexRoute
   '/v2/studio': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesById {
@@ -221,9 +203,7 @@ export interface FileRoutesById {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
-  '/_authenticated-v2/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/_authenticated-v2/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/_authenticated-v2/v2/api/': typeof AuthenticatedV2V2ApiIndexRoute
   '/_authenticated-v2/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRouteTypes {
@@ -246,9 +226,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio/'
-    | '/v2/api/$'
     | '/v2/studio/$projectId'
-    | '/v2/api/'
     | '/v2/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -268,9 +246,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio'
-    | '/v2/api/$'
     | '/v2/studio/$projectId'
-    | '/v2/api'
     | '/v2/studio'
   id:
     | '__root__'
@@ -293,9 +269,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/_authenticated/studio/'
-    | '/_authenticated-v2/v2/api/$'
     | '/_authenticated-v2/v2/studio/$projectId'
-    | '/_authenticated-v2/v2/api/'
     | '/_authenticated-v2/v2/studio/'
   fileRoutesById: FileRoutesById
 }
@@ -452,25 +426,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedV2V2StudioIndexRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
-    '/_authenticated-v2/v2/api/': {
-      id: '/_authenticated-v2/v2/api/'
-      path: '/v2/api'
-      fullPath: '/v2/api/'
-      preLoaderRoute: typeof AuthenticatedV2V2ApiIndexRouteImport
-      parentRoute: typeof AuthenticatedV2Route
-    }
     '/_authenticated-v2/v2/studio/$projectId': {
       id: '/_authenticated-v2/v2/studio/$projectId'
       path: '/v2/studio/$projectId'
       fullPath: '/v2/studio/$projectId'
       preLoaderRoute: typeof AuthenticatedV2V2StudioProjectIdRouteImport
-      parentRoute: typeof AuthenticatedV2Route
-    }
-    '/_authenticated-v2/v2/api/$': {
-      id: '/_authenticated-v2/v2/api/$'
-      path: '/v2/api/$'
-      fullPath: '/v2/api/$'
-      preLoaderRoute: typeof AuthenticatedV2V2ApiSplatRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
   }
@@ -501,9 +461,7 @@ interface AuthenticatedV2RouteChildren {
   AuthenticatedV2V2JobsRoute: typeof AuthenticatedV2V2JobsRoute
   AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
   AuthenticatedV2V2ProjectsRoute: typeof AuthenticatedV2V2ProjectsRoute
-  AuthenticatedV2V2ApiSplatRoute: typeof AuthenticatedV2V2ApiSplatRoute
   AuthenticatedV2V2StudioProjectIdRoute: typeof AuthenticatedV2V2StudioProjectIdRoute
-  AuthenticatedV2V2ApiIndexRoute: typeof AuthenticatedV2V2ApiIndexRoute
   AuthenticatedV2V2StudioIndexRoute: typeof AuthenticatedV2V2StudioIndexRoute
 }
 
@@ -512,9 +470,7 @@ const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
   AuthenticatedV2V2JobsRoute: AuthenticatedV2V2JobsRoute,
   AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
   AuthenticatedV2V2ProjectsRoute: AuthenticatedV2V2ProjectsRoute,
-  AuthenticatedV2V2ApiSplatRoute: AuthenticatedV2V2ApiSplatRoute,
   AuthenticatedV2V2StudioProjectIdRoute: AuthenticatedV2V2StudioProjectIdRoute,
-  AuthenticatedV2V2ApiIndexRoute: AuthenticatedV2V2ApiIndexRoute,
   AuthenticatedV2V2StudioIndexRoute: AuthenticatedV2V2StudioIndexRoute,
 }
 
