@@ -123,16 +123,31 @@ const base = (slug: string) => ({
   schemaUrl: `https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/pika/${slug}`,
 });
 
-// Official Pika imagery (from cdn.pika.art / pika.art landing pages).
+// Asset pointers (CDN-hosted via Lovable Assets).
+import i2v21In from "@/assets/pika-api/i2v21_in.asset.json";
+import i2v21Out from "@/assets/pika-api/i2v21_out.asset.json";
+import i2v22In from "@/assets/pika-api/i2v22_in.asset.json";
+import i2v22Out from "@/assets/pika-api/i2v22_out.asset.json";
+import framesIn1 from "@/assets/pika-api/frames_in1.asset.json";
+import framesIn2 from "@/assets/pika-api/frames_in2.asset.json";
+import framesOut from "@/assets/pika-api/frames_out.asset.json";
+import scenesA from "@/assets/pika-api/scenes_a.asset.json";
+import scenesB from "@/assets/pika-api/scenes_b.asset.json";
+import scenesC from "@/assets/pika-api/scenes_c.asset.json";
+import scenesOut from "@/assets/pika-api/scenes_out.asset.json";
+import t2v21Out from "@/assets/pika-api/t2v21_out.asset.json";
+import t2v22Out from "@/assets/pika-api/t2v22_out.asset.json";
+import turboI2vIn from "@/assets/pika-api/turbo_i2v_in.asset.json";
+import turboI2vOut from "@/assets/pika-api/turbo_i2v_out.asset.json";
+import turboT2vOut from "@/assets/pika-api/turbo_t2v_out.asset.json";
+import pkfCakeIn from "@/assets/pika-api/pkf_cake_in.asset.json";
+import pkfCakeOut from "@/assets/pika-api/pkf_cake_out.asset.json";
+
+// Fallback brand imagery (still used for models without provided assets).
 const PIKA_BRAND_COVER =
   "https://cdn.pika.art/pika/2.5/launch/b648eb7d-8a2f-4350-9d84-7fae958c633a.jpg";
 const PIKA_BRAND_VIDEO =
   "https://cdn.pika.art/pika/api/launch/512be5d5-5b83-4106-bbca-1eff6c73b44c.mp4";
-const PIKAFFECTS_COVER =
-  "https://cdn.pika.art/pika/2.5/launch/275797df-23b0-4cfe-b6ba-e1e46f7e9531.webp";
-const PIKAFFECTS_VIDEO =
-  "https://cdn.pika.art/pika/api/launch/3fa56d02-ca8f-4269-80a5-6003ccdd1b99.mp4";
-
 
 export const PIKA_APIS: PikaApi[] = [
   {
@@ -143,18 +158,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Upload up to 5 keyframes, customize transition length and prompts, and watch them come to life as a seamless video.",
-    cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    cover: framesIn1.url,
+    coverVideo: framesOut.url,
     tags: ["keyframes", "interpolation", "narrative"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p) · 5s minimum",
     inputs: ["2–5 image URLs", "Per-transition prompts", "Transition durations"],
     outputs: ["MP4 video up to 25 seconds total"],
-    exampleVideo:
-      "https://v3b.fal.media/files/b/lion/0KxHFdw-mp0OzGsLrQLIy_tmpjfwlno11.mp4",
-    exampleImages: [
-      "https://v3b.fal.media/files/b/tiger/-YohU0xcPcWe_eiUB9_i6_keyframes-apple-start.png",
-      "https://v3b.fal.media/files/b/tiger/LarvwQGEFqEmF8fkgDB8R_keyframes-apple-end.png",
-    ],
+    exampleVideo: framesOut.url,
+    exampleImages: [framesIn1.url, framesIn2.url],
   },
   {
     slug: "v2.2/image-to-video",
@@ -164,12 +175,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turn photos into mind-blowing, dynamic videos in up to 1080p with sharper visuals and better clarity.",
-    cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    cover: i2v22In.url,
+    coverVideo: i2v22Out.url,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Image URL", "Prompt", "Duration, resolution"],
     outputs: ["MP4 video, 720p or 1080p"],
+    exampleVideo: i2v22Out.url,
+    exampleImages: [i2v22In.url],
   },
   {
     slug: "v2.2/text-to-video",
@@ -180,11 +193,12 @@ export const PIKA_APIS: PikaApi[] = [
     description:
       "Start with a simple text prompt to create dynamic generations that defy expectations in up to 1080p.",
     cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    coverVideo: t2v22Out.url,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Prompt", "Aspect ratio, resolution, duration"],
     outputs: ["MP4 video, 720p or 1080p"],
+    exampleVideo: t2v22Out.url,
   },
   {
     slug: "v2.2/pikascenes",
@@ -194,12 +208,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Pika Scenes v2.2 creates videos from multiple input images with high quality output and scene-aware composition.",
-    cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    cover: scenesA.url,
+    coverVideo: scenesOut.url,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Multiple image URLs", "Prompt", "Resolution"],
     outputs: ["MP4 video with scene composition"],
+    exampleVideo: scenesOut.url,
+    exampleImages: [scenesA.url, scenesB.url, scenesC.url],
   },
   {
     slug: "v1.5/pikaffects",
@@ -209,12 +225,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Pika Effects are AI-powered video effects designed to modify objects, characters, and environments in fun, engaging ways.",
-    cover: PIKAFFECTS_COVER,
-    coverVideo: PIKAFFECTS_VIDEO,
+    cover: pkfCakeIn.url,
+    coverVideo: pkfCakeOut.url,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-generation pricing",
     inputs: ["Image URL", "Effect preset (inflate, melt, crush, …)"],
     outputs: ["MP4 video with applied effect"],
+    exampleVideo: pkfCakeOut.url,
+    exampleImages: [pkfCakeIn.url],
   },
   {
     slug: "v2/turbo/image-to-video",
@@ -224,12 +242,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turbo is the model to use when you feel the need for speed. Turn images into stunning video up to 3× faster with high quality outputs.",
-    cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    cover: turboI2vIn.url,
+    coverVideo: turboI2vOut.url,
     tags: ["fast", "editing", "animation"],
     pricing: "Lower per-second cost optimized for throughput",
     inputs: ["Image URL", "Prompt"],
     outputs: ["MP4 video, faster turnaround"],
+    exampleVideo: turboI2vOut.url,
+    exampleImages: [turboI2vIn.url],
   },
   {
     slug: "v2/turbo/text-to-video",
@@ -240,11 +260,12 @@ export const PIKA_APIS: PikaApi[] = [
     description:
       "Pika v2 Turbo creates videos from a text prompt with high quality output at faster speeds.",
     cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    coverVideo: turboT2vOut.url,
     tags: ["fast", "editing", "animation"],
     pricing: "Lower per-second cost optimized for throughput",
     inputs: ["Prompt", "Aspect ratio, duration"],
     outputs: ["MP4 video, faster turnaround"],
+    exampleVideo: turboT2vOut.url,
   },
   {
     slug: "v2/pikadditions",
@@ -270,11 +291,12 @@ export const PIKA_APIS: PikaApi[] = [
     description:
       "Anything you dream can come to life with sharp details, impressive character control and cinematic camera moves.",
     cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    coverVideo: t2v21Out.url,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-second pricing",
     inputs: ["Prompt", "Aspect ratio, duration"],
     outputs: ["MP4 video"],
+    exampleVideo: t2v21Out.url,
   },
   {
     slug: "v2.1/image-to-video",
@@ -284,12 +306,14 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turn photos into mind-blowing, dynamic videos with sharp details, character control and cinematic camera moves.",
-    cover: PIKA_BRAND_COVER,
-    coverVideo: PIKA_BRAND_VIDEO,
+    cover: i2v21In.url,
+    coverVideo: i2v21Out.url,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-second pricing",
     inputs: ["Image URL", "Prompt"],
     outputs: ["MP4 video"],
+    exampleVideo: i2v21Out.url,
+    exampleImages: [i2v21In.url],
   },
   {
     slug: "pikaformance/lipsync",
