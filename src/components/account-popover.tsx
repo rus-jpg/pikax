@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { ChevronUp, LogOut } from "lucide-react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { ChevronUp, LogOut, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+import { useLayoutVersion, getMirrorPath } from "@/hooks/use-layout-version";
 
 export function AccountPopover() {
   const navigate = useNavigate();
