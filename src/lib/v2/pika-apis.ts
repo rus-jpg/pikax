@@ -676,7 +676,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "image-to-image",
       description:
         "FLUX.1 Kontext [pro] handles in-context image editing — change subjects, styles, and scenes with text instructions.",
-      cover: thumb("fal-ai/flux-pro/kontext"),
+      cover:
+        "https://fal.media/files/elephant/foZaaLzgc--Vlcy3XwrNQ_c51f2cc166534c5997dcc0b072e41e09.jpg",
       tags: ["flux", "edit", "kontext"],
       pricing: "Per-image pricing",
       inputs: ["Reference image", "Edit prompt"],
