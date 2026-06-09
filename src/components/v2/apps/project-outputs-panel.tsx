@@ -256,22 +256,25 @@ export function ProjectOutputsPanel({
                         {meta?.prompt ?? o.name ?? ""}
                       </p>
                     </div>
-                    {meta && skill && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          onRegenerate({
-                            skill,
-                            prompt: meta.prompt,
-                            projectId: projectId!,
-                          })
-                        }
-                      >
-                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                        Regenerate
-                      </Button>
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <UseInAppMenu asset={o} onUseInApp={onUseInApp} />
+                      {meta && skill && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            onRegenerate({
+                              skill,
+                              prompt: meta.prompt,
+                              projectId: projectId!,
+                            })
+                          }
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                          Regenerate
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
