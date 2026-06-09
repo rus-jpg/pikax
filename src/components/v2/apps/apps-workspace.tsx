@@ -422,9 +422,7 @@ export function AppsWorkspace({
   );
 }
 
-    </div>
-  );
-}
+
 
 function EmptyPickAnApp() {
   return (
