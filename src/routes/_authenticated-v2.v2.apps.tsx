@@ -353,56 +353,16 @@ function AppsV2() {
 
       {/* Right column — project outputs view */}
       <div className="flex-1 overflow-hidden bg-background">
-        {run.phase === "error" ? (
-          <ErrorView
-            skill={run.skill}
-            error={run.error}
-            onDismiss={() => setRun({ phase: "idle" })}
-          />
-        ) : (
-          <ProjectOutputsPanel
-            projectId={projectId ?? (isRunning ? run.projectId : undefined)}
-            pendingProjectId={isRunning ? run.projectId : undefined}
-            pendingPrompt={isRunning ? run.prompt : undefined}
-            pendingSkill={isRunning ? run.skill : undefined}
-            pendingPhase={isRunning ? run.phase : undefined}
-            outputMeta={outputMeta}
-            onRegenerate={(args) => void handleRegenerate(args)}
-            onNewProject={handleNewProject}
-          />
-        )}
+        <ProjectOutputsPanel
+          projectId={projectId ?? activeRuns[0]?.projectId}
+          activeRuns={activeRuns}
+          outputMeta={outputMeta}
+          onRegenerate={(args) => void handleRegenerate(args)}
+          onNewProject={handleNewProject}
+          onDismissRun={dismissRun}
+        />
       </div>
     </div>
   );
 }
 
-function ErrorView({
-  skill,
-  error,
-  onDismiss,
-}: {
-  skill: Skill;
-  error: string;
-  onDismiss: () => void;
-}) {
-  return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center px-8 py-12 text-center">
-      <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-destructive/10 text-destructive">
-        <X className="h-6 w-6" />
-      </div>
-      <h2 className="font-display text-2xl font-semibold tracking-tight">
-        {skill.label} failed
-      </h2>
-      <p className="mt-3 max-w-md rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-        {error}
-      </p>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="mt-6 text-xs font-medium text-foreground underline-offset-4 hover:underline"
-      >
-        Dismiss
-      </button>
-    </div>
-  );
-}
