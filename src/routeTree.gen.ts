@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedV2RouteImport } from './routes/_authenticated-v2'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -20,10 +21,19 @@ import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenti
 import { Route as ApiPublicRenderTickRouteImport } from './routes/api/public/render-tick'
 import { Route as ApiAssetIdRouteImport } from './routes/api/asset.$id'
 import { Route as AuthenticatedStudioProjectIdRouteImport } from './routes/_authenticated/studio.$projectId'
+import { Route as AuthenticatedV2V2ProjectsRouteImport } from './routes/_authenticated-v2.v2.projects'
+import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenticated-v2.v2.library'
+import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
+import { Route as AuthenticatedV2V2StudioIndexRouteImport } from './routes/_authenticated-v2.v2.studio.index'
+import { Route as AuthenticatedV2V2StudioProjectIdRouteImport } from './routes/_authenticated-v2.v2.studio.$projectId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedV2Route = AuthenticatedV2RouteImport.update({
+  id: '/_authenticated-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -77,6 +87,35 @@ const AuthenticatedStudioProjectIdRoute =
     path: '/studio/$projectId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedV2V2ProjectsRoute =
+  AuthenticatedV2V2ProjectsRouteImport.update({
+    id: '/v2/projects',
+    path: '/v2/projects',
+    getParentRoute: () => AuthenticatedV2Route,
+  } as any)
+const AuthenticatedV2V2LibraryRoute =
+  AuthenticatedV2V2LibraryRouteImport.update({
+    id: '/v2/library',
+    path: '/v2/library',
+    getParentRoute: () => AuthenticatedV2Route,
+  } as any)
+const AuthenticatedV2V2AppsRoute = AuthenticatedV2V2AppsRouteImport.update({
+  id: '/v2/apps',
+  path: '/v2/apps',
+  getParentRoute: () => AuthenticatedV2Route,
+} as any)
+const AuthenticatedV2V2StudioIndexRoute =
+  AuthenticatedV2V2StudioIndexRouteImport.update({
+    id: '/v2/studio/',
+    path: '/v2/studio/',
+    getParentRoute: () => AuthenticatedV2Route,
+  } as any)
+const AuthenticatedV2V2StudioProjectIdRoute =
+  AuthenticatedV2V2StudioProjectIdRouteImport.update({
+    id: '/v2/studio/$projectId',
+    path: '/v2/studio/$projectId',
+    getParentRoute: () => AuthenticatedV2Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -85,10 +124,15 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/v2/library': typeof AuthenticatedV2V2LibraryRoute
+  '/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
+  '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -97,24 +141,35 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/v2/library': typeof AuthenticatedV2V2LibraryRoute
+  '/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
+  '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/v2/studio': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_authenticated-v2': typeof AuthenticatedV2RouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/apps': typeof AuthenticatedAppsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/_authenticated-v2/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/_authenticated-v2/v2/library': typeof AuthenticatedV2V2LibraryRoute
+  '/_authenticated-v2/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/_authenticated/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
+  '/_authenticated-v2/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/_authenticated-v2/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,10 +180,15 @@ export interface FileRouteTypes {
     | '/library'
     | '/projects'
     | '/api/chat'
+    | '/v2/apps'
+    | '/v2/library'
+    | '/v2/projects'
     | '/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio/'
+    | '/v2/studio/$projectId'
+    | '/v2/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -137,28 +197,40 @@ export interface FileRouteTypes {
     | '/library'
     | '/projects'
     | '/api/chat'
+    | '/v2/apps'
+    | '/v2/library'
+    | '/v2/projects'
     | '/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio'
+    | '/v2/studio/$projectId'
+    | '/v2/studio'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated-v2'
     | '/login'
     | '/_authenticated/apps'
     | '/_authenticated/library'
     | '/_authenticated/projects'
     | '/api/chat'
+    | '/_authenticated-v2/v2/apps'
+    | '/_authenticated-v2/v2/library'
+    | '/_authenticated-v2/v2/projects'
     | '/_authenticated/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/_authenticated/studio/'
+    | '/_authenticated-v2/v2/studio/$projectId'
+    | '/_authenticated-v2/v2/studio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthenticatedV2Route: typeof AuthenticatedV2RouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiAssetIdRoute: typeof ApiAssetIdRoute
@@ -172,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated-v2': {
+      id: '/_authenticated-v2'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedV2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -244,6 +323,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioProjectIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated-v2/v2/projects': {
+      id: '/_authenticated-v2/v2/projects'
+      path: '/v2/projects'
+      fullPath: '/v2/projects'
+      preLoaderRoute: typeof AuthenticatedV2V2ProjectsRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
+    '/_authenticated-v2/v2/library': {
+      id: '/_authenticated-v2/v2/library'
+      path: '/v2/library'
+      fullPath: '/v2/library'
+      preLoaderRoute: typeof AuthenticatedV2V2LibraryRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
+    '/_authenticated-v2/v2/apps': {
+      id: '/_authenticated-v2/v2/apps'
+      path: '/v2/apps'
+      fullPath: '/v2/apps'
+      preLoaderRoute: typeof AuthenticatedV2V2AppsRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
+    '/_authenticated-v2/v2/studio/': {
+      id: '/_authenticated-v2/v2/studio/'
+      path: '/v2/studio'
+      fullPath: '/v2/studio/'
+      preLoaderRoute: typeof AuthenticatedV2V2StudioIndexRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
+    '/_authenticated-v2/v2/studio/$projectId': {
+      id: '/_authenticated-v2/v2/studio/$projectId'
+      path: '/v2/studio/$projectId'
+      fullPath: '/v2/studio/$projectId'
+      preLoaderRoute: typeof AuthenticatedV2V2StudioProjectIdRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
   }
 }
 
@@ -267,9 +381,30 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface AuthenticatedV2RouteChildren {
+  AuthenticatedV2V2AppsRoute: typeof AuthenticatedV2V2AppsRoute
+  AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
+  AuthenticatedV2V2ProjectsRoute: typeof AuthenticatedV2V2ProjectsRoute
+  AuthenticatedV2V2StudioProjectIdRoute: typeof AuthenticatedV2V2StudioProjectIdRoute
+  AuthenticatedV2V2StudioIndexRoute: typeof AuthenticatedV2V2StudioIndexRoute
+}
+
+const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
+  AuthenticatedV2V2AppsRoute: AuthenticatedV2V2AppsRoute,
+  AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
+  AuthenticatedV2V2ProjectsRoute: AuthenticatedV2V2ProjectsRoute,
+  AuthenticatedV2V2StudioProjectIdRoute: AuthenticatedV2V2StudioProjectIdRoute,
+  AuthenticatedV2V2StudioIndexRoute: AuthenticatedV2V2StudioIndexRoute,
+}
+
+const AuthenticatedV2RouteWithChildren = AuthenticatedV2Route._addFileChildren(
+  AuthenticatedV2RouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthenticatedV2Route: AuthenticatedV2RouteWithChildren,
   LoginRoute: LoginRoute,
   ApiChatRoute: ApiChatRoute,
   ApiAssetIdRoute: ApiAssetIdRoute,
