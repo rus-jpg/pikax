@@ -341,7 +341,7 @@ export function AppsWorkspace({
                       onClick={() => onSelectApp(s.id)}
                       className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
                     >
-                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
+                      <div className="grid h-9 w-9 place-items-center rounded-[22%] bg-brand-gradient text-primary-foreground">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="text-sm font-semibold leading-tight text-foreground">
@@ -392,7 +392,7 @@ function EmptyPickAnApp() {
   return (
     <div className="grid h-full place-items-center p-8 text-center">
       <div className="max-w-sm">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-[22%] bg-brand-gradient text-primary-foreground shadow-elegant">
           <Sparkles className="h-6 w-6" />
         </div>
         <h2 className="font-display text-xl font-semibold tracking-tight">
