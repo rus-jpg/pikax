@@ -9,18 +9,22 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  Wand2,
   X,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { getProject, listProjects } from "@/lib/projects.functions";
-import { SKILL_BY_ID, type Skill } from "@/lib/skills";
+import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
+import { getRecipeForSkill } from "@/lib/app-recipes";
+import type { ProjectAsset } from "@/lib/project-state";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
@@ -33,11 +37,28 @@ export type ActiveRunView = {
   error?: string;
 };
 
+function appsAcceptingMime(mime: string): Skill[] {
+  const want = mime.startsWith("image/")
+    ? "image"
+    : mime.startsWith("video/")
+      ? "video"
+      : mime.startsWith("audio/")
+        ? "audio"
+        : null;
+  if (!want) return [];
+  return SKILLS.filter((s) => {
+    const upload = getRecipeForSkill(s).steps.find((st) => st.kind === "upload");
+    if (!upload) return false;
+    return upload.accept === want || upload.accept === "any";
+  });
+}
+
 export function ProjectOutputsPanel({
   projectId,
   activeRuns,
   outputMeta,
   onRegenerate,
+  onUseInApp,
   onNewProject,
   onDismissRun,
 }: {
@@ -45,6 +66,7 @@ export function ProjectOutputsPanel({
   activeRuns: ActiveRunView[];
   outputMeta: Record<string, OutputMeta>;
   onRegenerate: (args: { skill: Skill; prompt: string; projectId: string }) => void;
+  onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
   onNewProject: () => void;
   onDismissRun: (id: string) => void;
 }) {
