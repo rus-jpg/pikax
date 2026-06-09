@@ -24,11 +24,11 @@ import { Route as AuthenticatedStudioIndexRouteImport } from './routes/_authenti
 import { Route as ApiPublicRenderTickRouteImport } from './routes/api/public/render-tick'
 import { Route as ApiAssetIdRouteImport } from './routes/api/asset.$id'
 import { Route as AuthenticatedStudioProjectIdRouteImport } from './routes/_authenticated/studio.$projectId'
-import { Route as AuthenticatedV2V2ProjectsRouteImport } from './routes/_authenticated-v2.v2.projects'
 import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenticated-v2.v2.library'
 import { Route as AuthenticatedV2V2JobsRouteImport } from './routes/_authenticated-v2.v2.jobs'
 import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
 import { Route as AuthenticatedV2V2StudioIndexRouteImport } from './routes/_authenticated-v2.v2.studio.index'
+import { Route as AuthenticatedV2V2ProjectsIndexRouteImport } from './routes/_authenticated-v2.v2.projects.index'
 import { Route as AuthenticatedV2V2StudioProjectIdRouteImport } from './routes/_authenticated-v2.v2.studio.$projectId'
 import { Route as AuthenticatedV2V2ProjectsProjectIdRouteImport } from './routes/_authenticated-v2.v2.projects.$projectId'
 
@@ -107,12 +107,6 @@ const AuthenticatedStudioProjectIdRoute =
     path: '/studio/$projectId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedV2V2ProjectsRoute =
-  AuthenticatedV2V2ProjectsRouteImport.update({
-    id: '/v2/projects',
-    path: '/v2/projects',
-    getParentRoute: () => AuthenticatedV2Route,
-  } as any)
 const AuthenticatedV2V2LibraryRoute =
   AuthenticatedV2V2LibraryRouteImport.update({
     id: '/v2/library',
@@ -135,6 +129,12 @@ const AuthenticatedV2V2StudioIndexRoute =
     path: '/v2/studio/',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
+const AuthenticatedV2V2ProjectsIndexRoute =
+  AuthenticatedV2V2ProjectsIndexRouteImport.update({
+    id: '/v2/projects/',
+    path: '/v2/projects/',
+    getParentRoute: () => AuthenticatedV2Route,
+  } as any)
 const AuthenticatedV2V2StudioProjectIdRoute =
   AuthenticatedV2V2StudioProjectIdRouteImport.update({
     id: '/v2/studio/$projectId',
@@ -143,9 +143,9 @@ const AuthenticatedV2V2StudioProjectIdRoute =
   } as any)
 const AuthenticatedV2V2ProjectsProjectIdRoute =
   AuthenticatedV2V2ProjectsProjectIdRouteImport.update({
-    id: '/$projectId',
-    path: '/$projectId',
-    getParentRoute: () => AuthenticatedV2V2ProjectsRoute,
+    id: '/v2/projects/$projectId',
+    path: '/v2/projects/$projectId',
+    getParentRoute: () => AuthenticatedV2Route,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -161,13 +161,13 @@ export interface FileRoutesByFullPath {
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
-  '/v2/projects': typeof AuthenticatedV2V2ProjectsRouteWithChildren
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
   '/v2/projects/$projectId': typeof AuthenticatedV2V2ProjectsProjectIdRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/v2/projects/': typeof AuthenticatedV2V2ProjectsIndexRoute
   '/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesByTo {
@@ -182,13 +182,13 @@ export interface FileRoutesByTo {
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
-  '/v2/projects': typeof AuthenticatedV2V2ProjectsRouteWithChildren
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
   '/v2/projects/$projectId': typeof AuthenticatedV2V2ProjectsProjectIdRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/v2/projects': typeof AuthenticatedV2V2ProjectsIndexRoute
   '/v2/studio': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesById {
@@ -207,13 +207,13 @@ export interface FileRoutesById {
   '/_authenticated-v2/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/_authenticated-v2/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/_authenticated-v2/v2/library': typeof AuthenticatedV2V2LibraryRoute
-  '/_authenticated-v2/v2/projects': typeof AuthenticatedV2V2ProjectsRouteWithChildren
   '/_authenticated/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
   '/_authenticated-v2/v2/projects/$projectId': typeof AuthenticatedV2V2ProjectsProjectIdRoute
   '/_authenticated-v2/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
+  '/_authenticated-v2/v2/projects/': typeof AuthenticatedV2V2ProjectsIndexRoute
   '/_authenticated-v2/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRouteTypes {
@@ -231,13 +231,13 @@ export interface FileRouteTypes {
     | '/v2/apps'
     | '/v2/jobs'
     | '/v2/library'
-    | '/v2/projects'
     | '/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio/'
     | '/v2/projects/$projectId'
     | '/v2/studio/$projectId'
+    | '/v2/projects/'
     | '/v2/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -252,13 +252,13 @@ export interface FileRouteTypes {
     | '/v2/apps'
     | '/v2/jobs'
     | '/v2/library'
-    | '/v2/projects'
     | '/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio'
     | '/v2/projects/$projectId'
     | '/v2/studio/$projectId'
+    | '/v2/projects'
     | '/v2/studio'
   id:
     | '__root__'
@@ -276,13 +276,13 @@ export interface FileRouteTypes {
     | '/_authenticated-v2/v2/apps'
     | '/_authenticated-v2/v2/jobs'
     | '/_authenticated-v2/v2/library'
-    | '/_authenticated-v2/v2/projects'
     | '/_authenticated/studio/$projectId'
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/_authenticated/studio/'
     | '/_authenticated-v2/v2/projects/$projectId'
     | '/_authenticated-v2/v2/studio/$projectId'
+    | '/_authenticated-v2/v2/projects/'
     | '/_authenticated-v2/v2/studio/'
   fileRoutesById: FileRoutesById
 }
@@ -404,13 +404,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioProjectIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated-v2/v2/projects': {
-      id: '/_authenticated-v2/v2/projects'
-      path: '/v2/projects'
-      fullPath: '/v2/projects'
-      preLoaderRoute: typeof AuthenticatedV2V2ProjectsRouteImport
-      parentRoute: typeof AuthenticatedV2Route
-    }
     '/_authenticated-v2/v2/library': {
       id: '/_authenticated-v2/v2/library'
       path: '/v2/library'
@@ -439,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedV2V2StudioIndexRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
+    '/_authenticated-v2/v2/projects/': {
+      id: '/_authenticated-v2/v2/projects/'
+      path: '/v2/projects'
+      fullPath: '/v2/projects/'
+      preLoaderRoute: typeof AuthenticatedV2V2ProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
     '/_authenticated-v2/v2/studio/$projectId': {
       id: '/_authenticated-v2/v2/studio/$projectId'
       path: '/v2/studio/$projectId'
@@ -448,10 +448,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated-v2/v2/projects/$projectId': {
       id: '/_authenticated-v2/v2/projects/$projectId'
-      path: '/$projectId'
+      path: '/v2/projects/$projectId'
       fullPath: '/v2/projects/$projectId'
       preLoaderRoute: typeof AuthenticatedV2V2ProjectsProjectIdRouteImport
-      parentRoute: typeof AuthenticatedV2V2ProjectsRoute
+      parentRoute: typeof AuthenticatedV2Route
     }
   }
 }
@@ -476,27 +476,13 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface AuthenticatedV2V2ProjectsRouteChildren {
-  AuthenticatedV2V2ProjectsProjectIdRoute: typeof AuthenticatedV2V2ProjectsProjectIdRoute
-}
-
-const AuthenticatedV2V2ProjectsRouteChildren: AuthenticatedV2V2ProjectsRouteChildren =
-  {
-    AuthenticatedV2V2ProjectsProjectIdRoute:
-      AuthenticatedV2V2ProjectsProjectIdRoute,
-  }
-
-const AuthenticatedV2V2ProjectsRouteWithChildren =
-  AuthenticatedV2V2ProjectsRoute._addFileChildren(
-    AuthenticatedV2V2ProjectsRouteChildren,
-  )
-
 interface AuthenticatedV2RouteChildren {
   AuthenticatedV2V2AppsRoute: typeof AuthenticatedV2V2AppsRoute
   AuthenticatedV2V2JobsRoute: typeof AuthenticatedV2V2JobsRoute
   AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
-  AuthenticatedV2V2ProjectsRoute: typeof AuthenticatedV2V2ProjectsRouteWithChildren
+  AuthenticatedV2V2ProjectsProjectIdRoute: typeof AuthenticatedV2V2ProjectsProjectIdRoute
   AuthenticatedV2V2StudioProjectIdRoute: typeof AuthenticatedV2V2StudioProjectIdRoute
+  AuthenticatedV2V2ProjectsIndexRoute: typeof AuthenticatedV2V2ProjectsIndexRoute
   AuthenticatedV2V2StudioIndexRoute: typeof AuthenticatedV2V2StudioIndexRoute
 }
 
@@ -504,8 +490,10 @@ const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
   AuthenticatedV2V2AppsRoute: AuthenticatedV2V2AppsRoute,
   AuthenticatedV2V2JobsRoute: AuthenticatedV2V2JobsRoute,
   AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
-  AuthenticatedV2V2ProjectsRoute: AuthenticatedV2V2ProjectsRouteWithChildren,
+  AuthenticatedV2V2ProjectsProjectIdRoute:
+    AuthenticatedV2V2ProjectsProjectIdRoute,
   AuthenticatedV2V2StudioProjectIdRoute: AuthenticatedV2V2StudioProjectIdRoute,
+  AuthenticatedV2V2ProjectsIndexRoute: AuthenticatedV2V2ProjectsIndexRoute,
   AuthenticatedV2V2StudioIndexRoute: AuthenticatedV2V2StudioIndexRoute,
 }
 
@@ -539,3 +527,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
