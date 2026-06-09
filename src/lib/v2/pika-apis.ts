@@ -19,8 +19,10 @@ export type PikaApi = {
   category: PikaCategory;
   /** Short marketing description used on cards. */
   description: string;
-  /** Cover image URL (from fal's gallery). */
+  /** Cover image URL. */
   cover: string;
+  /** Optional cover video URL (autoplays muted/looped in cards). */
+  coverVideo?: string;
   /** Tags rendered as chips. */
   tags: string[];
   /** Per-second pricing copy. */
