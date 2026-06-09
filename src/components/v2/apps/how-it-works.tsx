@@ -1,13 +1,18 @@
 import type { Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
+import { getAppSwatch } from "@/lib/app-swatch";
 
 export function HowItWorksV2({ skill }: { skill: Skill }) {
   const recipe = getRecipeForSkill(skill);
   const Icon = skill.icon;
+  const swatch = getAppSwatch(skill.id);
   return (
     <div className="mx-auto max-w-5xl px-8 py-12">
       <div className="mb-8 flex flex-col items-center gap-4 text-center">
-        <div className="grid h-14 w-14 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground shadow-elegant">
+        <div
+          className="grid h-14 w-14 place-items-center rounded-[30%] shadow-elegant"
+          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+        >
           <Icon className="h-6 w-6" />
         </div>
         <div>
