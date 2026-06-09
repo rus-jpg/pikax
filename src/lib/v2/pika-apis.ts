@@ -762,7 +762,7 @@ export type PikaFilter = PikaCategory | "all" | "pika";
 
 export const PIKA_CATEGORIES: { id: PikaFilter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "pika", label: "Pika only" },
+  { id: "pika", label: "Pika" },
   { id: "image-to-video", label: "Image to Video" },
   { id: "text-to-video", label: "Text to Video" },
   { id: "video-to-video", label: "Video to Video" },
