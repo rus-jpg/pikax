@@ -29,22 +29,14 @@ import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 
 const APP_SWATCHES: { bg: string; fg: string }[] = [
-  { bg: "#111111", fg: "#ffffff" },
-  { bg: "#2a2a2a", fg: "#ffffff" },
-  { bg: "#e0d8c8", fg: "#111111" },
-  { bg: "#f7f0e3", fg: "#111111" },
-  { bg: "#f5f3ee", fg: "#111111" },
-  { bg: "#ffffff", fg: "#111111" },
-  { bg: "#c9bff5", fg: "#1a1a3a" },
-  { bg: "#d4cdf5", fg: "#1a1a3a" },
-  { bg: "#f0e9a8", fg: "#3a3300" },
-  { bg: "#fbf6c2", fg: "#3a3300" },
-  { bg: "#c5edb0", fg: "#0f3a14" },
-  { bg: "#f3d4f0", fg: "#3a0f3a" },
-  { bg: "#e23b2b", fg: "#ffffff" },
-  { bg: "#5fbf78", fg: "#0f2a14" },
-  { bg: "#e84d8a", fg: "#ffffff" },
-  { bg: "#e26464", fg: "#ffffff" },
+  { bg: "#C1B8FA", fg: "#0D0D0D" },
+  { bg: "#F6F2AD", fg: "#0D0D0D" },
+  { bg: "#C6F4A3", fg: "#0D0D0D" },
+  { bg: "#F7D4FA", fg: "#0D0D0D" },
+  { bg: "#63C87D", fg: "#0D0D0D" },
+  { bg: "#E54F83", fg: "#FCF7F0" },
+  { bg: "#FCF7F0", fg: "#0D0D0D" },
+  { bg: "#0D0D0D", fg: "#FCF7F0" },
 ];
 
 function getAppSwatch(id: string) {
