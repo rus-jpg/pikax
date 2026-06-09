@@ -23,6 +23,7 @@ import { Route as ApiAssetIdRouteImport } from './routes/api/asset.$id'
 import { Route as AuthenticatedStudioProjectIdRouteImport } from './routes/_authenticated/studio.$projectId'
 import { Route as AuthenticatedV2V2ProjectsRouteImport } from './routes/_authenticated-v2.v2.projects'
 import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenticated-v2.v2.library'
+import { Route as AuthenticatedV2V2JobsRouteImport } from './routes/_authenticated-v2.v2.jobs'
 import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
 import { Route as AuthenticatedV2V2StudioIndexRouteImport } from './routes/_authenticated-v2.v2.studio.index'
 import { Route as AuthenticatedV2V2ApiIndexRouteImport } from './routes/_authenticated-v2.v2.api.index'
@@ -101,6 +102,11 @@ const AuthenticatedV2V2LibraryRoute =
     path: '/v2/library',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
+const AuthenticatedV2V2JobsRoute = AuthenticatedV2V2JobsRouteImport.update({
+  id: '/v2/jobs',
+  path: '/v2/jobs',
+  getParentRoute: () => AuthenticatedV2Route,
+} as any)
 const AuthenticatedV2V2AppsRoute = AuthenticatedV2V2AppsRouteImport.update({
   id: '/v2/apps',
   path: '/v2/apps',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
   '/_authenticated-v2/v2/apps': typeof AuthenticatedV2V2AppsRoute
+  '/_authenticated-v2/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/_authenticated-v2/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/_authenticated-v2/v2/projects': typeof AuthenticatedV2V2ProjectsRoute
   '/_authenticated/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/api/chat'
     | '/v2/apps'
+    | '/v2/jobs'
     | '/v2/library'
     | '/v2/projects'
     | '/studio/$projectId'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/api/chat'
     | '/v2/apps'
+    | '/v2/jobs'
     | '/v2/library'
     | '/v2/projects'
     | '/studio/$projectId'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/api/chat'
     | '/_authenticated-v2/v2/apps'
+    | '/_authenticated-v2/v2/jobs'
     | '/_authenticated-v2/v2/library'
     | '/_authenticated-v2/v2/projects'
     | '/_authenticated/studio/$projectId'
@@ -363,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedV2V2LibraryRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
+    '/_authenticated-v2/v2/jobs': {
+      id: '/_authenticated-v2/v2/jobs'
+      path: '/v2/jobs'
+      fullPath: '/v2/jobs'
+      preLoaderRoute: typeof AuthenticatedV2V2JobsRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
     '/_authenticated-v2/v2/apps': {
       id: '/_authenticated-v2/v2/apps'
       path: '/v2/apps'
@@ -423,6 +442,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface AuthenticatedV2RouteChildren {
   AuthenticatedV2V2AppsRoute: typeof AuthenticatedV2V2AppsRoute
+  AuthenticatedV2V2JobsRoute: typeof AuthenticatedV2V2JobsRoute
   AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
   AuthenticatedV2V2ProjectsRoute: typeof AuthenticatedV2V2ProjectsRoute
   AuthenticatedV2V2ApiSplatRoute: typeof AuthenticatedV2V2ApiSplatRoute
@@ -433,6 +453,7 @@ interface AuthenticatedV2RouteChildren {
 
 const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
   AuthenticatedV2V2AppsRoute: AuthenticatedV2V2AppsRoute,
+  AuthenticatedV2V2JobsRoute: AuthenticatedV2V2JobsRoute,
   AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
   AuthenticatedV2V2ProjectsRoute: AuthenticatedV2V2ProjectsRoute,
   AuthenticatedV2V2ApiSplatRoute: AuthenticatedV2V2ApiSplatRoute,
