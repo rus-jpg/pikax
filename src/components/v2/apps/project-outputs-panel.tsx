@@ -24,24 +24,29 @@ import { SKILL_BY_ID, type Skill } from "@/lib/skills";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
+export type ActiveRunView = {
+  id: string;
+  skill: Skill;
+  projectId: string;
+  prompt: string;
+  phase: "starting" | "polling" | "error";
+  error?: string;
+};
+
 export function ProjectOutputsPanel({
   projectId,
-  pendingProjectId,
-  pendingPrompt,
-  pendingSkill,
-  pendingPhase,
+  activeRuns,
   outputMeta,
   onRegenerate,
   onNewProject,
+  onDismissRun,
 }: {
   projectId?: string;
-  pendingProjectId?: string;
-  pendingPrompt?: string;
-  pendingSkill?: Skill;
-  pendingPhase?: "starting" | "polling";
+  activeRuns: ActiveRunView[];
   outputMeta: Record<string, OutputMeta>;
   onRegenerate: (args: { skill: Skill; prompt: string; projectId: string }) => void;
   onNewProject: () => void;
+  onDismissRun: (id: string) => void;
 }) {
   const navigate = useNavigate();
   const fetchList = useServerFn(listProjects);
@@ -53,12 +58,20 @@ export function ProjectOutputsPanel({
   });
   const projects = listQ.data?.projects ?? [];
 
+  const runsForThisProject = activeRuns.filter(
+    (r) => r.projectId === projectId,
+  );
+  const hasPendingHere = runsForThisProject.some(
+    (r) => r.phase === "starting" || r.phase === "polling",
+  );
+
   const projectQ = useQuery({
     queryKey: ["v2-project", projectId],
     queryFn: () => fetchProject({ data: { id: projectId! } }),
     enabled: !!projectId,
-    refetchInterval: pendingProjectId === projectId ? 4000 : false,
+    refetchInterval: hasPendingHere ? 4000 : false,
   });
+
 
   const project = projectQ.data?.project;
   const assets = projectQ.data?.assets ?? [];
