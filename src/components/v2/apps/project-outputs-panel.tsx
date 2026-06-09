@@ -190,18 +190,23 @@ export function ProjectOutputsPanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {projectId && (
-          <Button asChild variant="ghost" size="sm">
-            <Link
-              to="/v2/projects/$projectId"
-              params={{ projectId }}
-            >
-              <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-              Open project
-            </Link>
+        {projectId && onToggleTimeline && (
+          <Button variant="ghost" size="sm" onClick={onToggleTimeline}>
+            {timelineOpen ? (
+              <>
+                <PanelRightClose className="mr-1.5 h-3.5 w-3.5" />
+                Close Timeline
+              </>
+            ) : (
+              <>
+                <Film className="mr-1.5 h-3.5 w-3.5" />
+                Open Timeline
+              </>
+            )}
           </Button>
         )}
       </header>
+
 
       {/* Outputs scrollable list */}
       <div className="flex-1 overflow-y-auto px-6 py-5">
