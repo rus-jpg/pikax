@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
-import { AppRunner } from "@/components/v2/apps/app-runner";
+import { AppRunner, type AppRunResult } from "@/components/v2/apps/app-runner";
+import { AppResultView } from "@/components/v2/apps/app-result-view";
 import { HowItWorksV2 } from "@/components/v2/apps/how-it-works";
 import { cn } from "@/lib/utils";
 
@@ -46,10 +47,16 @@ function AppsV2() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("Featured");
   const [hovered, setHovered] = useState<Skill | null>(null);
+  const [result, setResult] = useState<AppRunResult | null>(null);
 
   const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const showcase = selected ?? hovered ?? filtered[0] ?? null;
+
+  // Clear result when switching apps.
+  useEffect(() => {
+    setResult(null);
+  }, [appId]);
 
   const selectApp = (s: Skill | null) => {
     void navigate({
@@ -67,6 +74,7 @@ function AppsV2() {
             skill={selected}
             projectId={projectId}
             onBack={() => selectApp(null)}
+            onResult={(r) => setResult(r)}
           />
         ) : (
           <>
@@ -126,9 +134,15 @@ function AppsV2() {
         )}
       </div>
 
-      {/* Right column — how it works / docs */}
+      {/* Right column — result, timeline or how-it-works */}
       <div className="flex-1 overflow-y-auto bg-background">
-        {showcase ? (
+        {result && selected ? (
+          <AppResultView
+            result={result}
+            skill={selected}
+            onRunAgain={() => setResult(null)}
+          />
+        ) : showcase ? (
           <HowItWorksV2 skill={showcase} />
         ) : (
           <div className="grid h-full place-items-center text-sm text-muted-foreground">

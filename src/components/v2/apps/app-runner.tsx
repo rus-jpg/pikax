@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ArrowLeft, ImageIcon, FolderPlus, Check } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import type { Skill } from "@/lib/skills";
 import { DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
-import { AppWizard } from "@/components/studio/app-wizard";
+import { AppWizardV2 } from "@/components/v2/apps/app-wizard-v2";
 import {
   directGenerateStart,
   directGeneratePoll,
@@ -15,14 +15,13 @@ import {
   updateProjectState,
 } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
-import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
 
-type RunResult = {
+export type AppRunResult = {
   assetId: string;
   assetUrl: string;
   mime: string;
   projectId: string;
+  prompt: string;
 };
 
 export function AppRunner({
@@ -34,7 +33,7 @@ export function AppRunner({
   skill: Skill;
   projectId?: string;
   onBack: () => void;
-  onResult?: () => void;
+  onResult?: (result: AppRunResult) => void;
 }) {
   const recipe = getRecipeForSkill(skill);
   const runStart = useServerFn(directGenerateStart);
@@ -43,17 +42,14 @@ export function AppRunner({
   const updateState = useServerFn(updateProjectState);
   const qc = useQueryClient();
 
-  // We need a project id to upload to. If we don't have one yet, lazily create
-  // a draft one so wizard uploads have somewhere to live.
   const [draftProjectId, setDraftProjectId] = useState<string | null>(
     existingProjectId ?? null,
   );
   const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "starting" | "polling" | "done" | "error">(
-    "idle",
-  );
+  const [phase, setPhase] = useState<
+    "idle" | "starting" | "polling" | "error"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<RunResult | null>(null);
 
   const creatingRef = useRef<Promise<string> | null>(null);
   const ensureProject = async (): Promise<string> => {
@@ -78,9 +74,6 @@ export function AppRunner({
     }
   };
 
-  // Eagerly create a draft project on mount so wizard uploads have a valid
-  // project id to attach to. Without this, the wizard sends a placeholder
-  // UUID and uploads fail with "Project not found".
   useEffect(() => {
     if (!draftProjectId) void ensureProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,9 +143,9 @@ export function AppRunner({
       }
       if (!finalAsset) throw new Error("Generation timed out.");
 
-      // Also append a Scene so the asset shows up on the project's timeline.
       const isVisual =
-        finalAsset.mime.startsWith("image/") || finalAsset.mime.startsWith("video/");
+        finalAsset.mime.startsWith("image/") ||
+        finalAsset.mime.startsWith("video/");
       if (isVisual) {
         try {
           await updateState({
@@ -179,13 +172,8 @@ export function AppRunner({
         }
       }
 
-      setResult({
-        ...finalAsset,
-        projectId,
-      });
-      setPhase("done");
-      onResult?.();
-      // Refresh library + projects so the new asset appears everywhere.
+      setPhase("idle");
+      onResult?.({ ...finalAsset, projectId, prompt });
       void qc.invalidateQueries({ queryKey: ["v2-library"] });
       void qc.invalidateQueries({ queryKey: ["v2-library-picker"] });
       void qc.invalidateQueries({ queryKey: ["v2-projects"] });
@@ -222,90 +210,31 @@ export function AppRunner({
       </div>
 
       <div className="flex-1 overflow-y-auto p-5">
-        {/* If we just finished, show a compact "done" card with actions */}
-        {phase === "done" && result ? (
-          <ResultPanel
-            result={result}
-            onReset={() => {
-              setResult(null);
-              setPhase("idle");
-            }}
-          />
-        ) : (
-          <>
-            {phase === "polling" || phase === "starting" ? (
-              <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
-                <Loader2 className="mb-3 h-6 w-6 animate-spin" />
-                {phase === "starting" ? "Submitting…" : "Generating… this can take a minute or two."}
-              </div>
-            ) : !draftProjectId ? (
-              <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
-                <Loader2 className="mb-3 h-6 w-6 animate-spin" />
-                Preparing workspace…
-              </div>
-            ) : (
-              <AppWizard
-                recipe={recipe}
-                projectId={draftProjectId}
-                busy={busy}
-                onSubmit={handleSubmit}
-              />
-            )}
-            {error && (
-              <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {error}
-              </p>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ResultPanel({
-  result,
-  onReset,
-}: {
-  result: RunResult;
-  onReset: () => void;
-}) {
-  return (
-    <div className="rounded-3xl border border-border bg-card p-4 shadow-elegant">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Check className="h-4 w-4 text-emerald-600" /> Result ready
-      </div>
-      <div className="overflow-hidden rounded-2xl bg-muted/40">
-        {result.mime.startsWith("image/") ? (
-          <img src={result.assetUrl} alt="" className="w-full" />
-        ) : result.mime.startsWith("video/") ? (
-          <video src={result.assetUrl} className="w-full" controls autoPlay loop />
-        ) : (
-          <div className="grid place-items-center p-12 text-3xl text-muted-foreground">
-            ♪
-            <audio src={result.assetUrl} controls className="mt-4 w-full" />
+        {phase === "polling" || phase === "starting" ? (
+          <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
+            <Loader2 className="mb-3 h-6 w-6 animate-spin" />
+            {phase === "starting"
+              ? "Submitting…"
+              : "Generating… this can take a minute or two."}
           </div>
+        ) : !draftProjectId ? (
+          <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
+            <Loader2 className="mb-3 h-6 w-6 animate-spin" />
+            Preparing workspace…
+          </div>
+        ) : (
+          <AppWizardV2
+            recipe={recipe}
+            projectId={draftProjectId}
+            busy={busy}
+            onSubmit={handleSubmit}
+          />
         )}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button asChild>
-          <Link
-            to="/v2/projects"
-            search={{ p: result.projectId }}
-          >
-            <FolderPlus className="mr-2 h-4 w-4" />
-            Open in project
-          </Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link to="/v2/library">
-            <ImageIcon className="mr-2 h-4 w-4" />
-            View in library
-          </Link>
-        </Button>
-        <Button variant="ghost" onClick={onReset}>
-          Run again
-        </Button>
+        {error && (
+          <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
