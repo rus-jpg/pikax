@@ -27,6 +27,7 @@ import { getProject, listProjects } from "@/lib/projects.functions";
 import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import type { ProjectAsset } from "@/lib/project-state";
+import { getAppSwatch } from "@/lib/app-swatch";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
