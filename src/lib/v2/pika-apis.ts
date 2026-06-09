@@ -123,6 +123,17 @@ const base = (slug: string) => ({
   schemaUrl: `https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/pika/${slug}`,
 });
 
+// Official Pika imagery (from cdn.pika.art / pika.art landing pages).
+const PIKA_BRAND_COVER =
+  "https://cdn.pika.art/pika/2.5/launch/b648eb7d-8a2f-4350-9d84-7fae958c633a.jpg";
+const PIKA_BRAND_VIDEO =
+  "https://cdn.pika.art/pika/api/launch/512be5d5-5b83-4106-bbca-1eff6c73b44c.mp4";
+const PIKAFFECTS_COVER =
+  "https://cdn.pika.art/pika/2.5/launch/275797df-23b0-4cfe-b6ba-e1e46f7e9531.webp";
+const PIKAFFECTS_VIDEO =
+  "https://cdn.pika.art/pika/api/launch/3fa56d02-ca8f-4269-80a5-6003ccdd1b99.mp4";
+
+
 export const PIKA_APIS: PikaApi[] = [
   {
     slug: "v2.2/pikaframes",
