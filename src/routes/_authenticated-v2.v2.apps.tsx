@@ -284,7 +284,7 @@ function AppsV2() {
           <AppRunner
             skill={selected}
             projectId={projectId}
-            busy={isRunning}
+            busy={false}
             onBack={() => selectApp(null)}
             onProjectReady={(id) => setProjectIdInUrl(id)}
             onStartRun={(args) => void handleStartFromWizard(args)}
