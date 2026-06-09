@@ -242,7 +242,7 @@ export function ProjectOutputsPanel({
                           onRegenerate({
                             skill,
                             prompt: meta.prompt,
-                            projectId,
+                            projectId: projectId!,
                           })
                         }
                       >
