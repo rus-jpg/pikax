@@ -95,8 +95,8 @@ export function ProjectOutputsPanel({
     [assets],
   );
 
-  const isPendingHere =
-    !!pendingProjectId && pendingProjectId === projectId && !!pendingSkill;
+  const hasRunsHere = runsForThisProject.length > 0;
+
 
   const selectProject = (id: string) => {
     void navigate({
