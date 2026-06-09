@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, Sparkles, Upload as UploadIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -6,22 +6,21 @@ import { uploadProjectAsset } from "@/lib/projects.functions";
 import type { AppRecipe, AppStep } from "@/lib/app-recipes";
 import { composePrompt } from "@/lib/app-recipes";
 import type { AssetKind, ProjectAsset } from "@/lib/project-state";
+import {
+  AssetPickerDialog,
+  type PickerAccept,
+  type PickerResult,
+} from "@/components/v2/apps/asset-picker-dialog";
 
 type StepInputs = Record<string, string>;
 type StepUploads = Record<string, ProjectAsset[]>;
 
-function acceptAttr(accept: AppStep["accept"]): string {
-  switch (accept) {
-    case "image":
-      return "image/*";
-    case "video":
-      return "video/*";
-    case "audio":
-      return "audio/*";
-    default:
-      return "*/*";
-  }
+function pickerAcceptFor(accept: AppStep["accept"]): PickerAccept {
+  if (accept === "image" || accept === "video" || accept === "audio")
+    return accept;
+  return "any";
 }
+
 
 function kindForUpload(accept: AppStep["accept"]): AssetKind {
   if (accept === "audio") return "audio";
@@ -74,7 +73,7 @@ export function AppWizardV2({
   const [inputs, setInputs] = useState<StepInputs>({});
   const [uploads, setUploads] = useState<StepUploads>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [pickerStepId, setPickerStepId] = useState<string | null>(null);
 
   const stepIsComplete = (step: AppStep): boolean => {
     if (step.kind === "upload") return (uploads[step.id] ?? []).length > 0;
@@ -92,12 +91,18 @@ export function AppWizardV2({
     onSubmit({ prompt, assets: allAssets });
   };
 
-  const handleFiles = async (step: AppStep, files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handlePicked = async (step: AppStep, result: PickerResult) => {
+    if (result.kind === "library") {
+      setUploads((prev) => ({
+        ...prev,
+        [step.id]: [...(prev[step.id] ?? []), ...result.assets],
+      }));
+      return;
+    }
     setUploadingId(step.id);
     try {
       const out: ProjectAsset[] = [];
-      for (const f of Array.from(files)) {
+      for (const f of result.files) {
         out.push(await fileToProjectAsset(f, projectId, step.accept));
       }
       setUploads((prev) => ({
@@ -108,8 +113,6 @@ export function AppWizardV2({
       console.error("[app-wizard-v2] upload failed", err);
     } finally {
       setUploadingId(null);
-      const r = fileRefs.current[step.id];
-      if (r) r.value = "";
     }
   };
 
@@ -162,7 +165,7 @@ export function AppWizardV2({
               <div>
                 <button
                   type="button"
-                  onClick={() => fileRefs.current[step.id]?.click()}
+                  onClick={() => setPickerStepId(step.id)}
                   disabled={uploadingId === step.id}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background/40 px-4 py-6 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:opacity-60"
                 >
@@ -180,15 +183,14 @@ export function AppWizardV2({
                     </>
                   )}
                 </button>
-                <input
-                  ref={(el) => {
-                    fileRefs.current[step.id] = el;
-                  }}
-                  type="file"
-                  accept={acceptAttr(step.accept)}
-                  className="hidden"
+                <AssetPickerDialog
+                  open={pickerStepId === step.id}
+                  onOpenChange={(v) =>
+                    setPickerStepId(v ? step.id : null)
+                  }
+                  accept={pickerAcceptFor(step.accept)}
                   multiple
-                  onChange={(e) => void handleFiles(step, e.target.files)}
+                  onPick={(result) => void handlePicked(step, result)}
                 />
                 {stepUploads.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
