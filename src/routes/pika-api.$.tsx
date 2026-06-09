@@ -6,7 +6,6 @@ import {
   Copy,
   FileJson,
   ImagePlus,
-  LogIn,
   Music2,
   Plus,
   RotateCcw,
