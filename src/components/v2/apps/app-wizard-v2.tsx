@@ -165,7 +165,7 @@ export function AppWizardV2({
               <div>
                 <button
                   type="button"
-                  onClick={() => fileRefs.current[step.id]?.click()}
+                  onClick={() => setPickerStepId(step.id)}
                   disabled={uploadingId === step.id}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background/40 px-4 py-6 text-sm text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:opacity-60"
                 >
@@ -183,15 +183,14 @@ export function AppWizardV2({
                     </>
                   )}
                 </button>
-                <input
-                  ref={(el) => {
-                    fileRefs.current[step.id] = el;
-                  }}
-                  type="file"
-                  accept={acceptAttr(step.accept)}
-                  className="hidden"
+                <AssetPickerDialog
+                  open={pickerStepId === step.id}
+                  onOpenChange={(v) =>
+                    setPickerStepId(v ? step.id : null)
+                  }
+                  accept={pickerAcceptFor(step.accept)}
                   multiple
-                  onChange={(e) => void handleFiles(step, e.target.files)}
+                  onPick={(result) => void handlePicked(step, result)}
                 />
                 {stepUploads.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
