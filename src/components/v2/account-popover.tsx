@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronUp, LogOut, Sparkles } from "lucide-react";
+import { ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +11,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useLayoutVersion, getMirrorPath } from "@/hooks/use-layout-version";
 
-export function AccountPopover() {
+export function AccountPopoverV2() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { setVersion } = useLayoutVersion();
+  const { version, setVersion } = useLayoutVersion();
   const [user, setUser] = useState<{
     email: string | null;
     name: string | null;
@@ -52,6 +52,12 @@ export function AccountPopover() {
     }
   };
 
+  const switchToClassic = () => {
+    setVersion("v1");
+    const target = getMirrorPath(pathname, "v1");
+    window.location.assign(target);
+  };
+
   if (!user) return null;
 
   const initials = (user.name ?? user.email ?? "?")
@@ -66,23 +72,16 @@ export function AccountPopover() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full bg-card px-2.5 py-1.5 pr-3 shadow-sm border border-border/60 transition hover:bg-muted"
+          className="flex items-center gap-2 rounded-full px-1 py-1 transition hover:bg-muted/60"
         >
-          <Avatar className="h-7 w-7">
+          <Avatar className="h-8 w-8">
             {user.avatar ? <AvatarImage src={user.avatar} alt="" /> : null}
             <AvatarFallback>{initials || "U"}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-foreground hidden sm:block">
-            {user.name ?? user.email}
-          </span>
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        side="bottom"
-        align="end"
-        className="w-64 p-2"
-      >
+      <PopoverContent side="bottom" align="end" className="w-64 p-2">
         <div className="px-2 py-2 border-b border-border mb-1">
           <p className="text-sm font-medium truncate">
             {user.name ?? "Account"}
@@ -96,13 +95,10 @@ export function AccountPopover() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-2"
-          onClick={() => {
-            setVersion("v2");
-            window.location.assign(getMirrorPath(pathname, "v2"));
-          }}
+          onClick={switchToClassic}
         >
-          <Sparkles className="h-4 w-4" />
-          Try new layout
+          <LayoutDashboard className="h-4 w-4" />
+          Switch to classic layout
         </Button>
         <Button
           variant="ghost"
