@@ -305,7 +305,7 @@ export function AppsWorkspace({
       className="h-screen overflow-hidden"
     >
       {/* Left column — apps / runner */}
-      <ResizablePanel defaultSize={28} minSize={20} maxSize={45}>
+      <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
         <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
           {selected ? (
             <AppRunner
@@ -382,7 +382,7 @@ export function AppsWorkspace({
       <ResizableHandle withHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel defaultSize={showTimeline ? 42 : 72} minSize={30}>
+      <ResizablePanel defaultSize={showTimeline ? "42%" : "72%"} minSize="30%">
         <div className="h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
             <ProjectOutputsPanel
@@ -410,7 +410,7 @@ export function AppsWorkspace({
         <>
           <ResizableHandle withHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+          <ResizablePanel defaultSize="30%" minSize="20%" maxSize="50%">
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
