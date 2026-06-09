@@ -348,16 +348,20 @@ export function AppsWorkspace({
               <div className="flex-1 overflow-y-auto p-3">
                 <div className={cn("grid gap-3", appsGridCols)}>
                   {filtered.map((s) => {
-                    const Icon = s.icon;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => onSelectApp(s.id)}
-                        className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
-                      >
-                        <div className="grid h-9 w-9 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground">
-                          <Icon className="h-4 w-4" />
-                        </div>
+                     const Icon = s.icon;
+                     const swatch = getAppSwatch(s.id);
+                     return (
+                       <button
+                         key={s.id}
+                         onClick={() => onSelectApp(s.id)}
+                         className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                       >
+                         <div
+                           className="grid h-9 w-9 place-items-center rounded-[30%]"
+                           style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                         >
+                           <Icon className="h-4 w-4" />
+                         </div>
                         <div className="text-sm font-semibold leading-tight text-foreground">
                           {s.label}
                         </div>
