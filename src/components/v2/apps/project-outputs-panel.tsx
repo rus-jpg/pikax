@@ -27,6 +27,7 @@ import { getProject, listProjects } from "@/lib/projects.functions";
 import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import type { ProjectAsset } from "@/lib/project-state";
+import { getAppSwatch } from "@/lib/app-swatch";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
@@ -393,15 +394,19 @@ function UseInAppMenu({
         <DropdownMenuSeparator />
         {apps.map((s) => {
           const Icon = s.icon;
-          return (
-            <DropdownMenuItem
-              key={s.id}
-              onSelect={() => onUseInApp({ skill: s, asset })}
-              className="flex items-start gap-2"
-            >
-              <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-brand-gradient text-primary-foreground">
-                <Icon className="h-3 w-3" />
-              </div>
+           const sw = getAppSwatch(s.id);
+           return (
+             <DropdownMenuItem
+               key={s.id}
+               onSelect={() => onUseInApp({ skill: s, asset })}
+               className="flex items-start gap-2"
+             >
+               <div
+                 className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md"
+                 style={{ backgroundColor: sw.bg, color: sw.fg }}
+               >
+                 <Icon className="h-3 w-3" />
+               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm">{s.label}</div>
                 <div className="line-clamp-1 text-[10px] text-muted-foreground">
