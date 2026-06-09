@@ -597,7 +597,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "GPT Image 2, OpenAI's latest image model, is capable of creating extremely detailed images with pixel-perfect text rendering and brand-consistent product photography.",
-      cover: thumb("openai/gpt-image-2"),
+      cover:
+        "https://v3b.fal.media/files/b/0a981c3d/hdg8iaY8yShEwChTPjFah_OZUgg7Z4.jpg",
       tags: ["openai", "text-to-image", "typography"],
       pricing: "Token-based — text $5/1M in · $10/1M out; image $8/1M in · $30/1M out",
       inputs: ["Prompt", "Optional reference images", "Size, quality"],
@@ -611,7 +612,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "image-to-image",
       description:
         "GPT Image 2's edit endpoint makes fine-grained, detailed edits to your images while preserving identity and style.",
-      cover: thumb("openai/gpt-image-2/edit"),
+      cover:
+        "https://v3b.fal.media/files/b/0a970c4a/BkrYELYOiaZMXCw-pgRcB_QlgOenEx.png",
       tags: ["openai", "edit", "typography"],
       pricing: "Token-based pricing",
       inputs: ["Reference image", "Edit prompt"],
@@ -659,7 +661,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "FLUX 1.1 [pro] ultra delivers 4MP high-resolution images with exceptional prompt adherence and detail.",
-      cover: thumb("fal-ai/flux-pro/v1.1-ultra"),
+      cover:
+        "https://storage.googleapis.com/falserverless/flux-lora/example-images/knight.jpeg",
       tags: ["flux", "bfl", "high-res"],
       pricing: "Per-image pricing",
       inputs: ["Prompt", "Aspect ratio"],
@@ -673,7 +676,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "image-to-image",
       description:
         "FLUX.1 Kontext [pro] handles in-context image editing — change subjects, styles, and scenes with text instructions.",
-      cover: thumb("fal-ai/flux-pro/kontext"),
+      cover:
+        "https://fal.media/files/elephant/foZaaLzgc--Vlcy3XwrNQ_c51f2cc166534c5997dcc0b072e41e09.jpg",
       tags: ["flux", "edit", "kontext"],
       pricing: "Per-image pricing",
       inputs: ["Reference image", "Edit prompt"],
@@ -690,7 +694,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "Ideogram 3.0 generates images with industry-leading legible text rendering and strong design aesthetics.",
-      cover: thumb("fal-ai/ideogram/v3"),
+      cover:
+        "https://fal.media/files/lion/FHOx4y4a0ef7Sgmo-sOUR_image.png",
       tags: ["ideogram", "typography", "design"],
       pricing: "Per-image pricing",
       inputs: ["Prompt", "Style, aspect ratio"],
@@ -737,7 +742,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-audio",
       description:
         "Stable Audio 2.5 from Stability AI generates high-quality music and sound effects with enterprise-grade creative control.",
-      cover: thumb("fal-ai/stable-audio-25/audio-to-audio"),
+      cover:
+        "https://fal.media/files/lion/N_r3ILjHQBEDIf8umQMMd_f51771186f184c43ab1257350772d2f6.jpg",
       tags: ["stability", "music", "sfx"],
       pricing: "$0.20 per audio",
       inputs: ["Prompt or reference audio", "Duration"],
