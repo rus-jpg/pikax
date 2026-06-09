@@ -301,6 +301,8 @@ function AppsV2() {
             skill={selected}
             projectId={projectId}
             busy={false}
+            seedAsset={seedAsset}
+            onSeedConsumed={() => setSeedAsset(null)}
             onBack={() => selectApp(null)}
             onProjectReady={(id) => setProjectIdInUrl(id)}
             onStartRun={(args) => void handleStartFromWizard(args)}
