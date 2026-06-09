@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, ArrowLeft, ImageIcon, FolderPlus, Check } from "lucide-react";
@@ -55,19 +55,36 @@ export function AppRunner({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
 
+  const creatingRef = useRef<Promise<string> | null>(null);
   const ensureProject = async (): Promise<string> => {
     if (draftProjectId) return draftProjectId;
-    const out = await createProj({
-      data: {
-        title: skill.label,
-        skill: skill.id,
-        studioMode: skill.kind,
-        studioModel: skill.model,
-      },
-    });
-    setDraftProjectId(out.id);
-    return out.id;
+    if (creatingRef.current) return creatingRef.current;
+    creatingRef.current = (async () => {
+      const out = await createProj({
+        data: {
+          title: skill.label,
+          skill: skill.id,
+          studioMode: skill.kind,
+          studioModel: skill.model,
+        },
+      });
+      setDraftProjectId(out.id);
+      return out.id;
+    })();
+    try {
+      return await creatingRef.current;
+    } finally {
+      creatingRef.current = null;
+    }
   };
+
+  // Eagerly create a draft project on mount so wizard uploads have a valid
+  // project id to attach to. Without this, the wizard sends a placeholder
+  // UUID and uploads fail with "Project not found".
+  useEffect(() => {
+    if (!draftProjectId) void ensureProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skill.id]);
 
   const handleSubmit = async ({
     prompt,
@@ -221,10 +238,15 @@ export function AppRunner({
                 <Loader2 className="mb-3 h-6 w-6 animate-spin" />
                 {phase === "starting" ? "Submitting…" : "Generating… this can take a minute or two."}
               </div>
+            ) : !draftProjectId ? (
+              <div className="grid place-items-center rounded-3xl border border-border/60 bg-muted/30 p-8 text-sm text-muted-foreground">
+                <Loader2 className="mb-3 h-6 w-6 animate-spin" />
+                Preparing workspace…
+              </div>
             ) : (
               <AppWizard
                 recipe={recipe}
-                projectId={draftProjectId ?? "00000000-0000-0000-0000-000000000000"}
+                projectId={draftProjectId}
                 busy={busy}
                 onSubmit={handleSubmit}
               />
