@@ -11,6 +11,12 @@ import {
   ProjectOutputsPanel,
   type OutputMeta,
 } from "@/components/v2/apps/project-outputs-panel";
+import { ProjectTimelinePanel } from "@/components/v2/apps/project-timeline-panel";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   directGenerateStart,
   directGeneratePoll,
@@ -21,6 +27,7 @@ import {
 } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
+
 
 const TABS = [
   "Featured",
@@ -89,6 +96,8 @@ export function AppsWorkspace({
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+
 
   const handleUseInApp = ({
     skill,
@@ -287,106 +296,133 @@ export function AppsWorkspace({
   const hasOutputsContext =
     !!projectId || activeRuns.length > 0;
 
-  return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Left column */}
-      <div className="flex w-[420px] shrink-0 flex-col border-r border-border/50 bg-card/30">
-        {selected ? (
-          <AppRunner
-            skill={selected}
-            projectId={projectId}
-            busy={false}
-            seedAsset={seedAsset}
-            onSeedConsumed={() => setSeedAsset(null)}
-            onBack={() => onSelectApp(undefined)}
-            // Don't surface the draft project until generation succeeds —
-            // startRun calls onProjectIdChange when it actually starts.
-            onStartRun={(args) => void handleStartFromWizard(args)}
-          />
-        ) : (
-          <>
-            <header className="border-b border-border/50 px-5 pb-3 pt-6">
-              <h1 className="font-display text-2xl font-semibold tracking-tight">
-                Apps
-              </h1>
-              {projectId && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Adding to current project · pick an app to add more media.
-                </p>
-              )}
-              <div className="mt-4 flex gap-1 overflow-x-auto pb-1">
-                {TABS.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition",
-                      tab === t
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </header>
-            <div className="flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-2 gap-3">
-                {filtered.map((s) => {
-                  const Icon = s.icon;
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => onSelectApp(s.id)}
-                      className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
-                    >
-                      <div className="grid h-9 w-9 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="text-sm font-semibold leading-tight text-foreground">
-                        {s.label}
-                      </div>
-                      <div className="line-clamp-2 text-[11px] text-muted-foreground">
-                        {s.description}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              {filtered.length === 0 && (
-                <p className="p-6 text-center text-sm text-muted-foreground">
-                  No apps in this category yet.
-                </p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+  const showTimeline = timelineOpen && !!projectId;
+  const appsGridCols = showTimeline ? "grid-cols-1" : "grid-cols-2";
 
-      {/* Right column */}
-      <div className="flex-1 overflow-hidden bg-background">
-        {hasOutputsContext ? (
-          <ProjectOutputsPanel
-            projectId={projectId ?? activeRuns[0]?.projectId}
-            activeRuns={activeRuns}
-            outputMeta={outputMeta}
-            onRegenerate={(args) => void handleRegenerate(args)}
-            onUseInApp={handleUseInApp}
-            onNewProject={handleNewProject}
-            onDismissRun={dismissRun}
-          />
-        ) : selected ? (
-          <div className="grid h-full place-items-center overflow-y-auto p-6">
-            <HowItWorksV2 skill={selected} />
-          </div>
-        ) : (
-          <EmptyPickAnApp />
-        )}
-      </div>
-    </div>
+  return (
+    <ResizablePanelGroup
+      orientation="horizontal"
+      className="h-screen overflow-hidden"
+    >
+      {/* Left column — apps / runner */}
+      <ResizablePanel defaultSize={28} minSize={20} maxSize={45}>
+        <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
+          {selected ? (
+            <AppRunner
+              skill={selected}
+              projectId={projectId}
+              busy={false}
+              seedAsset={seedAsset}
+              onSeedConsumed={() => setSeedAsset(null)}
+              onBack={() => onSelectApp(undefined)}
+              onStartRun={(args) => void handleStartFromWizard(args)}
+            />
+          ) : (
+            <>
+              <header className="border-b border-border/50 px-5 pb-3 pt-6">
+                <h1 className="font-display text-2xl font-semibold tracking-tight">
+                  Apps
+                </h1>
+                {projectId && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Adding to current project · pick an app to add more media.
+                  </p>
+                )}
+                <div className="mt-4 flex gap-1 overflow-x-auto pb-1">
+                  {TABS.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTab(t)}
+                      className={cn(
+                        "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition",
+                        tab === t
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </header>
+              <div className="flex-1 overflow-y-auto p-3">
+                <div className={cn("grid gap-3", appsGridCols)}>
+                  {filtered.map((s) => {
+                    const Icon = s.icon;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => onSelectApp(s.id)}
+                        className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                      >
+                        <div className="grid h-9 w-9 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="text-sm font-semibold leading-tight text-foreground">
+                          {s.label}
+                        </div>
+                        <div className="line-clamp-2 text-[11px] text-muted-foreground">
+                          {s.description}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {filtered.length === 0 && (
+                  <p className="p-6 text-center text-sm text-muted-foreground">
+                    No apps in this category yet.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
+
+      {/* Middle column — outputs */}
+      <ResizablePanel defaultSize={showTimeline ? 42 : 72} minSize={30}>
+        <div className="h-full overflow-hidden bg-background">
+          {hasOutputsContext ? (
+            <ProjectOutputsPanel
+              projectId={projectId ?? activeRuns[0]?.projectId}
+              activeRuns={activeRuns}
+              outputMeta={outputMeta}
+              onRegenerate={(args) => void handleRegenerate(args)}
+              onUseInApp={handleUseInApp}
+              onNewProject={handleNewProject}
+              onDismissRun={dismissRun}
+              timelineOpen={showTimeline}
+              onToggleTimeline={() => setTimelineOpen((v) => !v)}
+            />
+          ) : selected ? (
+            <div className="grid h-full place-items-center overflow-y-auto p-6">
+              <HowItWorksV2 skill={selected} />
+            </div>
+          ) : (
+            <EmptyPickAnApp />
+          )}
+        </div>
+      </ResizablePanel>
+
+      {showTimeline && (
+        <>
+          <ResizableHandle withHandle />
+          {/* Right column — timeline */}
+          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+            <ProjectTimelinePanel
+              projectId={projectId}
+              onClose={() => setTimelineOpen(false)}
+            />
+          </ResizablePanel>
+        </>
+      )}
+    </ResizablePanelGroup>
   );
 }
+
+
 
 function EmptyPickAnApp() {
   return (

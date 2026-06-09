@@ -1,17 +1,19 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ChevronDown,
-  FolderOpen,
+  Film,
   Loader2,
+  PanelRightClose,
   Plus,
   RotateCcw,
   Sparkles,
   Wand2,
   X,
 } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +63,8 @@ export function ProjectOutputsPanel({
   onUseInApp,
   onNewProject,
   onDismissRun,
+  timelineOpen,
+  onToggleTimeline,
 }: {
   projectId?: string;
   activeRuns: ActiveRunView[];
@@ -69,7 +73,10 @@ export function ProjectOutputsPanel({
   onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
   onNewProject: () => void;
   onDismissRun: (id: string) => void;
+  timelineOpen?: boolean;
+  onToggleTimeline?: () => void;
 }) {
+
   const navigate = useNavigate();
   const fetchList = useServerFn(listProjects);
   const fetchProject = useServerFn(getProject);
@@ -183,18 +190,23 @@ export function ProjectOutputsPanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {projectId && (
-          <Button asChild variant="ghost" size="sm">
-            <Link
-              to="/v2/projects/$projectId"
-              params={{ projectId }}
-            >
-              <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-              Open project
-            </Link>
+        {projectId && onToggleTimeline && (
+          <Button variant="ghost" size="sm" onClick={onToggleTimeline}>
+            {timelineOpen ? (
+              <>
+                <PanelRightClose className="mr-1.5 h-3.5 w-3.5" />
+                Close Timeline
+              </>
+            ) : (
+              <>
+                <Film className="mr-1.5 h-3.5 w-3.5" />
+                Open Timeline
+              </>
+            )}
           </Button>
         )}
       </header>
+
 
       {/* Outputs scrollable list */}
       <div className="flex-1 overflow-y-auto px-6 py-5">
