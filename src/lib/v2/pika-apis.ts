@@ -5,7 +5,10 @@ export type PikaCategory =
   | "image-to-video"
   | "text-to-video"
   | "video-to-video"
-  | "audio-to-video";
+  | "audio-to-video"
+  | "text-to-image"
+  | "image-to-image"
+  | "text-to-audio";
 
 export type PikaApi = {
   /** URL-safe slug used as the splat param, e.g. "v2.2/pikaframes". */
@@ -336,7 +339,265 @@ export const PIKA_APIS: PikaApi[] = [
     ],
     outputs: ["MP4 video with lips and expressions synced to audio"],
   },
+
+  // ─── Third-party models available via fal.ai ─────────────────────────────
+  ...thirdPartyFalModels(),
 ];
+
+function fal(slug: string) {
+  return {
+    endpointId: `fal-ai/${slug}`,
+    falUrl: `https://fal.ai/models/fal-ai/${slug}`,
+    schemaUrl: `https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/${slug}`,
+  };
+}
+
+function thirdPartyFalModels(): PikaApi[] {
+  return [
+    {
+      slug: "bytedance/seedance/v2/text-to-video",
+      ...fal("bytedance/seedance/v2/text-to-video"),
+      name: "Seedance 2.0 — Text to Video",
+      tagline: "ByteDance's flagship text-to-video model",
+      category: "text-to-video",
+      description:
+        "Seedance 2.0 generates high-fidelity cinematic video from a text prompt with strong motion coherence and stylistic range.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["bytedance", "cinematic", "hi-fi"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Aspect ratio, duration"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "bytedance/seedance/v2/image-to-video",
+      ...fal("bytedance/seedance/v2/image-to-video"),
+      name: "Seedance 2.0 — Image to Video",
+      tagline: "Animate a still image with ByteDance Seedance",
+      category: "image-to-video",
+      description:
+        "Bring stills to life with cinematic motion using Seedance 2.0's image-to-video pipeline.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["bytedance", "cinematic"],
+      pricing: "Per-second pricing",
+      inputs: ["Image URL", "Prompt"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "veo/v3/text-to-video",
+      ...fal("veo/v3/text-to-video"),
+      name: "Google Veo 3",
+      tagline: "Google DeepMind's flagship video model",
+      category: "text-to-video",
+      description:
+        "Veo 3 produces photoreal video with synchronized native audio, advanced camera control, and long-form coherence.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["google", "photoreal", "audio"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Aspect ratio, duration"],
+      outputs: ["MP4 video with audio"],
+    },
+    {
+      slug: "kling-video/v2/master/text-to-video",
+      ...fal("kling-video/v2/master/text-to-video"),
+      name: "Kling 2.0 Master",
+      tagline: "Kuaishou Kling — flagship text-to-video",
+      category: "text-to-video",
+      description:
+        "Kling 2.0 Master delivers state-of-the-art motion realism and prompt adherence for cinematic generations.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["kling", "cinematic", "realism"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Duration"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "kling-video/v2/master/image-to-video",
+      ...fal("kling-video/v2/master/image-to-video"),
+      name: "Kling 2.0 — Image to Video",
+      tagline: "Animate images with Kling 2.0 Master",
+      category: "image-to-video",
+      description:
+        "Bring images to life with Kling's flagship image-to-video model, with strong subject preservation.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["kling", "image-to-video"],
+      pricing: "Per-second pricing",
+      inputs: ["Image URL", "Prompt"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "minimax/hailuo-02/text-to-video",
+      ...fal("minimax/hailuo-02/text-to-video"),
+      name: "MiniMax Hailuo 02",
+      tagline: "MiniMax flagship video generator",
+      category: "text-to-video",
+      description:
+        "Hailuo 02 generates expressive, cinematic video with strong character control and physical realism.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["minimax", "hailuo"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Duration"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "runway/gen4/turbo/image-to-video",
+      ...fal("runway/gen4/turbo/image-to-video"),
+      name: "Runway Gen-4 Turbo",
+      tagline: "Runway's fast, high-quality image-to-video",
+      category: "image-to-video",
+      description:
+        "Runway Gen-4 Turbo turns images into video with industry-leading motion quality at a faster speed.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["runway", "gen-4", "fast"],
+      pricing: "Per-second pricing",
+      inputs: ["Image URL", "Prompt"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "wan/v2.2/text-to-video",
+      ...fal("wan/v2.2/text-to-video"),
+      name: "Wan 2.2",
+      tagline: "Alibaba Wan — open text-to-video",
+      category: "text-to-video",
+      description:
+        "Wan 2.2 is Alibaba's open-source flagship text-to-video model with strong prompt fidelity.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["wan", "alibaba", "open"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Duration"],
+      outputs: ["MP4 video"],
+    },
+    {
+      slug: "luma-dream-machine/ray-3",
+      ...fal("luma-dream-machine/ray-3"),
+      name: "Luma Ray 3",
+      tagline: "Luma's flagship Dream Machine video model",
+      category: "text-to-video",
+      description:
+        "Luma Ray 3 delivers cinematic motion, lifelike physics, and strong camera control.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["luma", "ray-3", "dream-machine"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt or image", "Duration"],
+      outputs: ["MP4 video"],
+    },
+
+    // ─── Image generation ──────────────────────────────────────────────────
+    {
+      slug: "openai/gpt-image-2",
+      ...fal("openai/gpt-image-2"),
+      name: "GPT Image 2",
+      tagline: "OpenAI's flagship image generation model",
+      category: "text-to-image",
+      description:
+        "GPT Image 2 generates highly detailed images with excellent prompt adherence, native text rendering, and image editing.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["openai", "text-to-image", "editing"],
+      pricing: "Per-image pricing by tier (low/medium/high)",
+      inputs: ["Prompt", "Optional reference images", "Size, quality"],
+      outputs: ["PNG image"],
+    },
+    {
+      slug: "gemini-flash-image/nano-banana",
+      ...fal("gemini-flash-image/nano-banana"),
+      name: "Nano Banana (Gemini Flash Image)",
+      tagline: "Google's Gemini 2.5 Flash image model",
+      category: "text-to-image",
+      description:
+        "Nano Banana is Google's fast image generation and editing model with conversational refinement.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["google", "gemini", "fast"],
+      pricing: "Per-image pricing",
+      inputs: ["Prompt", "Optional reference images"],
+      outputs: ["PNG image"],
+    },
+    {
+      slug: "flux-pro/v1.1-ultra",
+      ...fal("flux-pro/v1.1-ultra"),
+      name: "FLUX 1.1 [pro] ultra",
+      tagline: "Black Forest Labs — flagship FLUX",
+      category: "text-to-image",
+      description:
+        "FLUX 1.1 [pro] ultra delivers 4MP high-resolution images with exceptional prompt adherence and detail.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["flux", "bfl", "high-res"],
+      pricing: "Per-image pricing",
+      inputs: ["Prompt", "Aspect ratio"],
+      outputs: ["PNG / JPEG image up to 4MP"],
+    },
+    {
+      slug: "flux-pro/kontext",
+      ...fal("flux-pro/kontext"),
+      name: "FLUX.1 Kontext [pro]",
+      tagline: "Image editing with FLUX Kontext",
+      category: "image-to-image",
+      description:
+        "FLUX.1 Kontext [pro] handles in-context image editing — change subjects, styles, and scenes with text instructions.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["flux", "edit", "kontext"],
+      pricing: "Per-image pricing",
+      inputs: ["Reference image", "Edit prompt"],
+      outputs: ["Edited image"],
+    },
+    {
+      slug: "ideogram/v3",
+      ...fal("ideogram/v3"),
+      name: "Ideogram 3.0",
+      tagline: "State-of-the-art typography in images",
+      category: "text-to-image",
+      description:
+        "Ideogram 3.0 generates images with industry-leading legible text rendering and strong design aesthetics.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["ideogram", "typography", "design"],
+      pricing: "Per-image pricing",
+      inputs: ["Prompt", "Style, aspect ratio"],
+      outputs: ["PNG image"],
+    },
+    {
+      slug: "recraft-v3",
+      ...fal("recraft-v3"),
+      name: "Recraft V3",
+      tagline: "Brand-grade image & vector generation",
+      category: "text-to-image",
+      description:
+        "Recraft V3 generates images and vector art with brand-consistent styles and excellent text rendering.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["recraft", "vector", "brand"],
+      pricing: "Per-image pricing",
+      inputs: ["Prompt", "Style preset"],
+      outputs: ["Raster or vector image"],
+    },
+
+    // ─── Audio ────────────────────────────────────────────────────────────
+    {
+      slug: "elevenlabs/tts/multilingual-v2",
+      ...fal("elevenlabs/tts/multilingual-v2"),
+      name: "ElevenLabs Multilingual v2",
+      tagline: "Lifelike text-to-speech in 29 languages",
+      category: "text-to-audio",
+      description:
+        "ElevenLabs Multilingual v2 produces natural, expressive voiceover across 29 languages with voice cloning support.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["elevenlabs", "tts", "voice"],
+      pricing: "Per-character pricing",
+      inputs: ["Text", "Voice", "Stability / similarity"],
+      outputs: ["MP3 audio"],
+    },
+    {
+      slug: "stable-audio-25",
+      ...fal("stable-audio-25"),
+      name: "Stable Audio 2.5",
+      tagline: "Stability AI — music & sound effects",
+      category: "text-to-audio",
+      description:
+        "Stable Audio 2.5 generates full music tracks and sound effects from a text prompt, up to 3 minutes.",
+      cover: PIKA_BRAND_COVER,
+      tags: ["stability", "music", "sfx"],
+      pricing: "Per-second pricing",
+      inputs: ["Prompt", "Duration"],
+      outputs: ["WAV / MP3 audio"],
+    },
+  ];
+}
 
 export function getPikaApi(slug: string): PikaApi | undefined {
   return PIKA_APIS.find((a) => a.slug === slug);
@@ -348,4 +609,7 @@ export const PIKA_CATEGORIES: { id: PikaCategory | "all"; label: string }[] = [
   { id: "text-to-video", label: "Text to Video" },
   { id: "video-to-video", label: "Video to Video" },
   { id: "audio-to-video", label: "Audio to Video" },
+  { id: "text-to-image", label: "Text to Image" },
+  { id: "image-to-image", label: "Image to Image" },
+  { id: "text-to-audio", label: "Text to Audio" },
 ];
