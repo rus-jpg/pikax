@@ -65,9 +65,16 @@ export function ProjectOutputsPanel({
     () =>
       assets
         .filter((a) =>
-          ["keyframe", "image", "video", "audio", "music", "voiceover", "final"].includes(
-            a.kind,
-          ),
+          [
+            "keyframe",
+            "image",
+            "reference",
+            "video",
+            "audio",
+            "music",
+            "voiceover",
+            "final",
+          ].includes(a.kind),
         )
         .slice()
         .reverse(),
