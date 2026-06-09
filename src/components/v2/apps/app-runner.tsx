@@ -132,6 +132,8 @@ export function AppRunner({
             recipe={recipe}
             projectId={draftProjectId}
             busy={busy}
+            seedAsset={seedAsset ?? null}
+            onSeedConsumed={onSeedConsumed}
             onSubmit={handleSubmit}
           />
         )}
