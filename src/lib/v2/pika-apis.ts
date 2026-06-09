@@ -612,7 +612,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "image-to-image",
       description:
         "GPT Image 2's edit endpoint makes fine-grained, detailed edits to your images while preserving identity and style.",
-      cover: thumb("openai/gpt-image-2/edit"),
+      cover:
+        "https://v3b.fal.media/files/b/0a970c4a/BkrYELYOiaZMXCw-pgRcB_QlgOenEx.png",
       tags: ["openai", "edit", "typography"],
       pricing: "Token-based pricing",
       inputs: ["Reference image", "Edit prompt"],
