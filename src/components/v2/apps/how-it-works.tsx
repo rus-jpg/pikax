@@ -7,7 +7,7 @@ export function HowItWorksV2({ skill }: { skill: Skill }) {
   return (
     <div className="mx-auto max-w-5xl px-8 py-12">
       <div className="mb-8 flex flex-col items-center gap-4 text-center">
-        <div className="grid h-14 w-14 place-items-center rounded-[22%] bg-brand-gradient text-primary-foreground shadow-elegant">
+        <div className="grid h-14 w-14 place-items-center rounded-[45%] bg-brand-gradient text-primary-foreground shadow-elegant">
           <Icon className="h-6 w-6" />
         </div>
         <div>
