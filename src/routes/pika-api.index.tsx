@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PIKA_APIS, PIKA_CATEGORIES, isPikaModel, type PikaFilter } from "@/lib/v2/pika-apis";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/pika-mark";
 import { ApiFaq } from "@/components/v2/api/faq";
 import { ApiContactForm } from "@/components/v2/api/contact-form";
 
@@ -75,12 +76,16 @@ function PikaApiIndex() {
                   playsInline
                   className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                 />
-              ) : (
+              ) : api.cover ? (
                 <img
                   src={api.cover}
                   alt={api.name}
                   className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                 />
+              ) : (
+                <div className="grid h-full w-full place-items-center bg-muted">
+                  <BrandMark className="h-10 w-auto opacity-40" />
+                </div>
               )}
             </div>
             <div className="p-4">
