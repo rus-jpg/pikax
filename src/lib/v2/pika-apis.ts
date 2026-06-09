@@ -58,6 +58,8 @@ export const PIKA_APIS: PikaApi[] = [
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p) · 5s minimum",
     inputs: ["2–5 image URLs", "Per-transition prompts", "Transition durations"],
     outputs: ["MP4 video up to 25 seconds total"],
+    exampleVideo:
+      "https://v3b.fal.media/files/b/lion/0KxHFdw-mp0OzGsLrQLIy_tmpjfwlno11.mp4",
   },
   {
     slug: "v2.2/image-to-video",
