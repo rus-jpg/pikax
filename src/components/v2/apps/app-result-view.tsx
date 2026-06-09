@@ -58,7 +58,7 @@ export function AppResultView({
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Button asChild size="lg" className="h-14">
-          <Link to="/v2/projects" search={{ p: result.projectId }}>
+          <Link to="/v2/projects/$projectId" params={{ projectId: result.projectId }}>
             <FolderOpen className="mr-2 h-5 w-5" />
             Open in project
           </Link>

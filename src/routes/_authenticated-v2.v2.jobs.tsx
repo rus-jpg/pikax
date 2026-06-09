@@ -71,7 +71,7 @@ function JobsScreen() {
                     </div>
                   </div>
                   <Button asChild size="sm" variant="ghost">
-                    <Link to="/v2/projects" search={{ p: j.projectId }}>
+                    <Link to="/v2/projects/$projectId" params={{ projectId: j.projectId }}>
                       <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
                       Open
                     </Link>
@@ -119,8 +119,8 @@ function JobsScreen() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link
-                      to="/v2/projects"
-                      search={{ p: g.projectId }}
+                      to="/v2/projects/$projectId"
+                      params={{ projectId: g.projectId }}
                       className="block truncate text-sm font-medium hover:underline"
                     >
                       {g.projectTitle}

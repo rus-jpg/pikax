@@ -132,8 +132,8 @@ function LibraryV2() {
                   <button
                     onClick={() =>
                       navigate({
-                        to: "/v2/projects",
-                        search: { p: group.projectId },
+                        to: "/v2/projects/$projectId",
+                        params: { projectId: group.projectId },
                       })
                     }
                     className="group flex items-baseline gap-2 text-left"
@@ -152,8 +152,8 @@ function LibraryV2() {
                       key={item.id}
                       onClick={() =>
                         navigate({
-                          to: "/v2/projects",
-                          search: { p: item.projectId },
+                          to: "/v2/projects/$projectId",
+                          params: { projectId: item.projectId },
                         })
                       }
                       className="group overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant"
