@@ -56,21 +56,15 @@ function tabMatches(skill: Skill, tab: Tab): boolean {
   return true;
 }
 
-type RunStatus =
-  | { phase: "idle" }
-  | {
-      phase: "starting" | "polling";
-      skill: Skill;
-      projectId: string;
-      prompt: string;
-    }
-  | {
-      phase: "error";
-      skill: Skill;
-      projectId: string;
-      prompt: string;
-      error: string;
-    };
+type ActiveRun = {
+  id: string;
+  skill: Skill;
+  projectId: string;
+  prompt: string;
+  phase: "starting" | "polling" | "error";
+  error?: string;
+};
+
 
 function AppsV2() {
   const { app: appId, projectId } = Route.useSearch();
