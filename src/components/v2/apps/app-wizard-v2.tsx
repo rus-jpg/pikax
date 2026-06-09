@@ -73,7 +73,7 @@ export function AppWizardV2({
   const [inputs, setInputs] = useState<StepInputs>({});
   const [uploads, setUploads] = useState<StepUploads>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [pickerStepId, setPickerStepId] = useState<string | null>(null);
 
   const stepIsComplete = (step: AppStep): boolean => {
     if (step.kind === "upload") return (uploads[step.id] ?? []).length > 0;
@@ -91,12 +91,18 @@ export function AppWizardV2({
     onSubmit({ prompt, assets: allAssets });
   };
 
-  const handleFiles = async (step: AppStep, files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handlePicked = async (step: AppStep, result: PickerResult) => {
+    if (result.kind === "library") {
+      setUploads((prev) => ({
+        ...prev,
+        [step.id]: [...(prev[step.id] ?? []), ...result.assets],
+      }));
+      return;
+    }
     setUploadingId(step.id);
     try {
       const out: ProjectAsset[] = [];
-      for (const f of Array.from(files)) {
+      for (const f of result.files) {
         out.push(await fileToProjectAsset(f, projectId, step.accept));
       }
       setUploads((prev) => ({
@@ -107,8 +113,6 @@ export function AppWizardV2({
       console.error("[app-wizard-v2] upload failed", err);
     } finally {
       setUploadingId(null);
-      const r = fileRefs.current[step.id];
-      if (r) r.value = "";
     }
   };
 
