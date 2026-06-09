@@ -125,49 +125,70 @@ function LibraryV2() {
             No assets yet — try an app to create your first.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {items.map((item) => (
-              <button
-                key={item.id}
-                onClick={() =>
-                  navigate({
-                    to: "/v2/projects",
-                    search: { p: item.projectId },
-                  })
-                }
-                className="group overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant"
-              >
-                <div className="aspect-square w-full bg-muted/40">
-                  {item.mime.startsWith("image/") ? (
-                    <img
-                      src={item.url}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-                    />
-                  ) : item.mime.startsWith("video/") ? (
-                    <video
-                      src={item.url}
-                      className="h-full w-full object-cover"
-                      muted
-                      loop
-                      onMouseEnter={(e) => e.currentTarget.play()}
-                      onMouseLeave={(e) => e.currentTarget.pause()}
-                    />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-3xl text-muted-foreground">
-                      {item.mime.startsWith("audio/") ? "♪" : "•"}
-                    </div>
-                  )}
+          <div className="flex flex-col gap-10">
+            {grouped.map((group) => (
+              <section key={group.projectId}>
+                <div className="mb-3 flex items-baseline justify-between">
+                  <button
+                    onClick={() =>
+                      navigate({
+                        to: "/v2/projects",
+                        search: { p: group.projectId },
+                      })
+                    }
+                    className="group flex items-baseline gap-2 text-left"
+                  >
+                    <h2 className="font-display text-lg font-semibold tracking-tight group-hover:underline">
+                      {group.projectTitle}
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                      {group.items.length} {group.items.length === 1 ? "item" : "items"}
+                    </span>
+                  </button>
                 </div>
-                <div className="p-3">
-                  <div className="truncate text-sm font-medium text-foreground">
-                    {item.label || item.name}
-                  </div>
-                  <div className="truncate text-xs text-muted-foreground">
-                    {item.projectTitle}
-                  </div>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  {group.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() =>
+                        navigate({
+                          to: "/v2/projects",
+                          search: { p: item.projectId },
+                        })
+                      }
+                      className="group overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                    >
+                      <div className="aspect-square w-full bg-muted/40">
+                        {item.mime.startsWith("image/") ? (
+                          <img
+                            src={item.url}
+                            alt={item.name}
+                            className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                          />
+                        ) : item.mime.startsWith("video/") ? (
+                          <video
+                            src={item.url}
+                            className="h-full w-full object-cover"
+                            muted
+                            loop
+                            onMouseEnter={(e) => e.currentTarget.play()}
+                            onMouseLeave={(e) => e.currentTarget.pause()}
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center text-3xl text-muted-foreground">
+                            {item.mime.startsWith("audio/") ? "♪" : "•"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {item.label || item.name}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </button>
+              </section>
             ))}
           </div>
         )}
