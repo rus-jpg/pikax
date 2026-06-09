@@ -134,15 +134,25 @@ function AppsV2() {
         )}
       </div>
 
-      {/* Right column — how it works / docs */}
+      {/* Right column — result, timeline or how-it-works */}
       <div className="flex-1 overflow-y-auto bg-background">
-        {showcase ? (
+        {result && selected ? (
+          <AppResultView
+            result={result}
+            skill={selected}
+            onRunAgain={() => setResult(null)}
+          />
+        ) : showcase ? (
           <HowItWorksV2 skill={showcase} />
         ) : (
           <div className="grid h-full place-items-center text-sm text-muted-foreground">
             Pick an app to get started.
           </div>
         )}
+      </div>
+    </div>
+  );
+}
       </div>
     </div>
   );
