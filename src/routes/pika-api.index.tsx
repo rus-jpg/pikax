@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { PIKA_APIS, PIKA_CATEGORIES, type PikaCategory } from "@/lib/v2/pika-apis";
+import { PIKA_APIS, PIKA_CATEGORIES, isPikaModel, type PikaFilter } from "@/lib/v2/pika-apis";
 import { cn } from "@/lib/utils";
 import { ApiFaq } from "@/components/v2/api/faq";
 import { ApiContactForm } from "@/components/v2/api/contact-form";
@@ -10,11 +10,15 @@ export const Route = createFileRoute("/pika-api/")({
 });
 
 function PikaApiIndex() {
-  const [cat, setCat] = useState<PikaCategory | "all">("all");
+  const [cat, setCat] = useState<PikaFilter>("all");
 
   const items = useMemo(
     () =>
-      cat === "all" ? PIKA_APIS : PIKA_APIS.filter((a) => a.category === cat),
+      cat === "all"
+        ? PIKA_APIS
+        : cat === "pika"
+          ? PIKA_APIS.filter(isPikaModel)
+          : PIKA_APIS.filter((a) => a.category === cat),
     [cat],
   );
 

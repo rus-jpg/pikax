@@ -756,8 +756,11 @@ export function getPikaApi(slug: string): PikaApi | undefined {
   return PIKA_APIS.find((a) => a.slug === slug);
 }
 
-export const PIKA_CATEGORIES: { id: PikaCategory | "all"; label: string }[] = [
+export type PikaFilter = PikaCategory | "all" | "pika";
+
+export const PIKA_CATEGORIES: { id: PikaFilter; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "pika", label: "Pika only" },
   { id: "image-to-video", label: "Image to Video" },
   { id: "text-to-video", label: "Text to Video" },
   { id: "video-to-video", label: "Video to Video" },
@@ -766,3 +769,8 @@ export const PIKA_CATEGORIES: { id: PikaCategory | "all"; label: string }[] = [
   { id: "image-to-image", label: "Image to Image" },
   { id: "text-to-audio", label: "Text to Audio" },
 ];
+
+export function isPikaModel(api: PikaApi): boolean {
+  return api.endpointId.includes("pika");
+}
+
