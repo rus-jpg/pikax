@@ -111,7 +111,10 @@ export function AppRunner({
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="grid h-9 w-9 place-items-center rounded-[30%] bg-brand-gradient text-primary-foreground">
+        <div
+          className="grid h-9 w-9 place-items-center rounded-[30%]"
+          style={{ backgroundColor: getAppSwatch(skill.id).bg, color: getAppSwatch(skill.id).fg }}
+        >
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
