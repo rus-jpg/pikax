@@ -341,7 +341,7 @@ export function AppsWorkspace({
                       onClick={() => onSelectApp(s.id)}
                       className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
                     >
-                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
+                      <div className="grid h-9 w-9 place-items-center rounded-[22%] bg-brand-gradient text-primary-foreground">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="text-sm font-semibold leading-tight text-foreground">
