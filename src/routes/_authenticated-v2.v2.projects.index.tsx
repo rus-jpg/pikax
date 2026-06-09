@@ -10,7 +10,7 @@ import {
 } from "@/lib/projects.functions";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated-v2/v2/projects")({
+export const Route = createFileRoute("/_authenticated-v2/v2/projects/")({
   component: ProjectsV2,
 });
 

@@ -299,7 +299,8 @@ export function AppsWorkspace({
             seedAsset={seedAsset}
             onSeedConsumed={() => setSeedAsset(null)}
             onBack={() => onSelectApp(undefined)}
-            onProjectReady={(id) => onProjectIdChange(id)}
+            // Don't surface the draft project until generation succeeds —
+            // startRun calls onProjectIdChange when it actually starts.
             onStartRun={(args) => void handleStartFromWizard(args)}
           />
         ) : (
