@@ -153,7 +153,3 @@ function AppsV2() {
     </div>
   );
 }
-      </div>
-    </div>
-  );
-}
