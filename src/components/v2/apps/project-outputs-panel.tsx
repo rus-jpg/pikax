@@ -4,14 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ChevronDown,
-  FolderOpen,
+  Film,
   Loader2,
+  PanelRightClose,
   Plus,
   RotateCcw,
   Sparkles,
   Wand2,
   X,
 } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
