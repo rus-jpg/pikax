@@ -297,16 +297,14 @@ function ApiDetail() {
                   />
                 </Field>
 
-                <button
-                  type="button"
-                  disabled
-                  className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3 text-sm font-semibold text-background opacity-90 transition hover:opacity-100"
-                  title="You need to sign in to run this model."
+                <a
+                  href="#contact"
+                  className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3 text-sm font-semibold text-background transition hover:opacity-90"
                 >
-                  <LogIn className="h-4 w-4" /> Sign in to run
-                </button>
+                  Contact us for API access
+                </a>
                 <p className="-mt-2 text-center text-[11px] text-muted-foreground">
-                  Estimated cost: {api.pricing}
+                  Estimated cost once onboarded: {api.pricing}
                 </p>
               </div>
             </section>
