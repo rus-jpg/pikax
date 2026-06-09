@@ -10,11 +10,15 @@ export const Route = createFileRoute("/pika-api/")({
 });
 
 function PikaApiIndex() {
-  const [cat, setCat] = useState<PikaCategory | "all">("all");
+  const [cat, setCat] = useState<PikaFilter>("all");
 
   const items = useMemo(
     () =>
-      cat === "all" ? PIKA_APIS : PIKA_APIS.filter((a) => a.category === cat),
+      cat === "all"
+        ? PIKA_APIS
+        : cat === "pika"
+          ? PIKA_APIS.filter(isPikaModel)
+          : PIKA_APIS.filter((a) => a.category === cat),
     [cat],
   );
 
