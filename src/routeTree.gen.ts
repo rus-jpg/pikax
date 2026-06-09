@@ -9,10 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PikaApiRouteImport } from './routes/pika-api'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedV2RouteImport } from './routes/_authenticated-v2'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PikaApiIndexRouteImport } from './routes/pika-api.index'
+import { Route as PikaApiSplatRouteImport } from './routes/pika-api.$'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -26,10 +29,13 @@ import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenti
 import { Route as AuthenticatedV2V2JobsRouteImport } from './routes/_authenticated-v2.v2.jobs'
 import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
 import { Route as AuthenticatedV2V2StudioIndexRouteImport } from './routes/_authenticated-v2.v2.studio.index'
-import { Route as AuthenticatedV2V2ApiIndexRouteImport } from './routes/_authenticated-v2.v2.api.index'
 import { Route as AuthenticatedV2V2StudioProjectIdRouteImport } from './routes/_authenticated-v2.v2.studio.$projectId'
-import { Route as AuthenticatedV2V2ApiSplatRouteImport } from './routes/_authenticated-v2.v2.api.$'
 
+const PikaApiRoute = PikaApiRouteImport.update({
+  id: '/pika-api',
+  path: '/pika-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -47,6 +53,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PikaApiIndexRoute = PikaApiIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PikaApiRoute,
+} as any)
+const PikaApiSplatRoute = PikaApiSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => PikaApiRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -118,32 +134,23 @@ const AuthenticatedV2V2StudioIndexRoute =
     path: '/v2/studio/',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
-const AuthenticatedV2V2ApiIndexRoute =
-  AuthenticatedV2V2ApiIndexRouteImport.update({
-    id: '/v2/api/',
-    path: '/v2/api/',
-    getParentRoute: () => AuthenticatedV2Route,
-  } as any)
 const AuthenticatedV2V2StudioProjectIdRoute =
   AuthenticatedV2V2StudioProjectIdRouteImport.update({
     id: '/v2/studio/$projectId',
     path: '/v2/studio/$projectId',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
-const AuthenticatedV2V2ApiSplatRoute =
-  AuthenticatedV2V2ApiSplatRouteImport.update({
-    id: '/v2/api/$',
-    path: '/v2/api/$',
-    getParentRoute: () => AuthenticatedV2Route,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/pika-api': typeof PikaApiRouteWithChildren
   '/apps': typeof AuthenticatedAppsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/pika-api/$': typeof PikaApiSplatRoute
+  '/pika-api/': typeof PikaApiIndexRoute
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
@@ -152,9 +159,7 @@ export interface FileRoutesByFullPath {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio/': typeof AuthenticatedStudioIndexRoute
-  '/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/v2/api/': typeof AuthenticatedV2V2ApiIndexRoute
   '/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesByTo {
@@ -164,6 +169,8 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/pika-api/$': typeof PikaApiSplatRoute
+  '/pika-api': typeof PikaApiIndexRoute
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
@@ -172,9 +179,7 @@ export interface FileRoutesByTo {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/studio': typeof AuthenticatedStudioIndexRoute
-  '/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/v2/api': typeof AuthenticatedV2V2ApiIndexRoute
   '/v2/studio': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRoutesById {
@@ -183,10 +188,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated-v2': typeof AuthenticatedV2RouteWithChildren
   '/login': typeof LoginRoute
+  '/pika-api': typeof PikaApiRouteWithChildren
   '/_authenticated/apps': typeof AuthenticatedAppsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/api/chat': typeof ApiChatRoute
+  '/pika-api/$': typeof PikaApiSplatRoute
+  '/pika-api/': typeof PikaApiIndexRoute
   '/_authenticated-v2/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/_authenticated-v2/v2/jobs': typeof AuthenticatedV2V2JobsRoute
   '/_authenticated-v2/v2/library': typeof AuthenticatedV2V2LibraryRoute
@@ -195,9 +203,7 @@ export interface FileRoutesById {
   '/api/asset/$id': typeof ApiAssetIdRoute
   '/api/public/render-tick': typeof ApiPublicRenderTickRoute
   '/_authenticated/studio/': typeof AuthenticatedStudioIndexRoute
-  '/_authenticated-v2/v2/api/$': typeof AuthenticatedV2V2ApiSplatRoute
   '/_authenticated-v2/v2/studio/$projectId': typeof AuthenticatedV2V2StudioProjectIdRoute
-  '/_authenticated-v2/v2/api/': typeof AuthenticatedV2V2ApiIndexRoute
   '/_authenticated-v2/v2/studio/': typeof AuthenticatedV2V2StudioIndexRoute
 }
 export interface FileRouteTypes {
@@ -205,10 +211,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/pika-api'
     | '/apps'
     | '/library'
     | '/projects'
     | '/api/chat'
+    | '/pika-api/$'
+    | '/pika-api/'
     | '/v2/apps'
     | '/v2/jobs'
     | '/v2/library'
@@ -217,9 +226,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio/'
-    | '/v2/api/$'
     | '/v2/studio/$projectId'
-    | '/v2/api/'
     | '/v2/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -229,6 +236,8 @@ export interface FileRouteTypes {
     | '/library'
     | '/projects'
     | '/api/chat'
+    | '/pika-api/$'
+    | '/pika-api'
     | '/v2/apps'
     | '/v2/jobs'
     | '/v2/library'
@@ -237,9 +246,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/studio'
-    | '/v2/api/$'
     | '/v2/studio/$projectId'
-    | '/v2/api'
     | '/v2/studio'
   id:
     | '__root__'
@@ -247,10 +254,13 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_authenticated-v2'
     | '/login'
+    | '/pika-api'
     | '/_authenticated/apps'
     | '/_authenticated/library'
     | '/_authenticated/projects'
     | '/api/chat'
+    | '/pika-api/$'
+    | '/pika-api/'
     | '/_authenticated-v2/v2/apps'
     | '/_authenticated-v2/v2/jobs'
     | '/_authenticated-v2/v2/library'
@@ -259,9 +269,7 @@ export interface FileRouteTypes {
     | '/api/asset/$id'
     | '/api/public/render-tick'
     | '/_authenticated/studio/'
-    | '/_authenticated-v2/v2/api/$'
     | '/_authenticated-v2/v2/studio/$projectId'
-    | '/_authenticated-v2/v2/api/'
     | '/_authenticated-v2/v2/studio/'
   fileRoutesById: FileRoutesById
 }
@@ -270,6 +278,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthenticatedV2Route: typeof AuthenticatedV2RouteWithChildren
   LoginRoute: typeof LoginRoute
+  PikaApiRoute: typeof PikaApiRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
   ApiAssetIdRoute: typeof ApiAssetIdRoute
   ApiPublicRenderTickRoute: typeof ApiPublicRenderTickRoute
@@ -277,6 +286,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pika-api': {
+      id: '/pika-api'
+      path: '/pika-api'
+      fullPath: '/pika-api'
+      preLoaderRoute: typeof PikaApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -304,6 +320,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/pika-api/': {
+      id: '/pika-api/'
+      path: '/'
+      fullPath: '/pika-api/'
+      preLoaderRoute: typeof PikaApiIndexRouteImport
+      parentRoute: typeof PikaApiRoute
+    }
+    '/pika-api/$': {
+      id: '/pika-api/$'
+      path: '/$'
+      fullPath: '/pika-api/$'
+      preLoaderRoute: typeof PikaApiSplatRouteImport
+      parentRoute: typeof PikaApiRoute
     }
     '/api/chat': {
       id: '/api/chat'
@@ -396,25 +426,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedV2V2StudioIndexRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
-    '/_authenticated-v2/v2/api/': {
-      id: '/_authenticated-v2/v2/api/'
-      path: '/v2/api'
-      fullPath: '/v2/api/'
-      preLoaderRoute: typeof AuthenticatedV2V2ApiIndexRouteImport
-      parentRoute: typeof AuthenticatedV2Route
-    }
     '/_authenticated-v2/v2/studio/$projectId': {
       id: '/_authenticated-v2/v2/studio/$projectId'
       path: '/v2/studio/$projectId'
       fullPath: '/v2/studio/$projectId'
       preLoaderRoute: typeof AuthenticatedV2V2StudioProjectIdRouteImport
-      parentRoute: typeof AuthenticatedV2Route
-    }
-    '/_authenticated-v2/v2/api/$': {
-      id: '/_authenticated-v2/v2/api/$'
-      path: '/v2/api/$'
-      fullPath: '/v2/api/$'
-      preLoaderRoute: typeof AuthenticatedV2V2ApiSplatRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
   }
@@ -445,9 +461,7 @@ interface AuthenticatedV2RouteChildren {
   AuthenticatedV2V2JobsRoute: typeof AuthenticatedV2V2JobsRoute
   AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
   AuthenticatedV2V2ProjectsRoute: typeof AuthenticatedV2V2ProjectsRoute
-  AuthenticatedV2V2ApiSplatRoute: typeof AuthenticatedV2V2ApiSplatRoute
   AuthenticatedV2V2StudioProjectIdRoute: typeof AuthenticatedV2V2StudioProjectIdRoute
-  AuthenticatedV2V2ApiIndexRoute: typeof AuthenticatedV2V2ApiIndexRoute
   AuthenticatedV2V2StudioIndexRoute: typeof AuthenticatedV2V2StudioIndexRoute
 }
 
@@ -456,9 +470,7 @@ const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
   AuthenticatedV2V2JobsRoute: AuthenticatedV2V2JobsRoute,
   AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
   AuthenticatedV2V2ProjectsRoute: AuthenticatedV2V2ProjectsRoute,
-  AuthenticatedV2V2ApiSplatRoute: AuthenticatedV2V2ApiSplatRoute,
   AuthenticatedV2V2StudioProjectIdRoute: AuthenticatedV2V2StudioProjectIdRoute,
-  AuthenticatedV2V2ApiIndexRoute: AuthenticatedV2V2ApiIndexRoute,
   AuthenticatedV2V2StudioIndexRoute: AuthenticatedV2V2StudioIndexRoute,
 }
 
@@ -466,11 +478,25 @@ const AuthenticatedV2RouteWithChildren = AuthenticatedV2Route._addFileChildren(
   AuthenticatedV2RouteChildren,
 )
 
+interface PikaApiRouteChildren {
+  PikaApiSplatRoute: typeof PikaApiSplatRoute
+  PikaApiIndexRoute: typeof PikaApiIndexRoute
+}
+
+const PikaApiRouteChildren: PikaApiRouteChildren = {
+  PikaApiSplatRoute: PikaApiSplatRoute,
+  PikaApiIndexRoute: PikaApiIndexRoute,
+}
+
+const PikaApiRouteWithChildren =
+  PikaApiRoute._addFileChildren(PikaApiRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthenticatedV2Route: AuthenticatedV2RouteWithChildren,
   LoginRoute: LoginRoute,
+  PikaApiRoute: PikaApiRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
   ApiAssetIdRoute: ApiAssetIdRoute,
   ApiPublicRenderTickRoute: ApiPublicRenderTickRoute,
