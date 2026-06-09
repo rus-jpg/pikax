@@ -59,11 +59,23 @@ function ApiIndex() {
               className="group overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant"
             >
               <div className="aspect-video w-full overflow-hidden bg-muted/40">
-                <img
-                  src={api.cover}
-                  alt={api.name}
-                  className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-                />
+                {api.coverVideo ? (
+                  <video
+                    src={api.coverVideo}
+                    poster={api.cover}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                  />
+                ) : (
+                  <img
+                    src={api.cover}
+                    alt={api.name}
+                    className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+                  />
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
