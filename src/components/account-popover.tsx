@@ -95,6 +95,17 @@ export function AccountPopover() {
         </div>
         <Button
           variant="ghost"
+          className="w-full justify-start gap-2"
+          onClick={() => {
+            setVersion("v2");
+            window.location.assign(getMirrorPath(pathname, "v2"));
+          }}
+        >
+          <Sparkles className="h-4 w-4" />
+          Try new layout
+        </Button>
+        <Button
+          variant="ghost"
           className="w-full justify-start gap-2 text-destructive hover:text-destructive"
           disabled={busy !== null}
           onClick={handleLogout}
