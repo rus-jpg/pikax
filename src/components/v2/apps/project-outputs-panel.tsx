@@ -9,18 +9,22 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  Wand2,
   X,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { getProject, listProjects } from "@/lib/projects.functions";
-import { SKILL_BY_ID, type Skill } from "@/lib/skills";
+import { SKILLS, SKILL_BY_ID, type Skill } from "@/lib/skills";
+import { getRecipeForSkill } from "@/lib/app-recipes";
+import type { ProjectAsset } from "@/lib/project-state";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
@@ -33,11 +37,28 @@ export type ActiveRunView = {
   error?: string;
 };
 
+function appsAcceptingMime(mime: string): Skill[] {
+  const want = mime.startsWith("image/")
+    ? "image"
+    : mime.startsWith("video/")
+      ? "video"
+      : mime.startsWith("audio/")
+        ? "audio"
+        : null;
+  if (!want) return [];
+  return SKILLS.filter((s) => {
+    const upload = getRecipeForSkill(s).steps.find((st) => st.kind === "upload");
+    if (!upload) return false;
+    return upload.accept === want || upload.accept === "any";
+  });
+}
+
 export function ProjectOutputsPanel({
   projectId,
   activeRuns,
   outputMeta,
   onRegenerate,
+  onUseInApp,
   onNewProject,
   onDismissRun,
 }: {
@@ -45,6 +66,7 @@ export function ProjectOutputsPanel({
   activeRuns: ActiveRunView[];
   outputMeta: Record<string, OutputMeta>;
   onRegenerate: (args: { skill: Skill; prompt: string; projectId: string }) => void;
+  onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
   onNewProject: () => void;
   onDismissRun: (id: string) => void;
 }) {
@@ -234,22 +256,25 @@ export function ProjectOutputsPanel({
                         {meta?.prompt ?? o.name ?? ""}
                       </p>
                     </div>
-                    {meta && skill && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          onRegenerate({
-                            skill,
-                            prompt: meta.prompt,
-                            projectId: projectId!,
-                          })
-                        }
-                      >
-                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                        Regenerate
-                      </Button>
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <UseInAppMenu asset={o} onUseInApp={onUseInApp} />
+                      {meta && skill && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            onRegenerate({
+                              skill,
+                              prompt: meta.prompt,
+                              projectId: projectId!,
+                            })
+                          }
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                          Regenerate
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
@@ -330,3 +355,51 @@ function RunCard({
   );
 }
 
+
+function UseInAppMenu({
+  asset,
+  onUseInApp,
+}: {
+  asset: ProjectAsset;
+  onUseInApp: (args: { skill: Skill; asset: ProjectAsset }) => void;
+}) {
+  const apps = useMemo(() => appsAcceptingMime(asset.mime), [asset.mime]);
+  if (apps.length === 0) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+          Use in app
+          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-h-[60vh] w-64 overflow-y-auto">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Apply an app to this asset
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {apps.map((s) => {
+          const Icon = s.icon;
+          return (
+            <DropdownMenuItem
+              key={s.id}
+              onSelect={() => onUseInApp({ skill: s, asset })}
+              className="flex items-start gap-2"
+            >
+              <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-brand-gradient text-primary-foreground">
+                <Icon className="h-3 w-3" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm">{s.label}</div>
+                <div className="line-clamp-1 text-[10px] text-muted-foreground">
+                  {s.description}
+                </div>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

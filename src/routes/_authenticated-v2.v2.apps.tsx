@@ -78,6 +78,22 @@ function AppsV2() {
   const [tab, setTab] = useState<Tab>("Featured");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
+  const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
+
+  const handleUseInApp = ({
+    skill,
+    asset,
+  }: {
+    skill: Skill;
+    asset: ProjectAsset;
+  }) => {
+    setSeedAsset(asset);
+    void navigate({
+      to: "/v2/apps",
+      search: { app: skill.id, projectId },
+    });
+  };
+
 
   const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
@@ -285,6 +301,8 @@ function AppsV2() {
             skill={selected}
             projectId={projectId}
             busy={false}
+            seedAsset={seedAsset}
+            onSeedConsumed={() => setSeedAsset(null)}
             onBack={() => selectApp(null)}
             onProjectReady={(id) => setProjectIdInUrl(id)}
             onStartRun={(args) => void handleStartFromWizard(args)}
@@ -358,6 +376,7 @@ function AppsV2() {
           activeRuns={activeRuns}
           outputMeta={outputMeta}
           onRegenerate={(args) => void handleRegenerate(args)}
+          onUseInApp={handleUseInApp}
           onNewProject={handleNewProject}
           onDismissRun={dismissRun}
         />

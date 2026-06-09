@@ -19,6 +19,8 @@ export function AppRunner({
   skill,
   projectId: existingProjectId,
   busy,
+  seedAsset,
+  onSeedConsumed,
   onBack,
   onProjectReady,
   onStartRun,
@@ -27,6 +29,10 @@ export function AppRunner({
   projectId?: string;
   /** Disable submit (a generation is already in flight). */
   busy: boolean;
+  /** Optional asset to pre-fill the first upload step with. */
+  seedAsset?: ProjectAsset | null;
+  /** Called once the wizard has consumed the seed (so parent can clear it). */
+  onSeedConsumed?: () => void;
   onBack: () => void;
   /** Called when a project has been ensured for this app session. */
   onProjectReady?: (projectId: string) => void;
@@ -126,6 +132,8 @@ export function AppRunner({
             recipe={recipe}
             projectId={draftProjectId}
             busy={busy}
+            seedAsset={seedAsset ?? null}
+            onSeedConsumed={onSeedConsumed}
             onSubmit={handleSubmit}
           />
         )}
