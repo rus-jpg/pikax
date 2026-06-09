@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, Sparkles, Upload as UploadIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,11 @@ import { uploadProjectAsset } from "@/lib/projects.functions";
 import type { AppRecipe, AppStep } from "@/lib/app-recipes";
 import { composePrompt } from "@/lib/app-recipes";
 import type { AssetKind, ProjectAsset } from "@/lib/project-state";
+import {
+  AssetPickerDialog,
+  type PickerAccept,
+  type PickerResult,
+} from "@/components/v2/apps/asset-picker-dialog";
 
 type StepInputs = Record<string, string>;
 type StepUploads = Record<string, ProjectAsset[]>;
