@@ -9,6 +9,7 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,24 +24,29 @@ import { SKILL_BY_ID, type Skill } from "@/lib/skills";
 
 export type OutputMeta = { prompt: string; skillId: string };
 
+export type ActiveRunView = {
+  id: string;
+  skill: Skill;
+  projectId: string;
+  prompt: string;
+  phase: "starting" | "polling" | "error";
+  error?: string;
+};
+
 export function ProjectOutputsPanel({
   projectId,
-  pendingProjectId,
-  pendingPrompt,
-  pendingSkill,
-  pendingPhase,
+  activeRuns,
   outputMeta,
   onRegenerate,
   onNewProject,
+  onDismissRun,
 }: {
   projectId?: string;
-  pendingProjectId?: string;
-  pendingPrompt?: string;
-  pendingSkill?: Skill;
-  pendingPhase?: "starting" | "polling";
+  activeRuns: ActiveRunView[];
   outputMeta: Record<string, OutputMeta>;
   onRegenerate: (args: { skill: Skill; prompt: string; projectId: string }) => void;
   onNewProject: () => void;
+  onDismissRun: (id: string) => void;
 }) {
   const navigate = useNavigate();
   const fetchList = useServerFn(listProjects);
@@ -52,12 +58,20 @@ export function ProjectOutputsPanel({
   });
   const projects = listQ.data?.projects ?? [];
 
+  const runsForThisProject = activeRuns.filter(
+    (r) => r.projectId === projectId,
+  );
+  const hasPendingHere = runsForThisProject.some(
+    (r) => r.phase === "starting" || r.phase === "polling",
+  );
+
   const projectQ = useQuery({
     queryKey: ["v2-project", projectId],
     queryFn: () => fetchProject({ data: { id: projectId! } }),
     enabled: !!projectId,
-    refetchInterval: pendingProjectId === projectId ? 4000 : false,
+    refetchInterval: hasPendingHere ? 4000 : false,
   });
+
 
   const project = projectQ.data?.project;
   const assets = projectQ.data?.assets ?? [];
@@ -81,8 +95,8 @@ export function ProjectOutputsPanel({
     [assets],
   );
 
-  const isPendingHere =
-    !!pendingProjectId && pendingProjectId === projectId && !!pendingSkill;
+  const hasRunsHere = runsForThisProject.length > 0;
+
 
   const selectProject = (id: string) => {
     void navigate({
@@ -179,15 +193,11 @@ export function ProjectOutputsPanel({
 
       {/* Outputs scrollable list */}
       <div className="flex-1 overflow-y-auto px-6 py-5">
-        {isPendingHere && (
-          <PendingCard
-            skill={pendingSkill!}
-            prompt={pendingPrompt ?? ""}
-            phase={pendingPhase ?? "polling"}
-          />
-        )}
+        {runsForThisProject.map((r) => (
+          <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
+        ))}
 
-        {outputs.length === 0 && !isPendingHere ? (
+        {outputs.length === 0 && !hasRunsHere ? (
           <div className="grid h-full place-items-center rounded-3xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
             <div className="max-w-sm">
               <Sparkles className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
@@ -268,36 +278,72 @@ export function ProjectOutputsPanel({
   );
 }
 
-function PendingCard({
-  skill,
-  prompt,
-  phase,
+function RunCard({
+  run,
+  onDismiss,
 }: {
-  skill: Skill;
-  prompt: string;
-  phase: "starting" | "polling";
+  run: ActiveRunView;
+  onDismiss: () => void;
 }) {
-  const Icon = skill.icon;
+  const Icon = run.skill.icon;
+  const isError = run.phase === "error";
   return (
-    <div className="mb-4 overflow-hidden rounded-3xl border border-primary/30 bg-card shadow-elegant">
-      <div className="grid place-items-center bg-brand-gradient/10 p-10">
+    <div
+      className={
+        "mb-4 overflow-hidden rounded-3xl border bg-card shadow-elegant " +
+        (isError ? "border-destructive/40" : "border-primary/30")
+      }
+    >
+      <div className="relative grid place-items-center bg-brand-gradient/10 p-10">
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-background/80 text-muted-foreground hover:text-foreground"
+          aria-label="Dismiss"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
         <div className="relative">
-          <div className="absolute inset-0 animate-pulse rounded-3xl bg-brand-gradient opacity-30 blur-2xl" />
-          <div className="relative grid h-20 w-20 place-items-center rounded-3xl bg-brand-gradient text-primary-foreground shadow-elegant">
+          {!isError && (
+            <div className="absolute inset-0 animate-pulse rounded-3xl bg-brand-gradient opacity-30 blur-2xl" />
+          )}
+          <div
+            className={
+              "relative grid h-20 w-20 place-items-center rounded-3xl text-primary-foreground shadow-elegant " +
+              (isError ? "bg-destructive" : "bg-brand-gradient")
+            }
+          >
             <Sparkles className="h-8 w-8" />
           </div>
         </div>
       </div>
       <div className="flex items-center gap-3 border-t border-border/50 px-4 py-3">
-        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        {isError ? (
+          <X className="h-4 w-4 text-destructive" />
+        ) : (
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             <Icon className="h-3 w-3" />
-            {skill.label} · {phase === "starting" ? "submitting" : "generating"}
+            {run.skill.label} ·{" "}
+            {isError
+              ? "failed"
+              : run.phase === "starting"
+                ? "submitting"
+                : "generating"}
           </div>
-          <p className="line-clamp-1 text-xs text-muted-foreground">{prompt}</p>
+          <p
+            className={
+              "line-clamp-2 text-xs " +
+              (isError ? "text-destructive" : "text-muted-foreground")
+            }
+          >
+            {isError ? run.error ?? "Generation failed" : run.prompt}
+          </p>
         </div>
       </div>
     </div>
   );
 }
+

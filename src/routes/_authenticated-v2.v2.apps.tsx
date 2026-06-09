@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
 import { z } from "zod";
+
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
 import { AppRunner } from "@/components/v2/apps/app-runner";
 import {
@@ -56,21 +56,15 @@ function tabMatches(skill: Skill, tab: Tab): boolean {
   return true;
 }
 
-type RunStatus =
-  | { phase: "idle" }
-  | {
-      phase: "starting" | "polling";
-      skill: Skill;
-      projectId: string;
-      prompt: string;
-    }
-  | {
-      phase: "error";
-      skill: Skill;
-      projectId: string;
-      prompt: string;
-      error: string;
-    };
+type ActiveRun = {
+  id: string;
+  skill: Skill;
+  projectId: string;
+  prompt: string;
+  phase: "starting" | "polling" | "error";
+  error?: string;
+};
+
 
 function AppsV2() {
   const { app: appId, projectId } = Route.useSearch();
@@ -82,13 +76,13 @@ function AppsV2() {
   const createProj = useServerFn(createProject);
 
   const [tab, setTab] = useState<Tab>("Featured");
-  const [run, setRun] = useState<RunStatus>({ phase: "idle" });
+  const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
 
   const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
 
-  const isRunning = run.phase === "starting" || run.phase === "polling";
+  const activeRuns = useMemo(() => Object.values(runs), [runs]);
 
   const selectApp = (s: Skill | null) => {
     void navigate({
@@ -109,6 +103,14 @@ function AppsV2() {
     setProjectIdInUrl(undefined);
   };
 
+  const dismissRun = (id: string) => {
+    setRuns((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const startRun = async ({
     skill,
     projectId: pid,
@@ -120,8 +122,19 @@ function AppsV2() {
     prompt: string;
     assets: ProjectAsset[];
   }) => {
-    setRun({ phase: "starting", skill, projectId: pid, prompt });
+    const runId = crypto.randomUUID();
+    setRuns((prev) => ({
+      ...prev,
+      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting" },
+    }));
     setProjectIdInUrl(pid);
+
+    const updatePhase = (phase: ActiveRun["phase"], error?: string) =>
+      setRuns((prev) => {
+        const cur = prev[runId];
+        if (!cur) return prev;
+        return { ...prev, [runId]: { ...cur, phase, error } };
+      });
 
     try {
       const userId = crypto.randomUUID();
@@ -145,7 +158,7 @@ function AppsV2() {
       if (!started.ok) {
         throw new Error(started.assistantText ?? "Failed to start");
       }
-      setRun({ phase: "polling", skill, projectId: pid, prompt });
+      updatePhase("polling");
 
       const deadline = Date.now() + 10 * 60_000;
       let finalAsset: { assetId: string; assetUrl: string; mime: string } | null =
@@ -205,29 +218,19 @@ function AppsV2() {
         }
       }
 
-      // Remember meta so we can regenerate this output later.
       setOutputMeta((prev) => ({
         ...prev,
         [finalAsset!.assetId]: { prompt, skillId: skill.id },
       }));
 
-      setRun({ phase: "idle" });
+      dismissRun(runId);
       void qc.invalidateQueries({ queryKey: ["v2-library"] });
       void qc.invalidateQueries({ queryKey: ["v2-library-picker"] });
       void qc.invalidateQueries({ queryKey: ["v2-projects"] });
       void qc.invalidateQueries({ queryKey: ["v2-project", pid] });
       void qc.invalidateQueries({ queryKey: ["v2-jobs"] });
     } catch (e) {
-      setRun((prev) => {
-        if (prev.phase === "idle") return prev;
-        return {
-          phase: "error",
-          skill: prev.skill,
-          projectId: prev.projectId,
-          prompt: prev.prompt,
-          error: e instanceof Error ? e.message : String(e),
-        };
-      });
+      updatePhase("error", e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -240,9 +243,9 @@ function AppsV2() {
     prompt: string;
     projectId: string;
   }) => {
-    if (isRunning) return;
     await startRun({ skill, projectId: pid, prompt, assets: [] });
   };
+
 
   const handleStartFromWizard = async ({
     skill,
@@ -281,7 +284,7 @@ function AppsV2() {
           <AppRunner
             skill={selected}
             projectId={projectId}
-            busy={isRunning}
+            busy={false}
             onBack={() => selectApp(null)}
             onProjectReady={(id) => setProjectIdInUrl(id)}
             onStartRun={(args) => void handleStartFromWizard(args)}
@@ -350,56 +353,16 @@ function AppsV2() {
 
       {/* Right column — project outputs view */}
       <div className="flex-1 overflow-hidden bg-background">
-        {run.phase === "error" ? (
-          <ErrorView
-            skill={run.skill}
-            error={run.error}
-            onDismiss={() => setRun({ phase: "idle" })}
-          />
-        ) : (
-          <ProjectOutputsPanel
-            projectId={projectId ?? (isRunning ? run.projectId : undefined)}
-            pendingProjectId={isRunning ? run.projectId : undefined}
-            pendingPrompt={isRunning ? run.prompt : undefined}
-            pendingSkill={isRunning ? run.skill : undefined}
-            pendingPhase={isRunning ? run.phase : undefined}
-            outputMeta={outputMeta}
-            onRegenerate={(args) => void handleRegenerate(args)}
-            onNewProject={handleNewProject}
-          />
-        )}
+        <ProjectOutputsPanel
+          projectId={projectId ?? activeRuns[0]?.projectId}
+          activeRuns={activeRuns}
+          outputMeta={outputMeta}
+          onRegenerate={(args) => void handleRegenerate(args)}
+          onNewProject={handleNewProject}
+          onDismissRun={dismissRun}
+        />
       </div>
     </div>
   );
 }
 
-function ErrorView({
-  skill,
-  error,
-  onDismiss,
-}: {
-  skill: Skill;
-  error: string;
-  onDismiss: () => void;
-}) {
-  return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center px-8 py-12 text-center">
-      <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-destructive/10 text-destructive">
-        <X className="h-6 w-6" />
-      </div>
-      <h2 className="font-display text-2xl font-semibold tracking-tight">
-        {skill.label} failed
-      </h2>
-      <p className="mt-3 max-w-md rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-        {error}
-      </p>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="mt-6 text-xs font-medium text-foreground underline-offset-4 hover:underline"
-      >
-        Dismiss
-      </button>
-    </div>
-  );
-}
