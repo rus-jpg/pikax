@@ -108,25 +108,6 @@ export function ProjectOutputsPanel({
     });
   };
 
-  if (!projectId) {
-    return (
-      <div className="grid h-full place-items-center px-8 text-center">
-        <div className="max-w-md">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <h3 className="font-display text-xl font-semibold tracking-tight">
-            Pick an app to start a project
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Generating with an app will create a new project here. Each output
-            you create lands in the list — switch projects from the title
-            dropdown to keep things organized.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-full flex-col">
