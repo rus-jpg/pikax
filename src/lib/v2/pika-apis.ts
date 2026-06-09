@@ -19,8 +19,10 @@ export type PikaApi = {
   category: PikaCategory;
   /** Short marketing description used on cards. */
   description: string;
-  /** Cover image URL (from fal's gallery). */
+  /** Cover image URL. */
   cover: string;
+  /** Optional cover video URL (autoplays muted/looped in cards). */
+  coverVideo?: string;
   /** Tags rendered as chips. */
   tags: string[];
   /** Per-second pricing copy. */
@@ -121,6 +123,17 @@ const base = (slug: string) => ({
   schemaUrl: `https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/pika/${slug}`,
 });
 
+// Official Pika imagery (from cdn.pika.art / pika.art landing pages).
+const PIKA_BRAND_COVER =
+  "https://cdn.pika.art/pika/2.5/launch/b648eb7d-8a2f-4350-9d84-7fae958c633a.jpg";
+const PIKA_BRAND_VIDEO =
+  "https://cdn.pika.art/pika/api/launch/512be5d5-5b83-4106-bbca-1eff6c73b44c.mp4";
+const PIKAFFECTS_COVER =
+  "https://cdn.pika.art/pika/2.5/launch/275797df-23b0-4cfe-b6ba-e1e46f7e9531.webp";
+const PIKAFFECTS_VIDEO =
+  "https://cdn.pika.art/pika/api/launch/3fa56d02-ca8f-4269-80a5-6003ccdd1b99.mp4";
+
+
 export const PIKA_APIS: PikaApi[] = [
   {
     slug: "v2.2/pikaframes",
@@ -130,8 +143,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Upload up to 5 keyframes, customize transition length and prompts, and watch them come to life as a seamless video.",
-    cover:
-      "https://v3b.fal.media/files/b/koala/CtOfvKi8w3X6qO495bKva_4377f203234f47d69a57efef836c93aa.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["keyframes", "interpolation", "narrative"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p) · 5s minimum",
     inputs: ["2–5 image URLs", "Per-transition prompts", "Transition durations"],
@@ -151,8 +164,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turn photos into mind-blowing, dynamic videos in up to 1080p with sharper visuals and better clarity.",
-    cover:
-      "https://v3b.fal.media/files/b/koala/mATl0lc8FwiR6WceFEDfH_692743a190bc4859a00caa338a1809c5.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Image URL", "Prompt", "Duration, resolution"],
@@ -166,8 +179,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "text-to-video",
     description:
       "Start with a simple text prompt to create dynamic generations that defy expectations in up to 1080p.",
-    cover:
-      "https://v3b.fal.media/files/b/panda/d7bGY17P07W2dKiNoWXfQ_fb8e23d259a44c5a893f04ae7a710b95.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Prompt", "Aspect ratio, resolution, duration"],
@@ -181,8 +194,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Pika Scenes v2.2 creates videos from multiple input images with high quality output and scene-aware composition.",
-    cover:
-      "https://v3b.fal.media/files/b/lion/3FYXmzqtjqf6xQ5YVxbKi_bf6ff3d3904a42c783662e7e1fa21ce9.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "$0.04/sec (720p) · $0.06/sec (1080p)",
     inputs: ["Multiple image URLs", "Prompt", "Resolution"],
@@ -196,8 +209,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Pika Effects are AI-powered video effects designed to modify objects, characters, and environments in fun, engaging ways.",
-    cover:
-      "https://v3b.fal.media/files/b/kangaroo/2uSfx4xu1fXv4am4PvLAm_499f61b93f924a7496982491a87fb169.jpg",
+    cover: PIKAFFECTS_COVER,
+    coverVideo: PIKAFFECTS_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-generation pricing",
     inputs: ["Image URL", "Effect preset (inflate, melt, crush, …)"],
@@ -211,8 +224,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turbo is the model to use when you feel the need for speed. Turn images into stunning video up to 3× faster with high quality outputs.",
-    cover:
-      "https://v3b.fal.media/files/b/panda/izszWyAu5LZ56Z-ZK63x5_1c8004b9a1054d0d849848569196d293.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["fast", "editing", "animation"],
     pricing: "Lower per-second cost optimized for throughput",
     inputs: ["Image URL", "Prompt"],
@@ -226,8 +239,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "text-to-video",
     description:
       "Pika v2 Turbo creates videos from a text prompt with high quality output at faster speeds.",
-    cover:
-      "https://v3b.fal.media/files/b/kangaroo/D6kbQkNiBrPL9m05gdWnE_48bca5e513bd42a6b777dfb9b08e0ca9.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["fast", "editing", "animation"],
     pricing: "Lower per-second cost optimized for throughput",
     inputs: ["Prompt", "Aspect ratio, duration"],
@@ -241,8 +254,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "video-to-video",
     description:
       "Pikadditions is a powerful video-to-video AI model that lets you add anyone or anything to any video with seamless integration.",
-    cover:
-      "https://storage.googleapis.com/falserverless/gallery/1wavesunset.webp",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["video-to-video", "compositing", "effects"],
     pricing: "Per-generation pricing",
     inputs: ["Source video URL", "Subject image", "Prompt"],
@@ -256,8 +269,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "text-to-video",
     description:
       "Anything you dream can come to life with sharp details, impressive character control and cinematic camera moves.",
-    cover:
-      "https://v3b.fal.media/files/b/penguin/CUxIh-EAd_N4npYGWlEqA_d08d3d9739e947e9814d7d2f2a1c998d.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-second pricing",
     inputs: ["Prompt", "Aspect ratio, duration"],
@@ -271,8 +284,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "image-to-video",
     description:
       "Turn photos into mind-blowing, dynamic videos with sharp details, character control and cinematic camera moves.",
-    cover:
-      "https://v3b.fal.media/files/b/monkey/9yJyc4ezyAPejLJlzquI9_f8b95aa25041426fbc0c0861ae80a2c6.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["editing", "effects", "animation"],
     pricing: "Per-second pricing",
     inputs: ["Image URL", "Prompt"],
@@ -288,8 +301,8 @@ export const PIKA_APIS: PikaApi[] = [
     category: "audio-to-video",
     description:
       "Pika's audio-driven performance model. Provide a face image plus an audio clip and Pikaformance animates lips, eyes, and expressions in sync with the sound — speech, singing, rapping, even non-verbal sounds.",
-    cover:
-      "https://v3b.fal.media/files/b/penguin/CUxIh-EAd_N4npYGWlEqA_d08d3d9739e947e9814d7d2f2a1c998d.jpg",
+    cover: PIKA_BRAND_COVER,
+    coverVideo: PIKA_BRAND_VIDEO,
     tags: ["lip-sync", "talking-avatar", "performance"],
     pricing: "Per-second pricing (see pika.art/api)",
     inputs: [
