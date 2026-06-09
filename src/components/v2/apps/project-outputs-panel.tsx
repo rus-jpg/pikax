@@ -108,25 +108,6 @@ export function ProjectOutputsPanel({
     });
   };
 
-  if (!projectId) {
-    return (
-      <div className="grid h-full place-items-center px-8 text-center">
-        <div className="max-w-md">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <h3 className="font-display text-xl font-semibold tracking-tight">
-            Pick an app to start a project
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Generating with an app will create a new project here. Each output
-            you create lands in the list — switch projects from the title
-            dropdown to keep things organized.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-full flex-col">
@@ -136,7 +117,7 @@ export function ProjectOutputsPanel({
           <DropdownMenuTrigger asChild>
             <button className="group flex min-w-0 items-center gap-2 rounded-xl px-2 py-1 -ml-2 hover:bg-muted">
               <h2 className="truncate font-display text-xl font-semibold tracking-tight">
-                {project?.title ?? "Loading…"}
+                {projectId ? project?.title ?? "Loading…" : "New project"}
               </h2>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -183,12 +164,14 @@ export function ProjectOutputsPanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/v2/projects" search={{ p: projectId }}>
-            <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-            Open in timeline
-          </Link>
-        </Button>
+        {projectId && (
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/v2/projects" search={{ p: projectId }}>
+              <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+              Open in timeline
+            </Link>
+          </Button>
+        )}
       </header>
 
       {/* Outputs scrollable list */}
@@ -259,7 +242,7 @@ export function ProjectOutputsPanel({
                           onRegenerate({
                             skill,
                             prompt: meta.prompt,
-                            projectId,
+                            projectId: projectId!,
                           })
                         }
                       >
