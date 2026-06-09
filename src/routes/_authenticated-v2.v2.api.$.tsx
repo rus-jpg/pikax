@@ -88,7 +88,7 @@ function ApiDetail() {
                 {api.description}
               </p>
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {api.tags.map((t) => (
+                {api.tags.map((t: string) => (
                   <span
                     key={t}
                     className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
