@@ -11,6 +11,12 @@ import {
   ProjectOutputsPanel,
   type OutputMeta,
 } from "@/components/v2/apps/project-outputs-panel";
+import { ProjectTimelinePanel } from "@/components/v2/apps/project-timeline-panel";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   directGenerateStart,
   directGeneratePoll,
@@ -21,6 +27,7 @@ import {
 } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
+
 
 const TABS = [
   "Featured",
