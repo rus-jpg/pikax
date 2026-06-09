@@ -694,7 +694,8 @@ function thirdPartyFalModels(): PikaApi[] {
       category: "text-to-image",
       description:
         "Ideogram 3.0 generates images with industry-leading legible text rendering and strong design aesthetics.",
-      cover: thumb("fal-ai/ideogram/v3"),
+      cover:
+        "https://fal.media/files/lion/FHOx4y4a0ef7Sgmo-sOUR_image.png",
       tags: ["ideogram", "typography", "design"],
       pricing: "Per-image pricing",
       inputs: ["Prompt", "Style, aspect ratio"],
