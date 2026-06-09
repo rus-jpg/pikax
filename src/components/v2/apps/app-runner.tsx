@@ -122,13 +122,11 @@ export function AppRunner({
         });
         if (tick.status === "done") {
           if (tick.ok) {
-            finalAsset = {
-              assetId: tick.assetId!,
-              assetUrl: tick.assetUrl!,
-              mime: tick.mime!,
-            };
+            const t = tick as { assetId: string; assetUrl: string; mime: string };
+            finalAsset = { assetId: t.assetId, assetUrl: t.assetUrl, mime: t.mime };
           } else {
-            throw new Error(tick.assistantText ?? tick.error ?? "Generation failed");
+            const t = tick as { error?: string; assistantText?: string };
+            throw new Error(t.assistantText ?? t.error ?? "Generation failed");
           }
           break;
         }
