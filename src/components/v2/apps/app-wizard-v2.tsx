@@ -15,12 +15,13 @@ import {
 type StepInputs = Record<string, string>;
 type StepUploads = Record<string, ProjectAsset[]>;
 
+function pickerAcceptFor(accept: AppStep["accept"]): PickerAccept {
+  if (accept === "image" || accept === "video" || accept === "audio")
+    return accept;
+  return "any";
+}
+
 function acceptAttr(accept: AppStep["accept"]): string {
-  switch (accept) {
-    case "image":
-      return "image/*";
-    case "video":
-      return "video/*";
     case "audio":
       return "audio/*";
     default:
