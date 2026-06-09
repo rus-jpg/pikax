@@ -6,7 +6,7 @@ export function HowItWorksV2({ skill }: { skill: Skill }) {
   const Icon = skill.icon;
   return (
     <div className="mx-auto max-w-5xl px-8 py-12">
-      <div className="mb-8 flex items-center gap-4">
+      <div className="mb-8 flex flex-col items-center gap-4 text-center">
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-gradient text-primary-foreground shadow-elegant">
           <Icon className="h-6 w-6" />
         </div>
@@ -18,9 +18,9 @@ export function HowItWorksV2({ skill }: { skill: Skill }) {
         </div>
       </div>
 
-      <p className="max-w-2xl text-base text-foreground">{skill.description}</p>
+      <p className="mx-auto max-w-2xl text-center text-base text-foreground">{skill.description}</p>
 
-      <h3 className="mt-10 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <h3 className="mt-10 mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         How it works
       </h3>
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
