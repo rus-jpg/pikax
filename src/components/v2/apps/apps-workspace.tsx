@@ -301,7 +301,7 @@ export function AppsWorkspace({
 
   return (
     <ResizablePanelGroup
-      direction="horizontal"
+      orientation="horizontal"
       className="h-screen overflow-hidden"
     >
       {/* Left column — apps / runner */}
