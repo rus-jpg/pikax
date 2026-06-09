@@ -193,15 +193,11 @@ export function ProjectOutputsPanel({
 
       {/* Outputs scrollable list */}
       <div className="flex-1 overflow-y-auto px-6 py-5">
-        {isPendingHere && (
-          <PendingCard
-            skill={pendingSkill!}
-            prompt={pendingPrompt ?? ""}
-            phase={pendingPhase ?? "polling"}
-          />
-        )}
+        {runsForThisProject.map((r) => (
+          <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
+        ))}
 
-        {outputs.length === 0 && !isPendingHere ? (
+        {outputs.length === 0 && !hasRunsHere ? (
           <div className="grid h-full place-items-center rounded-3xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
             <div className="max-w-sm">
               <Sparkles className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
