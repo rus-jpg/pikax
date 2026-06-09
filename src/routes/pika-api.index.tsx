@@ -80,14 +80,12 @@ function PikaApiIndex() {
               )}
             </div>
             <div className="p-4">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="truncate font-display text-base font-semibold tracking-tight">
-                  {api.name}
-                </h2>
-                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {api.category}
-                </span>
-              </div>
+              <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {api.category}
+              </span>
+              <h2 className="mt-2 font-display text-base font-semibold tracking-tight">
+                {api.name}
+              </h2>
               <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                 {api.description}
               </p>
