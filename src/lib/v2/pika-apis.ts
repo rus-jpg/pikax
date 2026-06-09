@@ -192,6 +192,27 @@ export const PIKA_APIS: PikaApi[] = [
     inputs: ["Image URL", "Prompt"],
     outputs: ["MP4 video"],
   },
+  {
+    slug: "pikaformance/lipsync",
+    endpointId: "pika/pikaformance",
+    falUrl: "https://pika.art/api",
+    schemaUrl: "https://pika.art/api",
+    name: "Pikaformance — Lip Sync",
+    tagline: "Audio-driven lip sync & facial performance",
+    category: "audio-to-video",
+    description:
+      "Pika's audio-driven performance model. Provide a face image plus an audio clip and Pikaformance animates lips, eyes, and expressions in sync with the sound — speech, singing, rapping, even non-verbal sounds.",
+    cover:
+      "https://v3b.fal.media/files/b/penguin/CUxIh-EAd_N4npYGWlEqA_d08d3d9739e947e9814d7d2f2a1c998d.jpg",
+    tags: ["lip-sync", "talking-avatar", "performance"],
+    pricing: "Per-second pricing (see pika.art/api)",
+    inputs: [
+      "Portrait or character image",
+      "Audio clip (speech, song, or sound)",
+      "Optional style / performance prompt",
+    ],
+    outputs: ["MP4 video with lips and expressions synced to audio"],
+  },
 ];
 
 export function getPikaApi(slug: string): PikaApi | undefined {
@@ -203,4 +224,5 @@ export const PIKA_CATEGORIES: { id: PikaCategory | "all"; label: string }[] = [
   { id: "image-to-video", label: "Image to Video" },
   { id: "text-to-video", label: "Text to Video" },
   { id: "video-to-video", label: "Video to Video" },
+  { id: "audio-to-video", label: "Audio to Video" },
 ];
