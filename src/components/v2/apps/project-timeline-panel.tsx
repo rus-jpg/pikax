@@ -719,11 +719,71 @@ export function ProjectTimelinePanel({
             </button>
           </div>
 
+          {/* Editor toolbar */}
+          <div className="flex w-full items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={undo}
+                disabled={!canUndo}
+                aria-label="Undo"
+                title="Undo (⌘Z)"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={redo}
+                disabled={!canRedo}
+                aria-label="Redo"
+                title="Redo (⇧⌘Z)"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+              <div className="mx-1 h-4 w-px bg-border" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={duplicateSelected}
+                disabled={!selectedEntry}
+                aria-label="Duplicate clip"
+                title="Duplicate clip (⌘D)"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => selectedId && handleDelete(selectedId)}
+                disabled={!selectedId}
+                aria-label="Delete clip"
+                title="Delete (⌫)"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ZoomOut className="h-3.5 w-3.5" />
+              <Slider
+                value={[zoom]}
+                min={0.5}
+                max={2.5}
+                step={0.1}
+                onValueChange={(v) => setZoom(v[0] ?? 1)}
+                className="w-32"
+                aria-label="Zoom"
+              />
+              <ZoomIn className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
           {/* Time ruler + clip strip */}
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualAssets.length * 96 + 64, 480) }}
+              style={{ width: Math.max(visualAssets.length * (clipPx + clipGapPx) + 80, 480) }}
             >
               {/* Ruler */}
               <div
