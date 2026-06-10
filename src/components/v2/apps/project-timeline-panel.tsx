@@ -251,6 +251,26 @@ export function ProjectTimelinePanel({
     else v.pause();
   }, [isPlaying, muted, selected?.id]);
 
+  // Audio playback sync — play all timeline audio tracks together with transport
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  useEffect(() => {
+    for (const el of audioRefs.current.values()) {
+      el.muted = muted;
+      if (isPlaying) {
+        // Resync from start on play to keep alignment simple
+        try {
+          el.currentTime = Math.min(currentTime, el.duration || currentTime);
+        } catch {}
+        el.play().catch(() => {});
+      } else {
+        el.pause();
+      }
+    }
+    // Only react to play/mute toggles, not every tick
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, muted, audioAssets.map((a) => a.id).join(",")]);
+
+
   const persist = (nextOrder: string[]) => {
     if (!projectId) return;
     void updateState({
@@ -417,6 +437,20 @@ export function ProjectTimelinePanel({
               )}
             </div>
           </div>
+
+          {/* Hidden audio elements for timeline preview playback */}
+          {audioAssets.map((a) => (
+            <audio
+              key={a.id}
+              src={a.url}
+              ref={(el) => {
+                if (el) audioRefs.current.set(a.id, el);
+                else audioRefs.current.delete(a.id);
+              }}
+              preload="auto"
+              className="hidden"
+            />
+          ))}
 
           {/* Transport */}
           <div className="flex items-center gap-4">
