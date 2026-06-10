@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Film,
   Loader2,
-  PanelRightClose,
   Plus,
   RotateCcw,
   Sparkles,
@@ -191,19 +190,10 @@ export function ProjectOutputsPanel({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {projectId && onToggleTimeline && (
+        {projectId && onToggleTimeline && !timelineOpen && (
           <Button variant="ghost" size="sm" onClick={onToggleTimeline}>
-            {timelineOpen ? (
-              <>
-                <PanelRightClose className="mr-1.5 h-3.5 w-3.5" />
-                Close Timeline
-              </>
-            ) : (
-              <>
-                <Film className="mr-1.5 h-3.5 w-3.5" />
-                Open Timeline
-              </>
-            )}
+            <Film className="mr-1.5 h-3.5 w-3.5" />
+            Open Timeline
           </Button>
         )}
       </header>
