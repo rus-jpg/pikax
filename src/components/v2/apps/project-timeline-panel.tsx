@@ -525,26 +525,33 @@ export function ProjectTimelinePanel({
       if (e.key === "ArrowRight" && visualEntries.length) {
         e.preventDefault();
         const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const next = visualEntries[Math.min(i + 1, visualEntries.length - 1)];
+        const ni = Math.min(i + 1, visualEntries.length - 1);
+        const next = visualEntries[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+          seekTo(cumStarts[ni] ?? 0);
         }
         return;
       }
       if (e.key === "ArrowLeft" && visualEntries.length) {
         e.preventDefault();
         const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const next = visualEntries[Math.max(i - 1, 0)];
+        const ni = Math.max(i - 1, 0);
+        const next = visualEntries[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+          seekTo(cumStarts[ni] ?? 0);
         }
         return;
       }
       if (mod && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateSelected();
+        return;
+      }
+      if (e.key.toLowerCase() === "s" && !mod) {
+        e.preventDefault();
+        splitAtPlayhead();
       }
     };
     window.addEventListener("keydown", onKey);
