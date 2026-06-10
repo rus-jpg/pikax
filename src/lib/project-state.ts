@@ -87,7 +87,7 @@ export type ProjectMeta = {
   resolution: string; // "1080p", "4K"
 };
 
-export type TimelineTrim = { start: number; end: number };
+export type TimelineTrim = { start: number; end: number; offset?: number };
 
 export type TimelineState = {
   // Explicit allowlist of asset ids on the timeline, in display order.
