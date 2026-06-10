@@ -471,6 +471,11 @@ export function ProjectTimelinePanel({
     const startX = e.clientX;
     const baseTrim = getTrim(ref);
     const baseTrims = { ...effectiveTrims };
+    const asset = assetsById.get(assetIdFromTimelineRef(ref));
+    const isImage = asset?.mime.startsWith("image/") ?? false;
+    // Images are a single frame — they can be held on screen indefinitely.
+    // Videos are capped at the source clip's natural length (CLIP_SECONDS).
+    const maxEnd = isImage ? 600 : CLIP_SECONDS;
     let latest = baseTrim;
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
@@ -480,7 +485,7 @@ export function ProjectTimelinePanel({
       if (edge === "start") {
         nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
       } else {
-        nextEnd = Math.max(Math.min(CLIP_SECONDS, baseTrim.end + dSec), baseTrim.start + 0.2);
+        nextEnd = Math.max(Math.min(maxEnd, baseTrim.end + dSec), baseTrim.start + 0.2);
       }
       latest = { start: nextStart, end: nextEnd };
       setLocalTrims({ ...baseTrims, [ref]: latest });
