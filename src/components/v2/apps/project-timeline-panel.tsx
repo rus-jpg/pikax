@@ -11,12 +11,22 @@ import {
   Trash2,
   Volume2,
   VolumeX,
+  Wand2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { getProject, updateProjectState } from "@/lib/projects.functions";
 import type { ProjectAsset, TimelineState } from "@/lib/project-state";
+import { SKILLS, type Skill } from "@/lib/skills";
+import { getRecipeForSkill } from "@/lib/app-recipes";
+import { getAppSwatch } from "@/lib/app-swatch";
 import { cn } from "@/lib/utils";
+import type { TimelineIntent } from "@/components/v2/apps/apps-workspace";
 
 const CLIP_SECONDS = 5;
 
@@ -26,30 +36,24 @@ function fmt(t: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function applyTimeline(
-  assets: ProjectAsset[],
-  timeline: TimelineState | undefined,
-): ProjectAsset[] {
-  const hidden = new Set(timeline?.hidden ?? []);
-  const filtered = assets.filter((a) => !hidden.has(a.id));
-  const order = timeline?.order ?? [];
-  if (order.length === 0) return filtered;
-  const byId = new Map(filtered.map((a) => [a.id, a] as const));
-  const seen = new Set<string>();
-  const ordered: ProjectAsset[] = [];
-  for (const id of order) {
-    const a = byId.get(id);
-    if (a) {
-      ordered.push(a);
-      seen.add(id);
-    }
-  }
-  for (const a of filtered) if (!seen.has(a.id)) ordered.push(a);
-  return ordered;
+// Apps whose upload step accepts a given media kind (for "Edit with app").
+function appsAcceptingKind(want: "image" | "video" | "audio"): Skill[] {
+  return SKILLS.filter((s) => {
+    const upload = getRecipeForSkill(s).steps.find((st) => st.kind === "upload");
+    if (!upload) return false;
+    return upload.accept === want || upload.accept === "any";
+  });
 }
 
-// Cheap, deterministic waveform from an asset id so it looks the same on
-// every render without decoding audio.
+// Apps that PRODUCE a given media kind (for "Add clip / Add audio").
+function appsProducingKind(want: "visual" | "audio"): Skill[] {
+  return SKILLS.filter((s) => {
+    if (want === "audio") return s.kind === "audio" || s.kind === "speech";
+    return s.kind === "image" || s.kind === "video";
+  });
+}
+
+// Deterministic decorative waveform.
 function fakeWave(seed: string, bars = 80): number[] {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
@@ -57,19 +61,69 @@ function fakeWave(seed: string, bars = 80): number[] {
   for (let i = 0; i < bars; i++) {
     h = (h * 1664525 + 1013904223) >>> 0;
     const v = ((h >>> 8) % 100) / 100;
-    // shape: gentle envelope
     const env = 0.35 + 0.55 * Math.sin((i / bars) * Math.PI);
     out.push(0.2 + v * 0.8 * env);
   }
   return out;
 }
 
+function AppPickerList({
+  apps,
+  onPick,
+}: {
+  apps: Skill[];
+  onPick: (s: Skill) => void;
+}) {
+  if (apps.length === 0) {
+    return (
+      <p className="px-2 py-3 text-xs text-muted-foreground">
+        No matching apps.
+      </p>
+    );
+  }
+  return (
+    <div className="max-h-[60vh] overflow-y-auto">
+      {apps.map((s) => {
+        const Icon = s.icon;
+        const sw = getAppSwatch(s.id);
+        return (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onPick(s)}
+            className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-muted"
+          >
+            <div
+              className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md"
+              style={{ backgroundColor: sw.bg, color: sw.fg }}
+            >
+              <Icon className="h-3 w-3" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm">{s.label}</div>
+              <div className="line-clamp-1 text-[10px] text-muted-foreground">
+                {s.description}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ProjectTimelinePanel({
   projectId,
   onClose,
+  onUseInApp,
 }: {
   projectId?: string;
   onClose: () => void;
+  onUseInApp?: (args: {
+    skill: Skill;
+    asset: ProjectAsset | null;
+    intent?: TimelineIntent;
+  }) => void;
 }) {
   const qc = useQueryClient();
   const fetchProject = useServerFn(getProject);
@@ -83,34 +137,35 @@ export function ProjectTimelinePanel({
   const serverAssets = projectQ.data?.assets ?? [];
   const timeline = projectQ.data?.project?.projectState?.timeline;
 
-  // Locally orchestrated order/hidden for snappy DnD/delete; we seed from
-  // the server, then sync after mutations.
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
-  const [localHidden, setLocalHidden] = useState<string[] | null>(null);
 
-  const effectiveTimeline: TimelineState = useMemo(
-    () => ({
-      order: localOrder ?? timeline?.order ?? [],
-      hidden: localHidden ?? timeline?.hidden ?? [],
-    }),
-    [localOrder, localHidden, timeline?.order, timeline?.hidden],
-  );
+  const effectiveOrder = localOrder ?? timeline?.order ?? [];
 
-  const visualAssets = useMemo(
-    () =>
-      applyTimeline(
-        serverAssets.filter(
-          (a) => a.mime.startsWith("image/") || a.mime.startsWith("video/"),
-        ),
-        effectiveTimeline,
-      ),
-    [serverAssets, effectiveTimeline],
-  );
-
-  const audioAssets = useMemo(
-    () => serverAssets.filter((a) => a.mime.startsWith("audio/")),
+  // Allowlist semantics: only assets whose ids appear in `order` are shown.
+  const assetsById = useMemo(
+    () => new Map(serverAssets.map((a) => [a.id, a] as const)),
     [serverAssets],
   );
+
+  const visualAssets = useMemo(() => {
+    const out: ProjectAsset[] = [];
+    for (const id of effectiveOrder) {
+      const a = assetsById.get(id);
+      if (a && (a.mime.startsWith("image/") || a.mime.startsWith("video/"))) {
+        out.push(a);
+      }
+    }
+    return out;
+  }, [effectiveOrder, assetsById]);
+
+  const audioAssets = useMemo(() => {
+    const out: ProjectAsset[] = [];
+    for (const id of effectiveOrder) {
+      const a = assetsById.get(id);
+      if (a && a.mime.startsWith("audio/")) out.push(a);
+    }
+    return out;
+  }, [effectiveOrder, assetsById]);
 
   const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
 
@@ -121,14 +176,13 @@ export function ProjectTimelinePanel({
     if (!selected && visualAssets[0]) setSelectedId(visualAssets[0].id);
   }, [visualAssets, selected]);
 
-  // Transport state
+  // Transport
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTickRef = useRef<number | null>(null);
 
-  // Drive currentTime with rAF when playing (works for both image & video).
   useEffect(() => {
     if (!isPlaying) {
       lastTickRef.current = null;
@@ -153,7 +207,6 @@ export function ProjectTimelinePanel({
     return () => cancelAnimationFrame(raf);
   }, [isPlaying, totalSeconds]);
 
-  // Keep selected clip in sync with playhead.
   useEffect(() => {
     if (!visualAssets.length) return;
     const idx = Math.min(
@@ -164,52 +217,45 @@ export function ProjectTimelinePanel({
     if (id && id !== selectedId) setSelectedId(id);
   }, [currentTime, visualAssets, selectedId]);
 
-  // Sync the video element with transport when current clip is a video.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     v.muted = muted;
-    if (isPlaying) {
-      v.play().catch(() => {});
-    } else {
-      v.pause();
-    }
+    if (isPlaying) v.play().catch(() => {});
+    else v.pause();
   }, [isPlaying, muted, selected?.id]);
 
-  // Persist timeline changes (debounced + fire-and-forget).
-  const persist = (next: TimelineState) => {
+  const persist = (nextOrder: string[]) => {
     if (!projectId) return;
-    void updateState({ data: { id: projectId, patch: { timeline: next } } })
+    void updateState({
+      data: { id: projectId, patch: { timeline: { order: nextOrder } } },
+    })
       .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
       .catch((e) => console.error("[timeline] persist failed", e));
   };
 
-  // Drag & drop reorder
   const [dragId, setDragId] = useState<string | null>(null);
   const handleDrop = (targetId: string) => {
     if (!dragId || dragId === targetId) return;
-    const cur = visualAssets.map((a) => a.id);
-    const from = cur.indexOf(dragId);
-    const to = cur.indexOf(targetId);
+    const next = effectiveOrder.slice();
+    const from = next.indexOf(dragId);
+    const to = next.indexOf(targetId);
     if (from < 0 || to < 0) return;
-    const next = cur.slice();
     const [m] = next.splice(from, 1);
     next.splice(to, 0, m);
     setLocalOrder(next);
-    persist({ order: next, hidden: effectiveTimeline.hidden });
+    persist(next);
     setDragId(null);
   };
 
   const handleDelete = (id: string) => {
-    const nextHidden = Array.from(
-      new Set([...(effectiveTimeline.hidden ?? []), id]),
-    );
-    setLocalHidden(nextHidden);
+    const next = effectiveOrder.filter((x) => x !== id);
+    setLocalOrder(next);
     if (selectedId === id) {
       const remaining = visualAssets.filter((a) => a.id !== id);
       setSelectedId(remaining[0]?.id ?? null);
     }
-    persist({ order: effectiveTimeline.order, hidden: nextHidden });
+    persist(next);
   };
 
   const seekTo = (t: number) => {
@@ -219,14 +265,64 @@ export function ProjectTimelinePanel({
 
   const playheadPct = totalSeconds > 0 ? (currentTime / totalSeconds) * 100 : 0;
 
+  // Popover open state
+  const [editClipFor, setEditClipFor] = useState<string | null>(null);
+  const [addClipOpen, setAddClipOpen] = useState(false);
+  const [editAudioFor, setEditAudioFor] = useState<string | null>(null);
+  const [addAudioOpen, setAddAudioOpen] = useState(false);
+
+  const pickEditClip = (skill: Skill, asset: ProjectAsset) => {
+    onUseInApp?.({
+      skill,
+      asset,
+      intent: { kind: "replaceClip", assetId: asset.id },
+    });
+    setEditClipFor(null);
+  };
+  const pickAddClip = (skill: Skill) => {
+    onUseInApp?.({ skill, asset: null, intent: { kind: "appendVisual" } });
+    setAddClipOpen(false);
+  };
+  const pickEditAudio = (skill: Skill, asset: ProjectAsset) => {
+    onUseInApp?.({
+      skill,
+      asset,
+      intent: { kind: "replaceAudio", assetId: asset.id },
+    });
+    setEditAudioFor(null);
+  };
+  const pickAddAudio = (skill: Skill) => {
+    onUseInApp?.({ skill, asset: null, intent: { kind: "appendAudio" } });
+    setAddAudioOpen(false);
+  };
+
   return (
     <div className="flex h-full flex-col bg-card/40">
-      {/* Slim header */}
-      <header className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
-        <div className="text-xs font-medium text-muted-foreground">Timeline</div>
-        <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close timeline">
-          <PanelRightClose className="h-4 w-4" />
-        </Button>
+      {/* Header — matches project title font */}
+      <header className="flex items-center justify-between gap-3 border-b border-border/50 px-6 py-4">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          Timeline
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm">
+            <Share2 className="mr-1.5 h-3.5 w-3.5" />
+            Share
+          </Button>
+          <Button
+            size="sm"
+            className="bg-foreground text-background hover:opacity-90"
+          >
+            Export
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close timeline"
+          >
+            <PanelRightClose className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Centered editor */}
@@ -254,8 +350,8 @@ export function ProjectTimelinePanel({
                   />
                 )
               ) : (
-                <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">
-                  No clips yet
+                <div className="grid h-full w-full place-items-center px-6 text-center text-xs text-muted-foreground">
+                  No clips yet — click the <Plus className="mx-1 inline h-3 w-3" /> below to add one.
                 </div>
               )}
             </div>
@@ -299,7 +395,7 @@ export function ProjectTimelinePanel({
             </button>
           </div>
 
-          {/* Time ruler + clip strip (horizontally scrollable) */}
+          {/* Time ruler + clip strip */}
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
@@ -346,59 +442,101 @@ export function ProjectTimelinePanel({
                 {visualAssets.map((a) => {
                   const isSel = a.id === selected?.id;
                   return (
-                    <div
+                    <Popover
                       key={a.id}
-                      draggable
-                      onDragStart={() => setDragId(a.id)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleDrop(a.id)}
-                      onClick={() => {
-                        setSelectedId(a.id);
-                        const idx = visualAssets.findIndex((v) => v.id === a.id);
-                        if (idx >= 0) seekTo(idx * CLIP_SECONDS);
-                      }}
-                      className={cn(
-                        "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
-                        isSel
-                          ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                          : "ring-1 ring-border hover:ring-foreground/40",
-                      )}
+                      open={editClipFor === a.id}
+                      onOpenChange={(o) => setEditClipFor(o ? a.id : null)}
                     >
-                      {a.mime.startsWith("image/") ? (
-                        <img
-                          src={a.url}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          draggable={false}
-                        />
-                      ) : (
-                        <video
-                          src={a.url}
-                          muted
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(a.id);
-                        }}
-                        className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
-                        aria-label="Delete clip"
+                      <PopoverTrigger asChild>
+                        <div
+                          draggable
+                          onDragStart={() => setDragId(a.id)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => handleDrop(a.id)}
+                          onClick={() => {
+                            setSelectedId(a.id);
+                            const idx = visualAssets.findIndex(
+                              (v) => v.id === a.id,
+                            );
+                            if (idx >= 0) seekTo(idx * CLIP_SECONDS);
+                            setEditClipFor(a.id);
+                          }}
+                          className={cn(
+                            "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
+                            isSel
+                              ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                              : "ring-1 ring-border hover:ring-foreground/40",
+                          )}
+                        >
+                          {a.mime.startsWith("image/") ? (
+                            <img
+                              src={a.url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              draggable={false}
+                            />
+                          ) : (
+                            <video
+                              src={a.url}
+                              muted
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(a.id);
+                            }}
+                            className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
+                            aria-label="Delete clip"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="top"
+                        align="start"
+                        className="w-72 p-2"
                       >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
+                        <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          <Wand2 className="h-3 w-3" />
+                          Edit clip with app
+                        </div>
+                        <AppPickerList
+                          apps={appsAcceptingKind(
+                            a.mime.startsWith("video/") ? "video" : "image",
+                          )}
+                          onPick={(s) => pickEditClip(s, a)}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   );
                 })}
-                <button
-                  type="button"
-                  className="grid h-14 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
-                  aria-label="Add clip"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+
+                {/* Add-clip + button */}
+                <Popover open={addClipOpen} onOpenChange={setAddClipOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="grid h-14 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+                      aria-label="Add clip"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="start" className="w-72 p-2">
+                    <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <Plus className="h-3 w-3" />
+                      Add a clip with an app
+                    </div>
+                    <AppPickerList
+                      apps={appsProducingKind("visual")}
+                      onPick={pickAddClip}
+                    />
+                  </PopoverContent>
+                </Popover>
 
                 {/* Playhead */}
                 {visualAssets.length > 0 && (
@@ -413,50 +551,74 @@ export function ProjectTimelinePanel({
                 )}
               </div>
 
-              {/* Audio track(s) */}
+              {/* Audio tracks */}
               <div className="mt-3 space-y-1.5">
-                {(audioAssets.length > 0
-                  ? audioAssets
-                  : [{ id: "placeholder", name: "Audio", url: "" } as Partial<ProjectAsset>]
-                ).map((a) => {
-                  const wave = fakeWave(a.id ?? "audio", 96);
-                  const isPlaceholder = !a.url;
+                {audioAssets.map((a) => {
+                  const wave = fakeWave(a.id, 96);
                   return (
-                    <div
+                    <Popover
                       key={a.id}
-                      className={cn(
-                        "flex h-10 items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2",
-                        isPlaceholder && "opacity-50",
-                      )}
+                      open={editAudioFor === a.id}
+                      onOpenChange={(o) => setEditAudioFor(o ? a.id : null)}
                     >
-                      <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
-                        {a.name ?? "Audio"}
-                      </span>
-                      <div className="flex h-full flex-1 items-center gap-[2px]">
-                        {wave.map((v, i) => (
-                          <div
-                            key={i}
-                            className="w-[2px] rounded-full bg-secondary-foreground/60"
-                            style={{ height: `${Math.round(v * 70)}%` }}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
+                        >
+                          <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
+                            {a.label ?? a.name ?? "Audio"}
+                          </span>
+                          <div className="flex h-full flex-1 items-center gap-[2px]">
+                            {wave.map((v, i) => (
+                              <div
+                                key={i}
+                                className="w-[2px] rounded-full bg-secondary-foreground/60"
+                                style={{ height: `${Math.round(v * 70)}%` }}
+                              />
+                            ))}
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" align="start" className="w-72 p-2">
+                        <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          <Wand2 className="h-3 w-3" />
+                          Edit audio with app
+                        </div>
+                        <AppPickerList
+                          apps={appsAcceptingKind("audio")}
+                          onPick={(s) => pickEditAudio(s, a)}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   );
                 })}
+
+                {/* Add-audio + button */}
+                <Popover open={addAudioOpen} onOpenChange={setAddAudioOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-secondary/30 text-xs text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+                      aria-label="Add audio"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add audio with an app
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="start" className="w-72 p-2">
+                    <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <Plus className="h-3 w-3" />
+                      Add audio with an app
+                    </div>
+                    <AppPickerList
+                      apps={appsProducingKind("audio")}
+                      onPick={pickAddAudio}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
-          </div>
-
-          {/* Share / Export */}
-          <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" size="sm">
-              <Share2 className="mr-1.5 h-3.5 w-3.5" />
-              Share
-            </Button>
-            <Button size="sm" className="bg-foreground text-background hover:opacity-90">
-              Export
-            </Button>
           </div>
         </div>
       </div>
