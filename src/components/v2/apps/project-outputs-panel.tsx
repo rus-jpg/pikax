@@ -224,7 +224,13 @@ export function ProjectOutputsPanel({
               return (
                 <li
                   key={o.id}
-                  className="overflow-hidden rounded-3xl border border-border bg-card shadow-elegant"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/x-v2-asset-id", o.id);
+                    e.dataTransfer.setData("application/x-v2-asset-mime", o.mime);
+                    e.dataTransfer.effectAllowed = "copyMove";
+                  }}
+                  className="cursor-grab overflow-hidden rounded-3xl border border-border bg-card shadow-elegant active:cursor-grabbing"
                 >
                   <div className="grid place-items-center bg-muted/30 p-3">
                     {o.mime.startsWith("image/") && (
