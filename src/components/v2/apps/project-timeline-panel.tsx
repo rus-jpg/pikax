@@ -324,26 +324,71 @@ export function ProjectTimelinePanel({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<"visual" | "audio" | null>(null);
 
-  const readDragAssetId = (e: React.DragEvent): string | null => {
-    const fromDt = e.dataTransfer.getData("application/x-v2-asset-id");
-    return fromDt || dragId;
+  const readDragData = (e: React.DragEvent) => {
+    const timelineRef =
+      e.dataTransfer.getData("application/x-v2-timeline-ref") || dragId;
+    const assetId =
+      e.dataTransfer.getData("application/x-v2-asset-id") ||
+      (timelineRef ? timelineRefAssetId(timelineRef, effectiveOrder) : "");
+    return { timelineRef, assetId };
   };
 
-  const handleDrop = (targetId: string, e: React.DragEvent) => {
-    const id = readDragAssetId(e);
-    if (!id || id === targetId) return;
-    const next = effectiveOrder.slice();
-    const from = next.indexOf(id);
-    const to = next.indexOf(targetId);
-    if (to < 0) return;
-    if (from >= 0) {
-      const [m] = next.splice(from, 1);
-      const insertAt = next.indexOf(targetId);
-      next.splice(insertAt, 0, m);
-    } else {
-      // External asset — insert before the target clip
-      next.splice(to, 0, id);
+  const insertTimelineItem = (
+    next: string[],
+    assetId: string,
+    timelineRef: string | null,
+    targetRef: string | null,
+    place: "before" | "after" | "append",
+  ) => {
+    const isMove = !!timelineRef && next.includes(timelineRef);
+    const refToInsert = isMove ? timelineRef : makeTimelineRef(assetId);
+    if (targetRef === refToInsert) return next;
+    if (isMove) next.splice(next.indexOf(refToInsert), 1);
+    if (!targetRef || place === "append") {
+      next.push(refToInsert);
+      return next;
     }
+    const targetIndex = next.indexOf(targetRef);
+    if (targetIndex < 0) {
+      next.push(refToInsert);
+      return next;
+    }
+    next.splice(place === "before" ? targetIndex : targetIndex + 1, 0, refToInsert);
+    return next;
+  };
+
+  const dropPlacementFromElement = (el: HTMLElement, clientX: number) => {
+    const rect = el.getBoundingClientRect();
+    return clientX < rect.left + rect.width / 2 ? "before" : "after";
+  };
+
+  const dropTargetFromTrack = (
+    track: HTMLElement,
+    clientX: number,
+    selector: string,
+  ) => {
+    const items = Array.from(track.querySelectorAll<HTMLElement>(selector));
+    for (const item of items) {
+      const rect = item.getBoundingClientRect();
+      if (clientX < rect.left + rect.width / 2) {
+        return { targetRef: item.dataset.timelineRef ?? null, place: "before" as const };
+      }
+    }
+    const last = items.at(-1);
+    return {
+      targetRef: last?.dataset.timelineRef ?? null,
+      place: last ? ("after" as const) : ("append" as const),
+    };
+  };
+
+  const handleDropOnItem = (targetRef: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropHint(null);
+    const { timelineRef, assetId } = readDragData(e);
+    if (!assetId) return;
+    const next = effectiveOrder.slice();
+    insertTimelineItem(next, assetId, timelineRef, targetRef, dropPlacementFromElement(e.currentTarget as HTMLElement, e.clientX));
     setLocalOrder(next);
     persist(next);
     setDragId(null);
@@ -355,31 +400,31 @@ export function ProjectTimelinePanel({
   ) => {
     e.preventDefault();
     setDropHint(null);
-    const id = readDragAssetId(e);
-    if (!id) return;
+    const { timelineRef, assetId } = readDragData(e);
+    if (!assetId) return;
     const mime =
       e.dataTransfer.getData("application/x-v2-asset-mime") ||
-      assetsById.get(id)?.mime ||
+      assetsById.get(assetId)?.mime ||
       "";
     const isAudio = mime.startsWith("audio/");
     const isVisual = mime.startsWith("image/") || mime.startsWith("video/");
     if (kind === "visual" && !isVisual) return;
     if (kind === "audio" && !isAudio) return;
     const next = effectiveOrder.slice();
-    const from = next.indexOf(id);
-    if (from >= 0) next.splice(from, 1);
-    next.push(id);
+    const selector = kind === "visual" ? "[data-timeline-kind='visual']" : "[data-timeline-kind='audio']";
+    const target = dropTargetFromTrack(e.currentTarget as HTMLElement, e.clientX, selector);
+    insertTimelineItem(next, assetId, timelineRef, target.targetRef, target.place);
     setLocalOrder(next);
     persist(next);
     setDragId(null);
   };
 
-  const handleDelete = (id: string) => {
-    const next = effectiveOrder.filter((x) => x !== id);
+  const handleDelete = (ref: string) => {
+    const next = effectiveOrder.filter((x) => x !== ref);
     setLocalOrder(next);
-    if (selectedId === id) {
-      const remaining = visualAssets.filter((a) => a.id !== id);
-      setSelectedId(remaining[0]?.id ?? null);
+    if (selectedId === ref) {
+      const remaining = visualEntries.filter((entry) => entry.ref !== ref);
+      setSelectedId(remaining[0]?.ref ?? null);
     }
     persist(next);
   };
