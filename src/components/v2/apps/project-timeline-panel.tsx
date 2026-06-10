@@ -513,7 +513,7 @@ export function ProjectTimelinePanel({
                           draggable
                           onDragStart={() => setDragId(a.id)}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => handleDrop(a.id)}
+                          onDrop={(e) => handleDrop(a.id, e)}
                           onClick={() => {
                             setSelectedId(a.id);
                             const idx = visualAssets.findIndex(
