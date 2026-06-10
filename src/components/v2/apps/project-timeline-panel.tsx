@@ -251,6 +251,26 @@ export function ProjectTimelinePanel({
     else v.pause();
   }, [isPlaying, muted, selected?.id]);
 
+  // Audio playback sync — play all timeline audio tracks together with transport
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
+  useEffect(() => {
+    for (const el of audioRefs.current.values()) {
+      el.muted = muted;
+      if (isPlaying) {
+        // Resync from start on play to keep alignment simple
+        try {
+          el.currentTime = Math.min(currentTime, el.duration || currentTime);
+        } catch {}
+        el.play().catch(() => {});
+      } else {
+        el.pause();
+      }
+    }
+    // Only react to play/mute toggles, not every tick
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying, muted, audioAssets.map((a) => a.id).join(",")]);
+
+
   const persist = (nextOrder: string[]) => {
     if (!projectId) return;
     void updateState({
