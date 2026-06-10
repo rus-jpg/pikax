@@ -546,92 +546,9 @@ export function AppsWorkspace({
               onStartRun={(args) => void handleStartFromWizard(args)}
             />
           ) : (
-            <>
-              <header className="border-b border-border/50 px-5 pb-3 pt-6">
-                <h1 className="font-display text-2xl font-semibold tracking-tight">
-                  Apps
-                </h1>
-                {projectId && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Adding to current project · pick an app to add more media.
-                  </p>
-                )}
-                <div className="mt-4 flex gap-1 overflow-x-auto pb-1">
-                  {TABS.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTab(t)}
-                      className={cn(
-                        "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition",
-                        tab === t
-                          ? "bg-foreground text-background"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </header>
-              <div className="flex-1 overflow-y-auto p-3">
-                <div className={cn("grid gap-3", appsGridCols)}>
-                  {filtered.map((s) => {
-                     const Icon = s.icon;
-                     const swatch = getAppSwatch(s.id);
-                     const fav = isFavorite(s.id);
-                     return (
-                       <div
-                         key={s.id}
-                         className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
-                       >
-                         <button
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             toggleFav(s.id);
-                           }}
-                           aria-label={fav ? "Remove from favorites" : "Add to favorites"}
-                           className={cn(
-                             "absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition",
-                             fav
-                               ? "text-rose-500 opacity-100"
-                               : "text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100",
-                           )}
-                         >
-                           <Heart className={cn("h-3.5 w-3.5", fav && "fill-current")} />
-                         </button>
-                         <button
-                           type="button"
-                           onClick={() => onSelectApp(s.id)}
-                           className="flex w-full flex-col items-start gap-2 text-left"
-                         >
-                           <div
-                             className="grid h-9 w-9 place-items-center rounded-[30%]"
-                             style={{ backgroundColor: swatch.bg, color: swatch.fg }}
-                           >
-                             <Icon className="h-4 w-4" />
-                           </div>
-                           <div className="pr-6 text-sm font-semibold leading-tight text-foreground">
-                             {s.label}
-                           </div>
-                           <div className="line-clamp-2 text-[11px] text-muted-foreground">
-                             {s.description}
-                           </div>
-                         </button>
-                       </div>
-                     );
-                  })}
-                </div>
-                {filtered.length === 0 && (
-                  <p className="p-6 text-center text-sm text-muted-foreground">
-                    {tab === "Favorites"
-                      ? "No favorites yet. Tap the heart on any app to save it here."
-                      : "No apps in this category yet."}
-                  </p>
-                )}
-              </div>
-            </>
+            appsBrowser
           )}
+
         </div>
       </ResizablePanel>
 
