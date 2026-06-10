@@ -499,7 +499,18 @@ export function ProjectTimelinePanel({
               </div>
 
               {/* Clip strip */}
-              <div className="relative flex items-center gap-1.5">
+              <div
+                className={cn(
+                  "relative flex items-center gap-1.5 rounded-lg p-1 -m-1 transition",
+                  dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropHint("visual");
+                }}
+                onDragLeave={() => setDropHint(null)}
+                onDrop={(e) => handleAppendDrop(e, "visual")}
+              >
                 {visualAssets.map((a) => {
                   const isSel = a.id === selected?.id;
                   return (
