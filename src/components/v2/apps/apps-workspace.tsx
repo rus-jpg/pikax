@@ -71,8 +71,18 @@ type ActiveRun = {
 export type TimelineIntent =
   | { kind: "appendVisual" }
   | { kind: "appendAudio" }
-  | { kind: "replaceClip"; assetId: string }
-  | { kind: "replaceAudio"; assetId: string };
+  | { kind: "replaceClip"; targetRef: string }
+  | { kind: "replaceAudio"; targetRef: string };
+
+const TIMELINE_INSTANCE_SEP = "::timeline-instance::";
+
+function makeTimelineRef(assetId: string) {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${assetId}${TIMELINE_INSTANCE_SEP}${id}`;
+}
 
 export type AppsWorkspaceProps = {
   /** The project this workspace is bound to. If undefined, this is the free
@@ -240,11 +250,11 @@ export function AppsWorkspace({
           const curOrder = cur?.project?.projectState?.timeline?.order ?? [];
           let nextOrder = curOrder.slice();
           if (intent.kind === "appendVisual" || intent.kind === "appendAudio") {
-            nextOrder.push(finalAsset.assetId);
+            nextOrder.push(makeTimelineRef(finalAsset.assetId));
           } else if (intent.kind === "replaceClip" || intent.kind === "replaceAudio") {
-            const idx = nextOrder.indexOf(intent.assetId);
-            if (idx >= 0) nextOrder[idx] = finalAsset.assetId;
-            else nextOrder.push(finalAsset.assetId);
+            const idx = nextOrder.indexOf(intent.targetRef);
+            if (idx >= 0) nextOrder[idx] = makeTimelineRef(finalAsset.assetId);
+            else nextOrder.push(makeTimelineRef(finalAsset.assetId));
           }
           await updateState({
             data: { id: pid, patch: { timeline: { order: nextOrder } } },
