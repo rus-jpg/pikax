@@ -390,6 +390,23 @@ export function ProjectTimelinePanel({
     setAddAudioOpen(false);
   };
 
+  const handleLibraryPick = async (item: { id: string; mime: string }) => {
+    if (!projectId) return;
+    try {
+      const asset = await attachLibrary({
+        data: { sourceAssetId: item.id, targetProjectId: projectId },
+      });
+      const next = effectiveOrder.slice();
+      if (!next.includes(asset.id)) next.push(asset.id);
+      setLocalOrder(next);
+      persist(next);
+      await qc.invalidateQueries({ queryKey: ["v2-project", projectId] });
+    } catch (e) {
+      console.error("[timeline] library attach failed", e);
+    }
+  };
+
+
   return (
     <div className="flex h-full flex-col bg-card/40">
       {/* Header — matches project title font */}
