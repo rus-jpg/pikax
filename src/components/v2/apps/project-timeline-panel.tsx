@@ -133,6 +133,10 @@ export function ProjectTimelinePanel({
   const qc = useQueryClient();
   const fetchProject = useServerFn(getProject);
   const updateState = useServerFn(updateProjectState);
+  const attachLibrary = useServerFn(attachLibraryAssetToProject);
+  const [libraryPickerFor, setLibraryPickerFor] = useState<
+    null | { kind: "visual" | "audio" }
+  >(null);
   const projectQ = useQuery({
     queryKey: ["v2-project", projectId],
     queryFn: () => fetchProject({ data: { id: projectId! } }),
