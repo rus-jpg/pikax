@@ -685,7 +685,8 @@ export function ProjectTimelinePanel({
     setCurrentTime(clamped);
   };
 
-  const playheadPct = totalSeconds > 0 ? (currentTime / totalSeconds) * 100 : 0;
+
+
 
   // Popover open state
   const [editClipFor, setEditClipFor] = useState<string | null>(null);
