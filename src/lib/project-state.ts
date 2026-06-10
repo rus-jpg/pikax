@@ -89,12 +89,13 @@ export type ProjectMeta = {
 
 export type TimelineState = {
   // Explicit allowlist of asset ids on the timeline, in display order.
-  // Assets NOT in this list do not appear on the timeline — they live in
-  // the Project Assets panel until the user adds them.
   order?: string[];
-  // Legacy soft-delete list, retained for backward compat; ignored by the
-  // timeline panel now that `order` is the source of truth.
+  // Legacy, ignored by the panel now that `order` is the source of truth.
   hidden?: string[];
+  // True once the timeline has been initialized for this project (first
+  // "Open Timeline" seeds it with existing assets). Prevents re-seeding
+  // after the user intentionally clears the timeline.
+  seeded?: boolean;
 };
 
 export type ProjectState = {
