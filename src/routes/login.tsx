@@ -18,7 +18,7 @@ function LoginPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (session) void navigate({ to: "/projects" });
+        if (session) void navigate({ to: "/v2/projects" });
       },
     );
     return () => subscription.unsubscribe();
