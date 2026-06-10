@@ -399,7 +399,7 @@ export function AppsWorkspace({
       <ResizableHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel defaultSize={showTimeline ? "30%" : "72%"} minSize="25%">
+      <ResizablePanel defaultSize={showTimeline ? "25%" : "72%"} minSize="20%">
         <div className="h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
             <ProjectOutputsPanel
