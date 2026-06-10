@@ -1026,12 +1026,16 @@ export function ProjectTimelinePanel({
                           <div
                             onPointerDown={(e) => beginTrim(ref, "start", e)}
                             onClick={(e) => e.stopPropagation()}
+                            onDragStart={(e) => e.preventDefault()}
+                            draggable={false}
                             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
                             title="Trim start"
                           />
                           <div
                             onPointerDown={(e) => beginTrim(ref, "end", e)}
                             onClick={(e) => e.stopPropagation()}
+                            onDragStart={(e) => e.preventDefault()}
+                            draggable={false}
                             className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
                             title="Trim end"
                           />
