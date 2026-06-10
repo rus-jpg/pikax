@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Film,
   Loader2,
-  PanelRightClose,
   Plus,
   RotateCcw,
   Sparkles,
