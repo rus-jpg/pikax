@@ -261,14 +261,53 @@ export function ProjectTimelinePanel({
   };
 
   const [dragId, setDragId] = useState<string | null>(null);
-  const handleDrop = (targetId: string) => {
-    if (!dragId || dragId === targetId) return;
+  const [dropHint, setDropHint] = useState<"visual" | "audio" | null>(null);
+
+  const readDragAssetId = (e: React.DragEvent): string | null => {
+    const fromDt = e.dataTransfer.getData("application/x-v2-asset-id");
+    return fromDt || dragId;
+  };
+
+  const handleDrop = (targetId: string, e: React.DragEvent) => {
+    const id = readDragAssetId(e);
+    if (!id || id === targetId) return;
     const next = effectiveOrder.slice();
-    const from = next.indexOf(dragId);
+    const from = next.indexOf(id);
     const to = next.indexOf(targetId);
-    if (from < 0 || to < 0) return;
-    const [m] = next.splice(from, 1);
-    next.splice(to, 0, m);
+    if (to < 0) return;
+    if (from >= 0) {
+      const [m] = next.splice(from, 1);
+      const insertAt = next.indexOf(targetId);
+      next.splice(insertAt, 0, m);
+    } else {
+      // External asset — insert before the target clip
+      next.splice(to, 0, id);
+    }
+    setLocalOrder(next);
+    persist(next);
+    setDragId(null);
+  };
+
+  const handleAppendDrop = (
+    e: React.DragEvent,
+    kind: "visual" | "audio",
+  ) => {
+    e.preventDefault();
+    setDropHint(null);
+    const id = readDragAssetId(e);
+    if (!id) return;
+    const mime =
+      e.dataTransfer.getData("application/x-v2-asset-mime") ||
+      assetsById.get(id)?.mime ||
+      "";
+    const isAudio = mime.startsWith("audio/");
+    const isVisual = mime.startsWith("image/") || mime.startsWith("video/");
+    if (kind === "visual" && !isVisual) return;
+    if (kind === "audio" && !isAudio) return;
+    const next = effectiveOrder.slice();
+    const from = next.indexOf(id);
+    if (from >= 0) next.splice(from, 1);
+    next.push(id);
     setLocalOrder(next);
     persist(next);
     setDragId(null);
@@ -460,7 +499,18 @@ export function ProjectTimelinePanel({
               </div>
 
               {/* Clip strip */}
-              <div className="relative flex items-center gap-1.5">
+              <div
+                className={cn(
+                  "relative flex items-center gap-1.5 rounded-lg p-1 -m-1 transition",
+                  dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropHint("visual");
+                }}
+                onDragLeave={() => setDropHint(null)}
+                onDrop={(e) => handleAppendDrop(e, "visual")}
+              >
                 {visualAssets.map((a) => {
                   const isSel = a.id === selected?.id;
                   return (
@@ -474,7 +524,7 @@ export function ProjectTimelinePanel({
                           draggable
                           onDragStart={() => setDragId(a.id)}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => handleDrop(a.id)}
+                          onDrop={(e) => handleDrop(a.id, e)}
                           onClick={() => {
                             setSelectedId(a.id);
                             const idx = visualAssets.findIndex(
@@ -574,7 +624,18 @@ export function ProjectTimelinePanel({
               </div>
 
               {/* Audio tracks */}
-              <div className="mt-3 space-y-1.5">
+              <div
+                className={cn(
+                  "mt-3 space-y-1.5 rounded-lg p-1 -m-1 transition",
+                  dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropHint("audio");
+                }}
+                onDragLeave={() => setDropHint(null)}
+                onDrop={(e) => handleAppendDrop(e, "audio")}
+              >
                 {audioAssets.map((a) => {
                   const wave = fakeWave(a.id, 96);
                   return (
