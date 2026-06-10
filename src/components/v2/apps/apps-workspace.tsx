@@ -1,12 +1,13 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Heart, Sparkles } from "lucide-react";
 import { useAppFavorites } from "@/hooks/use-app-favorites";
 
-import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
+import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND, type SkillKind } from "@/lib/skills";
 import { AppRunner } from "@/components/v2/apps/app-runner";
+import { CreateAppWizard, type CreateSubmit } from "@/components/v2/apps/create-app-wizard";
 import { HowItWorksV2 } from "@/components/v2/apps/how-it-works";
 import {
   ProjectOutputsPanel,
@@ -100,6 +101,13 @@ export type AppsWorkspaceProps = {
    * dropdown's "New project" should navigate away to /v2/apps instead of
    * clearing in-place. */
   lockedProject?: boolean;
+  /** Optional one-shot seed for the Create app — populated when arriving from
+   * the home composer (?app=app-create&seedPrompt=...&seedMode=...). */
+  seedPrompt?: string;
+  seedMode?: SkillKind;
+  seedModel?: string;
+  /** Called after the seed is consumed so the parent can clear the URL. */
+  onSeedConsumed?: () => void;
 };
 
 export function AppsWorkspace({
@@ -108,6 +116,10 @@ export function AppsWorkspace({
   onSelectApp,
   onProjectIdChange,
   lockedProject,
+  seedPrompt,
+  seedMode,
+  seedModel,
+  onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -164,11 +176,17 @@ export function AppsWorkspace({
     projectId: pid,
     prompt,
     assets,
+    modeOverride,
+    modelOverride,
+    params,
   }: {
     skill: Skill;
     projectId: string;
     prompt: string;
     assets: ProjectAsset[];
+    modeOverride?: SkillKind;
+    modelOverride?: string;
+    params?: Record<string, string | number | boolean>;
   }) => {
     const runId = crypto.randomUUID();
     const intent = pendingIntent;
@@ -176,9 +194,15 @@ export function AppsWorkspace({
     const refImageUrls = assets
       .filter((a) => a.mime.startsWith("image/"))
       .map((a) => a.url);
+    const effectiveMode: SkillKind = modeOverride ?? skill.kind;
+    const effectiveModel =
+      modelOverride || skill.model || DEFAULT_MODEL_BY_KIND[effectiveMode];
+    const runSkill: Skill = modeOverride || modelOverride
+      ? { ...skill, kind: effectiveMode, model: effectiveModel }
+      : skill;
     setRuns((prev) => ({
       ...prev,
-      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined, refImageUrls },
+      [runId]: { id: runId, skill: runSkill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined, refImageUrls },
     }));
     onProjectIdChange(pid);
 
@@ -201,11 +225,12 @@ export function AppsWorkspace({
         data: {
           projectId: pid,
           prompt,
-          mode: skill.kind,
-          model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
+          mode: effectiveMode,
+          model: effectiveModel,
           userMessageId: userId,
           assistantMessageId: assistantId,
           referenceImageUrls: refUrls.length ? refUrls : undefined,
+          params,
         },
       });
       if (!started.ok) {
@@ -221,8 +246,8 @@ export function AppsWorkspace({
         const tick = await runPoll({
           data: {
             projectId: pid,
-            mode: skill.kind,
-            model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
+            mode: effectiveMode,
+            model: effectiveModel,
             prompt,
             assistantMessageId: assistantId,
             statusUrl: started.statusUrl,
@@ -322,6 +347,42 @@ export function AppsWorkspace({
     await startRun({ skill, projectId: pid, prompt, assets });
   };
 
+  const handleStartFromCreate = async (args: CreateSubmit) => {
+    const createSkill = selected!;
+    let pid = projectId;
+    if (!pid) {
+      const out = await createProj({
+        data: {
+          title: args.prompt.slice(0, 60) || createSkill.label,
+          skill: createSkill.id,
+          studioMode: args.mode,
+          studioModel: args.model,
+        },
+      });
+      pid = out.id;
+    }
+    await startRun({
+      skill: createSkill,
+      projectId: pid,
+      prompt: args.prompt,
+      assets: args.assets,
+      modeOverride: args.mode,
+      modelOverride: args.model,
+      params: args.params,
+    });
+  };
+
+  // Consume seed once it's been handed off to the wizard.
+  const consumedSeedRef = useRef(false);
+  useEffect(() => {
+    if (!seedPrompt && !seedMode && !seedModel) return;
+    if (consumedSeedRef.current) return;
+    consumedSeedRef.current = true;
+    // Defer so the wizard mounts with the seed first.
+    const t = setTimeout(() => onSeedConsumed?.(), 50);
+    return () => clearTimeout(t);
+  }, [seedPrompt, seedMode, seedModel, onSeedConsumed]);
+
   // Right column: outputs once we have a project/runs; how-it-works when an
   // app is selected without a project yet; otherwise a generic placeholder.
   const hasOutputsContext =
@@ -338,7 +399,37 @@ export function AppsWorkspace({
       {/* Left column — apps / runner */}
       <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
         <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
-          {selected ? (
+          {selected?.id === "app-create" ? (
+            <div className="flex h-full flex-col">
+              <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
+                <button
+                  onClick={() => onSelectApp(undefined)}
+                  className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
+                  aria-label="Back to apps"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">Create</div>
+                  <div className="truncate text-[11px] text-muted-foreground">
+                    Direct prompt → media
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <CreateAppWizard
+                  projectId={projectId ?? ""}
+                  busy={false}
+                  seedPrompt={seedPrompt}
+                  seedMode={seedMode}
+                  seedModel={seedModel}
+                  seedAsset={seedAsset}
+                  onSeedConsumed={() => setSeedAsset(null)}
+                  onSubmit={(args) => void handleStartFromCreate(args)}
+                />
+              </div>
+            </div>
+          ) : selected ? (
             <AppRunner
               skill={selected}
               projectId={projectId}

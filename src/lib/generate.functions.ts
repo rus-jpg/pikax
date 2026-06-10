@@ -30,6 +30,11 @@ const InputSchema = z.object({
   assistantMessageId: z.string().min(1).max(64),
   // Optional reference images (e.g. nano-banana/edit requires `image_urls`).
   referenceImageUrls: z.array(z.string().url()).max(8).optional(),
+  // Optional extra per-model parameters (aspect, duration, voice, ...). Merged
+  // into the upstream fal body, overriding the mode defaults below.
+  params: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+    .optional(),
 });
 
 function fallbackMimeFor(mode: z.infer<typeof ModeSchema>): string {
@@ -101,6 +106,13 @@ export const directGenerateStart = createServerFn({ method: "POST" })
       body = { prompt: data.prompt, duration: 30 };
     } else {
       body = { text: data.prompt, voice: "Rachel" };
+    }
+
+    // Merge in per-model overrides (aspect_ratio, duration, voice, count, ...).
+    if (data.params) {
+      for (const [k, v] of Object.entries(data.params)) {
+        if (v !== undefined && v !== null && v !== "") body[k] = v;
+      }
     }
 
     try {
