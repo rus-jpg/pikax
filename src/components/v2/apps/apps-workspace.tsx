@@ -248,7 +248,7 @@ export function AppsWorkspace({
             ["v2-project", pid],
           );
           const curOrder = cur?.project?.projectState?.timeline?.order ?? [];
-          let nextOrder = curOrder.slice();
+          const nextOrder = curOrder.slice();
           if (intent.kind === "appendVisual" || intent.kind === "appendAudio") {
             nextOrder.push(makeTimelineRef(finalAsset.assetId));
           } else if (intent.kind === "replaceClip" || intent.kind === "replaceAudio") {
