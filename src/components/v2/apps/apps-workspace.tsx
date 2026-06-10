@@ -34,6 +34,7 @@ import { getAppSwatch } from "@/lib/app-swatch";
 
 
 const TABS = [
+  "Favorites",
   "Featured",
   "Photo",
   "Video",
@@ -44,7 +45,8 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
-function tabMatches(skill: Skill, tab: Tab): boolean {
+function tabMatches(skill: Skill, tab: Tab, favorites: string[]): boolean {
+  if (tab === "Favorites") return favorites.includes(skill.id);
   if (tab === "Featured") return skill.id.startsWith("app-");
   if (tab === "Photo") return skill.category === "Photo Apps";
   if (tab === "Video")
