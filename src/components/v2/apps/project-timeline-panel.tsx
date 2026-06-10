@@ -205,8 +205,17 @@ export function ProjectTimelinePanel({
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
   const effectiveTrims = localTrims ?? timeline?.trims ?? {};
 
-  const getTrim = (ref: string): TimelineTrim =>
-    effectiveTrims[ref] ?? { start: 0, end: CLIP_SECONDS };
+  const getTrim = (ref: string): TimelineTrim => {
+    if (effectiveTrims[ref]) return effectiveTrims[ref];
+    const a = serverAssets.find(
+      (x) => x.id === assetIdFromTimelineRef(ref),
+    );
+    const natural =
+      a && a.mime.startsWith("audio/") && typeof a.duration === "number" && a.duration > 0
+        ? a.duration
+        : CLIP_SECONDS;
+    return { start: 0, end: natural };
+  };
   const getDur = (ref: string) => {
     const t = getTrim(ref);
     return Math.max(0.2, t.end - t.start);
@@ -243,21 +252,43 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
-  // Cumulative starts (seconds) per visual entry.
+  // Resolved start time (seconds) per visual entry. Uses explicit offset
+  // if set; otherwise lays the clip immediately after the previous one.
   const cumStarts = useMemo(() => {
     const out: number[] = [];
-    let t = 0;
+    let cursor = 0;
     for (const e of visualEntries) {
-      out.push(t);
-      t += getDur(e.ref);
+      const t = effectiveTrims[e.ref];
+      const off = typeof t?.offset === "number" ? t.offset : cursor;
+      out.push(off);
+      cursor = off + getDur(e.ref);
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualEntries, effectiveTrims]);
 
-  const visualTotal = cumStarts.length
-    ? cumStarts[cumStarts.length - 1] + getDur(visualEntries[visualEntries.length - 1].ref)
-    : 0;
+  const audioStarts = useMemo(() => {
+    const out: number[] = [];
+    let cursor = 0;
+    for (const e of audioEntries) {
+      const t = effectiveTrims[e.ref];
+      const off = typeof t?.offset === "number" ? t.offset : cursor;
+      out.push(off);
+      cursor = off + getDur(e.ref);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioEntries, effectiveTrims]);
+
+  const visualEnd = cumStarts.reduce(
+    (m, s, i) => Math.max(m, s + getDur(visualEntries[i].ref)),
+    0,
+  );
+  const audioEnd = audioStarts.reduce(
+    (m, s, i) => Math.max(m, s + getDur(audioEntries[i].ref)),
+    0,
+  );
+  const visualTotal = Math.max(visualEnd, audioEnd);
   const totalSeconds = Math.max(visualTotal, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -473,9 +504,13 @@ export function ProjectTimelinePanel({
     const baseTrims = { ...effectiveTrims };
     const asset = assetsById.get(assetIdFromTimelineRef(ref));
     const isImage = asset?.mime.startsWith("image/") ?? false;
-    // Images are a single frame — they can be held on screen indefinitely.
-    // Videos are capped at the source clip's natural length (CLIP_SECONDS).
-    const maxEnd = isImage ? 600 : CLIP_SECONDS;
+    // Images can be held indefinitely; video/audio are capped at the source
+    // asset's natural length when we know it.
+    const naturalDur =
+      typeof asset?.duration === "number" && asset.duration > 0
+        ? asset.duration
+        : null;
+    const maxEnd = isImage ? 600 : naturalDur ?? CLIP_SECONDS;
     let latest = baseTrim;
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
@@ -487,12 +522,88 @@ export function ProjectTimelinePanel({
       } else {
         nextEnd = Math.max(Math.min(maxEnd, baseTrim.end + dSec), baseTrim.start + 0.2);
       }
-      latest = { start: nextStart, end: nextEnd };
+      latest = { ...baseTrim, start: nextStart, end: nextEnd };
       setLocalTrims({ ...baseTrims, [ref]: latest });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      const nextTrims = { ...baseTrims, [ref]: latest };
+      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // ---- Move handles (drag a clip/audio body to reposition in time) ----
+  const SNAP_PX = 12;
+  const collectSnapTargets = (excludeRef: string): number[] => {
+    const out: number[] = [0];
+    visualEntries.forEach((e, i) => {
+      if (e.ref === excludeRef) return;
+      out.push(cumStarts[i]);
+      out.push(cumStarts[i] + getDur(e.ref));
+    });
+    audioEntries.forEach((e, i) => {
+      if (e.ref === excludeRef) return;
+      out.push(audioStarts[i]);
+      out.push(audioStarts[i] + getDur(e.ref));
+    });
+    return out;
+  };
+  const snapTime = (t: number, dur: number, targets: number[]) => {
+    const snapSec = SNAP_PX / Math.max(1, pxPerSec);
+    let best = t;
+    let bestDist = snapSec;
+    for (const target of targets) {
+      // Snap clip start
+      const d1 = Math.abs(t - target);
+      if (d1 < bestDist) {
+        best = target;
+        bestDist = d1;
+      }
+      // Snap clip end (so end aligns with target)
+      const d2 = Math.abs(t + dur - target);
+      if (d2 < bestDist) {
+        best = target - dur;
+        bestDist = d2;
+      }
+    }
+    return Math.max(0, best);
+  };
+
+  const beginMove = (
+    ref: string,
+    e: React.PointerEvent,
+    kind: "visual" | "audio",
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const baseTrim = getTrim(ref);
+    const starts = kind === "visual" ? cumStarts : audioStarts;
+    const entries = kind === "visual" ? visualEntries : audioEntries;
+    const idx = entries.findIndex((x) => x.ref === ref);
+    const baseStart = starts[idx] ?? 0;
+    const dur = getDur(ref);
+    const baseTrims = { ...effectiveTrims };
+    const targets = collectSnapTargets(ref);
+    let latest = { ...baseTrim, offset: baseStart };
+    let moved = false;
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      if (!moved && Math.abs(dx) < 3) return;
+      moved = true;
+      const dSec = dx / Math.max(1, pxPerSec);
+      const desired = Math.max(0, baseStart + dSec);
+      const snapped = snapTime(desired, dur, targets);
+      latest = { ...baseTrim, offset: snapped };
+      setLocalTrims({ ...baseTrims, [ref]: latest });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (!moved) return; // treat as click
       const nextTrims = { ...baseTrims, [ref]: latest };
       commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
     };
@@ -924,27 +1035,26 @@ export function ProjectTimelinePanel({
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualTotal * pxPerSec + visualEntries.length * clipGapPx + 80, 480) }}
+              style={{ width: Math.max(totalSeconds * pxPerSec + 80, 480) }}
             >
               {/* Ruler */}
               <div
                 className="relative mb-1 h-5 cursor-pointer select-none"
                 onClick={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
-                  const pct = (e.clientX - r.left) / r.width;
-                  seekTo(pct * totalSeconds);
+                  const x = e.clientX - r.left;
+                  seekTo(x / Math.max(1, pxPerSec));
                 }}
               >
                 {Array.from({
                   length: Math.max(Math.ceil(totalSeconds) + 1, 1),
                 }).map((_, i) => {
                   const isMajor = i % 5 === 0;
-                  const left = (i / totalSeconds) * 100;
                   return (
                     <div
                       key={i}
                       className="absolute top-0 flex flex-col items-center"
-                      style={{ left: `${left}%` }}
+                      style={{ left: `${i * pxPerSec}px` }}
                     >
                       <div
                         className={cn(
@@ -962,10 +1072,10 @@ export function ProjectTimelinePanel({
                 })}
               </div>
 
-              {/* Clip strip */}
+              {/* Clip strip — absolute positioning by time */}
               <div
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-lg p-1 -m-1 transition",
+                  "relative h-14 rounded-lg transition",
                   dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -979,6 +1089,7 @@ export function ProjectTimelinePanel({
                   const isSel = ref === selectedId;
                   const dur = getDur(ref);
                   const widthPx = Math.max(24, dur * pxPerSec);
+                  const leftPx = cumStarts[idx] * pxPerSec;
                   return (
                     <Popover
                       key={ref}
@@ -987,20 +1098,12 @@ export function ProjectTimelinePanel({
                     >
                       <PopoverTrigger asChild>
                         <div
-                          draggable
                           data-timeline-kind="visual"
                           data-timeline-ref={ref}
-                          onDragStart={(e) => {
+                          onPointerDown={(e) => {
                             const t = e.target as HTMLElement;
-                            if (t.closest && t.closest("[data-trim-handle]")) {
-                              e.preventDefault();
-                              return;
-                            }
-                            setDragId(ref);
-                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
-                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
-                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
-                            e.dataTransfer.effectAllowed = "copyMove";
+                            if (t.closest && t.closest("[data-trim-handle]")) return;
+                            beginMove(ref, e, "visual");
                           }}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => handleDropOnItem(ref, e, "visual")}
@@ -1009,9 +1112,9 @@ export function ProjectTimelinePanel({
                             seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: widthPx }}
+                          style={{ width: widthPx, left: `${leftPx}px` }}
                           className={cn(
-                            "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
+                            "group absolute top-0 h-14 cursor-grab overflow-hidden rounded-lg bg-muted transition active:cursor-grabbing",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
@@ -1082,12 +1185,13 @@ export function ProjectTimelinePanel({
                   );
                 })}
 
-                {/* Add-clip + button */}
+                {/* Add-clip + button — pinned to right end of last visual clip */}
                 <Popover open={addClipOpen} onOpenChange={setAddClipOpen}>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="grid h-14 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+                      style={{ left: `${visualEnd * pxPerSec + 6}px` }}
+                      className="absolute top-0 grid h-14 w-10 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
                       aria-label="Add clip"
                     >
                       <Plus className="h-4 w-4" />
@@ -1120,37 +1224,18 @@ export function ProjectTimelinePanel({
                 </Popover>
 
                 {/* Playhead */}
-                {visualEntries.length > 0 && (() => {
-                  let px = 4; // p-1
-                  let placed = false;
-                  for (let i = 0; i < visualEntries.length; i++) {
-                    const dur = getDur(visualEntries[i].ref);
-                    const w = Math.max(24, dur * pxPerSec);
-                    const start = cumStarts[i];
-                    const end = start + dur;
-                    if (!placed && currentTime <= end) {
-                      px += Math.max(0, (currentTime - start)) * pxPerSec;
-                      placed = true;
-                      break;
-                    }
-                    px += w + clipGapPx;
-                  }
-                  if (!placed) px += 0;
-                  return (
-                    <div
-                      className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
-                      style={{ left: `${px}px` }}
-                    >
-                      <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
-                    </div>
-                  );
-                })()}
+                <div
+                  className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
+                  style={{ left: `${currentTime * pxPerSec}px` }}
+                >
+                  <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
+                </div>
               </div>
 
-              {/* Audio tracks */}
+              {/* Audio tracks — absolute positioning by time, one row each */}
               <div
                 className={cn(
-                  "mt-3 space-y-1.5 rounded-lg p-1 -m-1 transition",
+                  "mt-3 space-y-1.5 rounded-lg transition",
                   dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -1160,56 +1245,84 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
-                {audioEntries.map(({ ref, asset: a }) => {
+                {audioEntries.map(({ ref, asset: a }, idx) => {
                   const wave = fakeWave(a.id, 96);
+                  const dur = getDur(ref);
+                  const widthPx = Math.max(40, dur * pxPerSec);
+                  const leftPx = audioStarts[idx] * pxPerSec;
                   return (
-                    <Popover
-                      key={ref}
-                      open={editAudioFor === ref}
-                      onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          draggable
-                          data-timeline-kind="audio"
-                          data-timeline-ref={ref}
-                          onDragStart={(e) => {
-                            setDragId(ref);
-                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
-                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
-                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
-                            e.dataTransfer.effectAllowed = "copyMove";
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDropOnItem(ref, e, "audio")}
-                          className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
-                        >
-                          <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
-                            {a.label ?? a.name ?? "Audio"}
-                          </span>
-                          <div className="flex h-full flex-1 items-center gap-[2px]">
-                            {wave.map((v, i) => (
-                              <div
-                                key={i}
-                                className="w-[2px] rounded-full bg-secondary-foreground/60"
-                                style={{ height: `${Math.round(v * 70)}%` }}
-                              />
-                            ))}
+                    <div key={ref} className="relative h-10">
+                      <Popover
+                        open={editAudioFor === ref}
+                        onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <div
+                            data-timeline-kind="audio"
+                            data-timeline-ref={ref}
+                            onPointerDown={(e) => {
+                              const t = e.target as HTMLElement;
+                              if (t.closest && t.closest("[data-trim-handle]")) return;
+                              beginMove(ref, e, "audio");
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => handleDropOnItem(ref, e, "audio")}
+                            onClick={() => setEditAudioFor(ref)}
+                            style={{ left: `${leftPx}px`, width: widthPx }}
+                            className="group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing"
+                          >
+                            <span className="shrink-0 truncate text-[10px] font-medium text-secondary-foreground">
+                              {a.label ?? a.name ?? "Audio"}
+                            </span>
+                            <div className="flex h-full flex-1 items-center gap-[2px]">
+                              {wave.map((v, i) => (
+                                <div
+                                  key={i}
+                                  className="w-[2px] rounded-full bg-secondary-foreground/60"
+                                  style={{ height: `${Math.round(v * 70)}%` }}
+                                />
+                              ))}
+                            </div>
+                            {/* Trim handles */}
+                            <div
+                              data-trim-handle="start"
+                              onPointerDown={(e) => beginTrim(ref, "start", e)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              title="Trim start"
+                            />
+                            <div
+                              data-trim-handle="end"
+                              onPointerDown={(e) => beginTrim(ref, "end", e)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              title="Trim end"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(ref);
+                              }}
+                              className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
+                              aria-label="Delete audio"
+                            >
+                              <Trash2 className="h-2.5 w-2.5" />
+                            </button>
                           </div>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" align="start" className="w-72 p-2">
-                        <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                          <Wand2 className="h-3 w-3" />
-                          Edit audio with app
-                        </div>
-                        <AppPickerList
-                          apps={appsAcceptingKind("audio")}
-                          onPick={(s) => pickEditAudio(s, a, ref)}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="start" className="w-72 p-2">
+                          <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            <Wand2 className="h-3 w-3" />
+                            Edit audio with app
+                          </div>
+                          <AppPickerList
+                            apps={appsAcceptingKind("audio")}
+                            onPick={(s) => pickEditAudio(s, a, ref)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   );
                 })}
 
