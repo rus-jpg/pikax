@@ -793,17 +793,29 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
-                {audioAssets.map((a) => {
+                {audioEntries.map(({ ref, asset: a }) => {
                   const wave = fakeWave(a.id, 96);
                   return (
                     <Popover
-                      key={a.id}
-                      open={editAudioFor === a.id}
-                      onOpenChange={(o) => setEditAudioFor(o ? a.id : null)}
+                      key={ref}
+                      open={editAudioFor === ref}
+                      onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
                     >
                       <PopoverTrigger asChild>
                         <button
                           type="button"
+                          draggable
+                          data-timeline-kind="audio"
+                          data-timeline-ref={ref}
+                          onDragStart={(e) => {
+                            setDragId(ref);
+                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
+                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
+                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
+                            e.dataTransfer.effectAllowed = "copyMove";
+                          }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => handleDropOnItem(ref, e)}
                           className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
                         >
                           <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
