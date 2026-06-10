@@ -871,6 +871,16 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={splitAtPlayhead}
+                disabled={!visualEntries.length}
+                aria-label="Split at playhead"
+                title="Split at playhead (S)"
+              >
+                <Scissors className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={duplicateSelected}
                 disabled={!selectedEntry}
                 aria-label="Duplicate clip"
