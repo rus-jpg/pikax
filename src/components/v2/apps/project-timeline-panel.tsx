@@ -313,7 +313,16 @@ export function ProjectTimelinePanel({
   }, [isPlaying, muted, audioEntries.map((entry) => entry.ref).join(",")]);
 
 
-  const persist = (nextOrder: string[]) => {
+  // ---- History (undo/redo) ----
+  const historyRef = useRef<{ past: string[][]; future: string[][] }>({
+    past: [],
+    future: [],
+  });
+  const [historyTick, setHistoryTick] = useState(0);
+  const canUndo = historyRef.current.past.length > 0;
+  const canRedo = historyRef.current.future.length > 0;
+
+  const persistOrder = (nextOrder: string[]) => {
     if (!projectId) return;
     void updateState({
       data: { id: projectId, patch: { timeline: { order: nextOrder } } },
@@ -321,6 +330,40 @@ export function ProjectTimelinePanel({
       .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
       .catch((e) => console.error("[timeline] persist failed", e));
   };
+
+  const commit = (nextOrder: string[]) => {
+    historyRef.current.past.push(effectiveOrder.slice());
+    if (historyRef.current.past.length > 50) historyRef.current.past.shift();
+    historyRef.current.future = [];
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(nextOrder);
+    persistOrder(nextOrder);
+  };
+
+  const persist = commit;
+
+  const undo = () => {
+    const prev = historyRef.current.past.pop();
+    if (!prev) return;
+    historyRef.current.future.push(effectiveOrder.slice());
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(prev);
+    persistOrder(prev);
+  };
+  const redo = () => {
+    const next = historyRef.current.future.pop();
+    if (!next) return;
+    historyRef.current.past.push(effectiveOrder.slice());
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(next);
+    persistOrder(next);
+  };
+
+  // ---- Zoom ----
+  const [zoom, setZoom] = useState(1); // 0.5 - 2.5
+  const clipPx = Math.round(80 * zoom);
+  const clipGapPx = 6;
+
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<"visual" | "audio" | null>(null);
