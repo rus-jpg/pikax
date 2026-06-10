@@ -21,7 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { getProject, updateProjectState } from "@/lib/projects.functions";
-import type { ProjectAsset, TimelineState } from "@/lib/project-state";
+import type { ProjectAsset } from "@/lib/project-state";
 import { SKILLS, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { getAppSwatch } from "@/lib/app-swatch";
