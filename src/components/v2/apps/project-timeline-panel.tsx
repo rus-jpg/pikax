@@ -918,7 +918,7 @@ export function ProjectTimelinePanel({
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualAssets.length * (clipPx + clipGapPx) + 80, 480) }}
+              style={{ width: Math.max(visualTotal * pxPerSec + visualEntries.length * clipGapPx + 80, 480) }}
             >
               {/* Ruler */}
               <div
