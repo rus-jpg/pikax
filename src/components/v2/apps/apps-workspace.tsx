@@ -412,7 +412,7 @@ export function AppsWorkspace({
                   <Sparkles className="h-4 w-4" />
                 </button>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">Create</div>
+                  <div className="truncate text-sm font-semibold">Custom</div>
                   <div className="truncate text-[11px] text-muted-foreground">
                     Direct prompt → media
                   </div>
