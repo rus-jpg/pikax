@@ -969,8 +969,10 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
-                {visualEntries.map(({ ref, asset: a }) => {
+                {visualEntries.map(({ ref, asset: a }, idx) => {
                   const isSel = ref === selectedId;
+                  const dur = getDur(ref);
+                  const widthPx = Math.max(24, dur * pxPerSec);
                   return (
                     <Popover
                       key={ref}
@@ -993,11 +995,10 @@ export function ProjectTimelinePanel({
                           onDrop={(e) => handleDropOnItem(ref, e, "visual")}
                           onClick={() => {
                             setSelectedId(ref);
-                            const idx = visualEntries.findIndex((v) => v.ref === ref);
-                            if (idx >= 0) seekTo(idx * CLIP_SECONDS);
+                            seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: clipPx }}
+                          style={{ width: widthPx }}
                           className={cn(
                             "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
                             isSel
@@ -1020,13 +1021,26 @@ export function ProjectTimelinePanel({
                               className="h-full w-full object-cover"
                             />
                           )}
+                          {/* Trim handles */}
+                          <div
+                            onPointerDown={(e) => beginTrim(ref, "start", e)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            title="Trim start"
+                          />
+                          <div
+                            onPointerDown={(e) => beginTrim(ref, "end", e)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            title="Trim end"
+                          />
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(ref);
                             }}
-                            className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
+                            className="absolute right-1.5 top-0.5 z-20 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
                           >
                             <Trash2 className="h-3 w-3" />
