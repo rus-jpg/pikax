@@ -5,28 +5,32 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
+/* ─────────────────────────────────────────────────────────────────
+ * Pika — Design Tokens (mapped to Tailwind semantic tokens)
+ * Brand: lavender #CFC3FF accent, cream surface, ink text.
+ * Telka for UI, Telka Extended for display, Space Mono for meta.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* Telka (ITF) — self-hosted from /public/fonts/ */
+@font-face { font-family: "Telka"; font-weight: 300; font-style: normal; font-display: swap; src: url("/fonts/Telka-Light.otf") format("opentype"); }
+@font-face { font-family: "Telka"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Telka-Regular.otf") format("opentype"); }
+@font-face { font-family: "Telka"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Telka-Medium.otf") format("opentype"); }
+@font-face { font-family: "Telka"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Telka-Bold.otf") format("opentype"); }
+@font-face { font-family: "Telka"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Telka-Black.otf") format("opentype"); }
+
+@font-face { font-family: "Telka Extended"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Telka-Extended-Medium.otf") format("opentype"); }
+@font-face { font-family: "Telka Extended"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Telka-Extended-Bold.otf") format("opentype"); }
+@font-face { font-family: "Telka Extended"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Telka-Extended-Black.otf") format("opentype"); }
+@font-face { font-family: "Telka Extended"; font-weight: 900; font-style: normal; font-display: swap; src: url("/fonts/Telka-Extended-Super.otf") format("opentype"); }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 10px);
+  --radius-md: calc(var(--radius) - 6px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 14px);
+  --radius-3xl: calc(var(--radius) + 22px);
+  --radius-4xl: calc(var(--radius) + 30px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -63,60 +67,75 @@
 }
 
 :root {
-  --radius: 1.25rem;
-  /* Warm light theme — Pika-inspired cream + soft yellow + lavender */
-  --background: oklch(0.985 0.008 85);            /* warm off-white #FAF8F3 */
-  --foreground: oklch(0.18 0.01 60);              /* near-black */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.01 60);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 60);
+  /* Pika signature radius = 18px on primary surfaces */
+  --radius: 18px;
 
-  /* Primary = soft yellow (CTA chips like New Chat / PLUS) */
-  --primary: oklch(0.92 0.13 95);                 /* soft warm yellow */
-  --primary-foreground: oklch(0.22 0.02 70);
+  /* ── Pika brand palette (raw) ─────────────────────────────── */
+  --pika-lavender: #CFC3FF;
+  --pika-lavender-soft: rgba(207, 195, 255, 0.20);
+  --pika-black: #0D0D0D;
+  --pika-ink: #222222;
+  --pika-cream: #FCFAF7;
+  --pika-white: #FFFFFF;
+  --pika-peach: #FFD5B0;
+  --pika-lime: #D9F07A;
+  --pika-sky: #B4DCFF;
+  --pika-rose: #FFB8C8;
 
-  /* Secondary = lavender (user bubbles / accent pills) */
-  --secondary: oklch(0.92 0.05 295);              /* pale lavender */
-  --secondary-foreground: oklch(0.22 0.03 290);
+  /* ── Semantic surfaces ─────────────────────────────────────── */
+  --background: #FCFAF7;
+  --foreground: #0D0D0D;
+  --card: #FFFFFF;
+  --card-foreground: #0D0D0D;
+  --popover: #FFFFFF;
+  --popover-foreground: #0D0D0D;
 
-  --muted: oklch(0.955 0.01 85);
-  --muted-foreground: oklch(0.5 0.02 70);
-  --accent: oklch(0.88 0.08 295);                 /* lavender accent */
-  --accent-foreground: oklch(0.22 0.03 290);
-  --destructive: oklch(0.62 0.22 27);
-  --destructive-foreground: oklch(0.98 0.01 60);
-  --border: oklch(0.18 0.01 60 / 10%);
-  --input: oklch(0.18 0.01 60 / 12%);
-  --ring: oklch(0.78 0.13 295);
+  /* Primary = lavender accent (the single brand moment) */
+  --primary: #CFC3FF;
+  --primary-foreground: #0D0D0D;
 
-  /* Brand gradient — yellow → lavender → soft peach */
-  --brand-1: oklch(0.92 0.13 95);                 /* yellow */
-  --brand-2: oklch(0.85 0.09 320);                /* pink-lavender */
-  --brand-3: oklch(0.82 0.08 270);                /* cool lavender */
+  /* Secondary = soft cream surface */
+  --secondary: #F3EFE9;
+  --secondary-foreground: #0D0D0D;
+
+  --muted: #F3EFE9;
+  --muted-foreground: rgba(13, 13, 13, 0.6);
+  --accent: rgba(207, 195, 255, 0.35);
+  --accent-foreground: #0D0D0D;
+  --destructive: #E12D43;
+  --destructive-foreground: #FCFAF7;
+  --border: rgba(13, 13, 13, 0.08);
+  --input: rgba(13, 13, 13, 0.12);
+  --ring: #CFC3FF;
+
+  /* Brand gradient — keep for any legacy bg-brand-gradient consumers */
+  --brand-1: #CFC3FF;
+  --brand-2: #B4DCFF;
+  --brand-3: #FFD5B0;
   --gradient-brand: linear-gradient(135deg, var(--brand-1), var(--brand-2) 55%, var(--brand-3));
-  --gradient-text: linear-gradient(120deg, oklch(0.35 0.05 295), oklch(0.55 0.18 320) 50%, oklch(0.6 0.16 80));
-  --gradient-surface: radial-gradient(120% 80% at 50% 0%, oklch(0.92 0.05 295 / 0.5), transparent 60%);
-  --shadow-glow: 0 0 40px -10px oklch(0.85 0.13 95 / 0.55), 0 0 80px -20px oklch(0.82 0.1 295 / 0.45);
-  --shadow-elegant: 0 12px 40px -16px oklch(0.18 0.02 60 / 0.18);
+  --gradient-text: linear-gradient(120deg, #0D0D0D, #6B5BD6 60%, #0D0D0D);
+  --gradient-surface: radial-gradient(120% 80% at 50% 0%, rgba(207, 195, 255, 0.35), transparent 60%);
+  --shadow-glow: 0 0 40px -10px rgba(207, 195, 255, 0.55), 0 0 80px -20px rgba(180, 220, 255, 0.35);
+  --shadow-elegant: 0 12px 40px -16px rgba(13, 13, 13, 0.18);
 
-  --chart-1: oklch(0.92 0.13 95);
-  --chart-2: oklch(0.82 0.08 270);
-  --chart-3: oklch(0.85 0.09 320);
-  --chart-4: oklch(0.78 0.13 160);
-  --chart-5: oklch(0.75 0.15 30);
-  --sidebar: oklch(0.975 0.01 85);
-  --sidebar-foreground: oklch(0.18 0.01 60);
-  --sidebar-primary: oklch(0.92 0.13 95);
-  --sidebar-primary-foreground: oklch(0.22 0.02 70);
-  --sidebar-accent: oklch(0.93 0.04 295);
-  --sidebar-accent-foreground: oklch(0.22 0.03 290);
-  --sidebar-border: oklch(0.18 0.01 60 / 8%);
-  --sidebar-ring: oklch(0.78 0.13 295);
+  --chart-1: #CFC3FF;
+  --chart-2: #B4DCFF;
+  --chart-3: #FFB8C8;
+  --chart-4: #D9F07A;
+  --chart-5: #FFD5B0;
+
+  --sidebar: #FCFAF7;
+  --sidebar-foreground: #0D0D0D;
+  --sidebar-primary: #CFC3FF;
+  --sidebar-primary-foreground: #0D0D0D;
+  --sidebar-accent: rgba(207, 195, 255, 0.2);
+  --sidebar-accent-foreground: #0D0D0D;
+  --sidebar-border: rgba(13, 13, 13, 0.08);
+  --sidebar-ring: #CFC3FF;
 }
 
 .dark {
-  /* No dark mode — keep tokens identical to :root so .dark is a no-op */
+  /* Keep dark a no-op for now — Pika tokens are light-theme first. */
   color-scheme: light;
 }
 
@@ -128,17 +147,22 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "ss01", "cv11";
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-family: "Telka", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.4;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, .font-display {
-    font-family: "Archivo Black", "Inter", sans-serif;
-    letter-spacing: -0.01em;
+    font-family: "Telka Extended", "Telka", system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
+  .font-mono { font-family: "Space Mono", ui-monospace, monospace; }
   .text-gradient {
     background: var(--gradient-text);
     -webkit-background-clip: text;
@@ -156,8 +180,8 @@
   .animate-float { animation: float-slow 6s ease-in-out infinite; }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 oklch(0.68 0.27 340 / 0.0); }
-    50% { box-shadow: 0 0 40px 4px oklch(0.68 0.27 340 / 0.35); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(207, 195, 255, 0); }
+    50% { box-shadow: 0 0 40px 4px rgba(207, 195, 255, 0.45); }
   }
   .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
 
@@ -168,7 +192,6 @@
   }
   .animate-card-pop { animation: card-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
-  /* Chat bubble fade-in animation */
   @keyframes pill-land {
     0%   { opacity: 0; }
     100% { opacity: 1; }
@@ -176,7 +199,7 @@
   .animate-pill-land { animation: pill-land 0.3s ease-out 0.35s both; }
 }
 
-/* Restore hand cursor for interactive elements (Tailwind v4 / modern browsers default to arrow on <button>) */
+/* Restore hand cursor for interactive elements */
 @layer base {
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
