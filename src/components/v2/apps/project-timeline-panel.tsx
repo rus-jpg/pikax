@@ -252,21 +252,43 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
-  // Cumulative starts (seconds) per visual entry.
+  // Resolved start time (seconds) per visual entry. Uses explicit offset
+  // if set; otherwise lays the clip immediately after the previous one.
   const cumStarts = useMemo(() => {
     const out: number[] = [];
-    let t = 0;
+    let cursor = 0;
     for (const e of visualEntries) {
-      out.push(t);
-      t += getDur(e.ref);
+      const t = effectiveTrims[e.ref];
+      const off = typeof t?.offset === "number" ? t.offset : cursor;
+      out.push(off);
+      cursor = off + getDur(e.ref);
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualEntries, effectiveTrims]);
 
-  const visualTotal = cumStarts.length
-    ? cumStarts[cumStarts.length - 1] + getDur(visualEntries[visualEntries.length - 1].ref)
-    : 0;
+  const audioStarts = useMemo(() => {
+    const out: number[] = [];
+    let cursor = 0;
+    for (const e of audioEntries) {
+      const t = effectiveTrims[e.ref];
+      const off = typeof t?.offset === "number" ? t.offset : cursor;
+      out.push(off);
+      cursor = off + getDur(e.ref);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioEntries, effectiveTrims]);
+
+  const visualEnd = cumStarts.reduce(
+    (m, s, i) => Math.max(m, s + getDur(visualEntries[i].ref)),
+    0,
+  );
+  const audioEnd = audioStarts.reduce(
+    (m, s, i) => Math.max(m, s + getDur(audioEntries[i].ref)),
+    0,
+  );
+  const visualTotal = Math.max(visualEnd, audioEnd);
   const totalSeconds = Math.max(visualTotal, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
