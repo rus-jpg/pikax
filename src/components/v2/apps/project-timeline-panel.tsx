@@ -20,12 +20,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getProject, updateProjectState } from "@/lib/projects.functions";
+import {
+  getProject,
+  updateProjectState,
+  attachLibraryAssetToProject,
+} from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { SKILLS, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { getAppSwatch } from "@/lib/app-swatch";
 import { cn } from "@/lib/utils";
+import { LibraryPickerModal } from "@/components/v2/library-picker-modal";
 import type { TimelineIntent } from "@/components/v2/apps/apps-workspace";
 
 const CLIP_SECONDS = 5;
@@ -128,6 +133,10 @@ export function ProjectTimelinePanel({
   const qc = useQueryClient();
   const fetchProject = useServerFn(getProject);
   const updateState = useServerFn(updateProjectState);
+  const attachLibrary = useServerFn(attachLibraryAssetToProject);
+  const [libraryPickerFor, setLibraryPickerFor] = useState<
+    null | { kind: "visual" | "audio" }
+  >(null);
   const projectQ = useQuery({
     queryKey: ["v2-project", projectId],
     queryFn: () => fetchProject({ data: { id: projectId! } }),
@@ -380,6 +389,23 @@ export function ProjectTimelinePanel({
     onUseInApp?.({ skill, asset: null, intent: { kind: "appendAudio" } });
     setAddAudioOpen(false);
   };
+
+  const handleLibraryPick = async (item: { id: string; mime: string }) => {
+    if (!projectId) return;
+    try {
+      const asset = await attachLibrary({
+        data: { sourceAssetId: item.id, targetProjectId: projectId },
+      });
+      const next = effectiveOrder.slice();
+      if (!next.includes(asset.id)) next.push(asset.id);
+      setLocalOrder(next);
+      persist(next);
+      await qc.invalidateQueries({ queryKey: ["v2-project", projectId] });
+    } catch (e) {
+      console.error("[timeline] library attach failed", e);
+    }
+  };
+
 
   return (
     <div className="flex h-full flex-col bg-card/40">
@@ -641,6 +667,20 @@ export function ProjectTimelinePanel({
                       apps={appsProducingKind("visual")}
                       onPick={pickAddClip}
                     />
+                    <div className="my-2 border-t border-border/60" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddClipOpen(false);
+                        setLibraryPickerFor({ kind: "visual" });
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition hover:bg-muted"
+                    >
+                      <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-muted text-foreground">
+                        <Plus className="h-3 w-3" />
+                      </div>
+                      <span>Choose from library</span>
+                    </button>
                   </PopoverContent>
                 </Popover>
 
@@ -732,6 +772,20 @@ export function ProjectTimelinePanel({
                       apps={appsProducingKind("audio")}
                       onPick={pickAddAudio}
                     />
+                    <div className="my-2 border-t border-border/60" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddAudioOpen(false);
+                        setLibraryPickerFor({ kind: "audio" });
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition hover:bg-muted"
+                    >
+                      <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-muted text-foreground">
+                        <Plus className="h-3 w-3" />
+                      </div>
+                      <span>Choose from library</span>
+                    </button>
                   </PopoverContent>
                 </Popover>
               </div>
@@ -739,6 +793,25 @@ export function ProjectTimelinePanel({
           </div>
         </div>
       </div>
+
+      <LibraryPickerModal
+        open={!!libraryPickerFor}
+        onClose={() => setLibraryPickerFor(null)}
+        accept={libraryPickerFor?.kind === "audio" ? "audio" : "any"}
+        onPick={(item) => {
+          if (libraryPickerFor?.kind === "visual") {
+            if (
+              !item.mime.startsWith("image/") &&
+              !item.mime.startsWith("video/")
+            )
+              return;
+          }
+          if (libraryPickerFor?.kind === "audio") {
+            if (!item.mime.startsWith("audio/")) return;
+          }
+          void handleLibraryPick(item);
+        }}
+      />
     </div>
   );
 }

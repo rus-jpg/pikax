@@ -408,3 +408,97 @@ export const uploadProjectAsset = createServerFn({ method: "POST" })
       duration: data.duration,
     };
   });
+
+// ---------- attach an existing library asset to another project ----------
+// Inserts a new project_assets row in `targetProjectId` that shares the
+// same underlying storage_path as the source asset. Useful for adding
+// library items (possibly from other projects) into a project's timeline.
+export const attachLibraryAssetToProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { sourceAssetId: string; targetProjectId: string }) =>
+    z
+      .object({
+        sourceAssetId: z.string().uuid(),
+        targetProjectId: z.string().uuid(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<ProjectAsset> => {
+    const userId = context.userId;
+
+    // Verify target project belongs to user
+    const { data: proj } = await supabaseAdmin
+      .from("projects")
+      .select("id")
+      .eq("id", data.targetProjectId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!proj) throw new Error("Target project not found");
+
+    // Load source asset and verify its project belongs to user
+    const { data: src, error: srcErr } = await supabaseAdmin
+      .from("project_assets")
+      .select(
+        "id, project_id, kind, mime, name, label, storage_path, url, width, height, duration",
+      )
+      .eq("id", data.sourceAssetId)
+      .maybeSingle();
+    if (srcErr || !src) throw new Error("Source asset not found");
+
+    const { data: srcProj } = await supabaseAdmin
+      .from("projects")
+      .select("id")
+      .eq("id", src.project_id as string)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!srcProj) throw new Error("Source asset not accessible");
+
+    // If it already lives in target project, just return it (refresh URL).
+    if (src.project_id === data.targetProjectId) {
+      const signed = await signAssetUrls([
+        { storage_path: (src.storage_path as string | null) ?? null, url: (src.url as string) ?? "" },
+      ]);
+      return {
+        id: src.id as string,
+        kind: (src.kind as ProjectAsset["kind"]) ?? "reference",
+        mime: (src.mime as string) ?? "application/octet-stream",
+        name: (src.name as string) ?? "asset",
+        url: signed[0],
+        label: (src.label as string | null) ?? undefined,
+        width: (src.width as number | null) ?? undefined,
+        height: (src.height as number | null) ?? undefined,
+        duration: (src.duration as number | null) ?? undefined,
+      };
+    }
+
+    const signed = await signAssetUrls([
+      { storage_path: (src.storage_path as string | null) ?? null, url: (src.url as string) ?? "" },
+    ]);
+
+    const { data: row, error: insErr } = await supabaseAdmin
+      .from("project_assets")
+      .insert({
+        project_id: data.targetProjectId,
+        kind: src.kind as string,
+        mime: src.mime as string,
+        name: (src.name as string) ?? "asset",
+        storage_path: src.storage_path as string | null,
+        url: signed[0],
+        label: (src.label as string | null) ?? null,
+      })
+      .select("id")
+      .single();
+    if (insErr || !row) throw new Error(insErr?.message ?? "attach failed");
+
+    return {
+      id: row.id as string,
+      kind: (src.kind as ProjectAsset["kind"]) ?? "reference",
+      mime: (src.mime as string) ?? "application/octet-stream",
+      name: (src.name as string) ?? "asset",
+      url: signed[0],
+      label: (src.label as string | null) ?? undefined,
+      width: (src.width as number | null) ?? undefined,
+      height: (src.height as number | null) ?? undefined,
+      duration: (src.duration as number | null) ?? undefined,
+    };
+  });
