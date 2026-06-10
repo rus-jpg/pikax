@@ -31,7 +31,7 @@ import {
   updateProjectState,
   attachLibraryAssetToProject,
 } from "@/lib/projects.functions";
-import type { ProjectAsset } from "@/lib/project-state";
+import type { ProjectAsset, TimelineTrim } from "@/lib/project-state";
 import { SKILLS, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { getAppSwatch } from "@/lib/app-swatch";
