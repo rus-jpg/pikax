@@ -2,17 +2,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  Copy,
   Maximize2,
   PanelRightClose,
   Pause,
   Play,
   Plus,
+  Redo2,
   Share2,
   Trash2,
+  Undo2,
   Volume2,
   VolumeX,
   Wand2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 import { Button } from "@/components/ui/button";
 import {
