@@ -64,7 +64,14 @@ type ActiveRun = {
   prompt: string;
   phase: "starting" | "polling" | "error";
   error?: string;
+  intent?: TimelineIntent;
 };
+
+export type TimelineIntent =
+  | { kind: "appendVisual" }
+  | { kind: "appendAudio" }
+  | { kind: "replaceClip"; assetId: string }
+  | { kind: "replaceAudio"; assetId: string };
 
 export type AppsWorkspaceProps = {
   /** The project this workspace is bound to. If undefined, this is the free
@@ -100,16 +107,20 @@ export function AppsWorkspace({
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState<TimelineIntent | null>(null);
 
 
   const handleUseInApp = ({
     skill,
     asset,
+    intent,
   }: {
     skill: Skill;
-    asset: ProjectAsset;
+    asset: ProjectAsset | null;
+    intent?: TimelineIntent;
   }) => {
     setSeedAsset(asset);
+    setPendingIntent(intent ?? null);
     onSelectApp(skill.id);
   };
 
