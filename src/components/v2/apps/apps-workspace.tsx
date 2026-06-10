@@ -2,7 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Heart, Sparkles } from "lucide-react";
+import { useAppFavorites } from "@/hooks/use-app-favorites";
 
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
 import { AppRunner } from "@/components/v2/apps/app-runner";
