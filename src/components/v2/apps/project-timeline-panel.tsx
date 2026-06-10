@@ -960,7 +960,7 @@ export function ProjectTimelinePanel({
                   <div
                     className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
                     style={{
-                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (80 + 6))}px)`,
+                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (clipPx + clipGapPx))}px)`,
                     }}
                   >
                     <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
