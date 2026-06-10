@@ -205,8 +205,17 @@ export function ProjectTimelinePanel({
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
   const effectiveTrims = localTrims ?? timeline?.trims ?? {};
 
-  const getTrim = (ref: string): TimelineTrim =>
-    effectiveTrims[ref] ?? { start: 0, end: CLIP_SECONDS };
+  const getTrim = (ref: string): TimelineTrim => {
+    if (effectiveTrims[ref]) return effectiveTrims[ref];
+    const a = serverAssets.find(
+      (x) => x.id === assetIdFromTimelineRef(ref),
+    );
+    const natural =
+      a && a.mime.startsWith("audio/") && typeof a.duration === "number" && a.duration > 0
+        ? a.duration
+        : CLIP_SECONDS;
+    return { start: 0, end: natural };
+  };
   const getDur = (ref: string) => {
     const t = getTrim(ref);
     return Math.max(0.2, t.end - t.start);
