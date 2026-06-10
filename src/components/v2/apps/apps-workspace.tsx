@@ -156,9 +156,11 @@ export function AppsWorkspace({
     assets: ProjectAsset[];
   }) => {
     const runId = crypto.randomUUID();
+    const intent = pendingIntent;
+    setPendingIntent(null);
     setRuns((prev) => ({
       ...prev,
-      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting" },
+      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined },
     }));
     onProjectIdChange(pid);
 
