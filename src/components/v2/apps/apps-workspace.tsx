@@ -427,7 +427,7 @@ export function AppsWorkspace({
         <>
           <ResizableHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize="30%" minSize="20%" maxSize="50%">
+          <ResizablePanel defaultSize="45%" minSize="25%" maxSize="65%">
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
