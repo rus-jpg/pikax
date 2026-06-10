@@ -2,7 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Heart, Sparkles } from "lucide-react";
+import { useAppFavorites } from "@/hooks/use-app-favorites";
 
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND } from "@/lib/skills";
 import { AppRunner } from "@/components/v2/apps/app-runner";
@@ -33,6 +34,7 @@ import { getAppSwatch } from "@/lib/app-swatch";
 
 
 const TABS = [
+  "Favorites",
   "Featured",
   "Photo",
   "Video",
@@ -43,7 +45,8 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
-function tabMatches(skill: Skill, tab: Tab): boolean {
+function tabMatches(skill: Skill, tab: Tab, favorites: string[]): boolean {
+  if (tab === "Favorites") return favorites.includes(skill.id);
   if (tab === "Featured") return skill.id.startsWith("app-");
   if (tab === "Photo") return skill.category === "Photo Apps";
   if (tab === "Video")
@@ -119,6 +122,7 @@ export function AppsWorkspace({
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<TimelineIntent | null>(null);
+  const { favorites, toggle: toggleFav, isFavorite } = useAppFavorites();
 
 
   const handleUseInApp = ({
@@ -135,7 +139,7 @@ export function AppsWorkspace({
     onSelectApp(skill.id);
   };
 
-  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
+  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab, favorites)), [tab, favorites]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const activeRuns = useMemo(() => Object.values(runs), [runs]);
 
@@ -377,31 +381,55 @@ export function AppsWorkspace({
                   {filtered.map((s) => {
                      const Icon = s.icon;
                      const swatch = getAppSwatch(s.id);
+                     const fav = isFavorite(s.id);
                      return (
-                       <button
+                       <div
                          key={s.id}
-                         onClick={() => onSelectApp(s.id)}
-                         className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                         className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
                        >
-                         <div
-                           className="grid h-9 w-9 place-items-center rounded-[30%]"
-                           style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                         <button
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             toggleFav(s.id);
+                           }}
+                           aria-label={fav ? "Remove from favorites" : "Add to favorites"}
+                           className={cn(
+                             "absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition",
+                             fav
+                               ? "text-rose-500 opacity-100"
+                               : "text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100",
+                           )}
                          >
-                           <Icon className="h-4 w-4" />
-                         </div>
-                        <div className="text-sm font-semibold leading-tight text-foreground">
-                          {s.label}
-                        </div>
-                        <div className="line-clamp-2 text-[11px] text-muted-foreground">
-                          {s.description}
-                        </div>
-                      </button>
-                    );
+                           <Heart className={cn("h-3.5 w-3.5", fav && "fill-current")} />
+                         </button>
+                         <button
+                           type="button"
+                           onClick={() => onSelectApp(s.id)}
+                           className="flex w-full flex-col items-start gap-2 text-left"
+                         >
+                           <div
+                             className="grid h-9 w-9 place-items-center rounded-[30%]"
+                             style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                           >
+                             <Icon className="h-4 w-4" />
+                           </div>
+                           <div className="pr-6 text-sm font-semibold leading-tight text-foreground">
+                             {s.label}
+                           </div>
+                           <div className="line-clamp-2 text-[11px] text-muted-foreground">
+                             {s.description}
+                           </div>
+                         </button>
+                       </div>
+                     );
                   })}
                 </div>
                 {filtered.length === 0 && (
                   <p className="p-6 text-center text-sm text-muted-foreground">
-                    No apps in this category yet.
+                    {tab === "Favorites"
+                      ? "No favorites yet. Tap the heart on any app to save it here."
+                      : "No apps in this category yet."}
                   </p>
                 )}
               </div>
