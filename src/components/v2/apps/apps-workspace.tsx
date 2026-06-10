@@ -431,7 +431,9 @@ export function AppsWorkspace({
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
+              onUseInApp={handleUseInApp}
             />
+
           </ResizablePanel>
         </>
       )}
