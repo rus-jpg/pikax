@@ -228,11 +228,6 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
-  const audioAssets = useMemo(
-    () => audioEntries.map((entry) => entry.asset),
-    [audioEntries],
-  );
-
   const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
