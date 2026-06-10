@@ -381,31 +381,55 @@ export function AppsWorkspace({
                   {filtered.map((s) => {
                      const Icon = s.icon;
                      const swatch = getAppSwatch(s.id);
+                     const fav = isFavorite(s.id);
                      return (
-                       <button
+                       <div
                          key={s.id}
-                         onClick={() => onSelectApp(s.id)}
-                         className="group flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                         className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
                        >
-                         <div
-                           className="grid h-9 w-9 place-items-center rounded-[30%]"
-                           style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                         <button
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             toggleFav(s.id);
+                           }}
+                           aria-label={fav ? "Remove from favorites" : "Add to favorites"}
+                           className={cn(
+                             "absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition",
+                             fav
+                               ? "text-rose-500 opacity-100"
+                               : "text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100",
+                           )}
                          >
-                           <Icon className="h-4 w-4" />
-                         </div>
-                        <div className="text-sm font-semibold leading-tight text-foreground">
-                          {s.label}
-                        </div>
-                        <div className="line-clamp-2 text-[11px] text-muted-foreground">
-                          {s.description}
-                        </div>
-                      </button>
-                    );
+                           <Heart className={cn("h-3.5 w-3.5", fav && "fill-current")} />
+                         </button>
+                         <button
+                           type="button"
+                           onClick={() => onSelectApp(s.id)}
+                           className="flex w-full flex-col items-start gap-2 text-left"
+                         >
+                           <div
+                             className="grid h-9 w-9 place-items-center rounded-[30%]"
+                             style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                           >
+                             <Icon className="h-4 w-4" />
+                           </div>
+                           <div className="pr-6 text-sm font-semibold leading-tight text-foreground">
+                             {s.label}
+                           </div>
+                           <div className="line-clamp-2 text-[11px] text-muted-foreground">
+                             {s.description}
+                           </div>
+                         </button>
+                       </div>
+                     );
                   })}
                 </div>
                 {filtered.length === 0 && (
                   <p className="p-6 text-center text-sm text-muted-foreground">
-                    No apps in this category yet.
+                    {tab === "Favorites"
+                      ? "No favorites yet. Tap the heart on any app to save it here."
+                      : "No apps in this category yet."}
                   </p>
                 )}
               </div>
