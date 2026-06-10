@@ -1105,16 +1105,31 @@ export function ProjectTimelinePanel({
                 </Popover>
 
                 {/* Playhead */}
-                {visualAssets.length > 0 && (
-                  <div
-                    className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
-                    style={{
-                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (clipPx + clipGapPx))}px)`,
-                    }}
-                  >
-                    <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
-                  </div>
-                )}
+                {visualEntries.length > 0 && (() => {
+                  let px = 4; // p-1
+                  let placed = false;
+                  for (let i = 0; i < visualEntries.length; i++) {
+                    const dur = getDur(visualEntries[i].ref);
+                    const w = Math.max(24, dur * pxPerSec);
+                    const start = cumStarts[i];
+                    const end = start + dur;
+                    if (!placed && currentTime <= end) {
+                      px += Math.max(0, (currentTime - start)) * pxPerSec;
+                      placed = true;
+                      break;
+                    }
+                    px += w + clipGapPx;
+                  }
+                  if (!placed) px += 0;
+                  return (
+                    <div
+                      className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
+                      style={{ left: `${px}px` }}
+                    >
+                      <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Audio tracks */}
