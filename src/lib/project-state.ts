@@ -87,12 +87,21 @@ export type ProjectMeta = {
   resolution: string; // "1080p", "4K"
 };
 
+export type TimelineState = {
+  // Ordered asset ids; assets not in this list keep their default (created_at)
+  // order and are appended after listed ids.
+  order?: string[];
+  // Asset ids hidden from the timeline (soft-delete; row stays in DB).
+  hidden?: string[];
+};
+
 export type ProjectState = {
   meta: ProjectMeta;
   scenes: Scene[];
   cast: Character[];
   music: Music;
   assets: ProjectAsset[];
+  timeline?: TimelineState;
 };
 
 // Patches the model can emit. Each field, if present, replaces (or in the
@@ -110,6 +119,7 @@ export type ProjectPatch = Partial<{
   assets: Partial<ProjectAsset>[];
   assetsReplace: Partial<ProjectAsset>[];
   assetsAppend: Partial<ProjectAsset>[];
+  timeline: Partial<TimelineState>;
 }>;
 
 export const INITIAL_PROJECT: ProjectState = {
@@ -126,6 +136,7 @@ export const INITIAL_PROJECT: ProjectState = {
   cast: [],
   music: null,
   assets: [],
+  timeline: { order: [], hidden: [] },
 };
 
 let idCounter = 1000;
