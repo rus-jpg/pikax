@@ -772,6 +772,20 @@ export function ProjectTimelinePanel({
                       apps={appsProducingKind("audio")}
                       onPick={pickAddAudio}
                     />
+                    <div className="my-2 border-t border-border/60" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddAudioOpen(false);
+                        setLibraryPickerFor({ kind: "audio" });
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition hover:bg-muted"
+                    >
+                      <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-muted text-foreground">
+                        <Plus className="h-3 w-3" />
+                      </div>
+                      <span>Choose from library</span>
+                    </button>
                   </PopoverContent>
                 </Popover>
               </div>
@@ -779,6 +793,25 @@ export function ProjectTimelinePanel({
           </div>
         </div>
       </div>
+
+      <LibraryPickerModal
+        open={!!libraryPickerFor}
+        onClose={() => setLibraryPickerFor(null)}
+        accept={libraryPickerFor?.kind === "audio" ? "audio" : "any"}
+        onPick={(item) => {
+          if (libraryPickerFor?.kind === "visual") {
+            if (
+              !item.mime.startsWith("image/") &&
+              !item.mime.startsWith("video/")
+            )
+              return;
+          }
+          if (libraryPickerFor?.kind === "audio") {
+            if (!item.mime.startsWith("audio/")) return;
+          }
+          void handleLibraryPick(item);
+        }}
+      />
     </div>
   );
 }
