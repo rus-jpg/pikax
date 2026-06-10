@@ -237,6 +237,7 @@ export function ProjectOutputsPanel({
                       <img
                         src={o.url}
                         alt=""
+                        draggable={false}
                         className="max-h-[60vh] max-w-full rounded-2xl object-contain"
                       />
                     )}
@@ -244,13 +245,14 @@ export function ProjectOutputsPanel({
                       <video
                         src={o.url}
                         controls
+                        draggable={false}
                         className="max-h-[60vh] max-w-full rounded-2xl"
                       />
                     )}
                     {o.mime.startsWith("audio/") && (
                       <div className="w-full max-w-xl py-6 text-center">
                         <div className="mb-3 text-4xl text-muted-foreground">♪</div>
-                        <audio src={o.url} controls className="w-full" />
+                        <audio src={o.url} controls draggable={false} className="w-full" />
                       </div>
                     )}
                   </div>
