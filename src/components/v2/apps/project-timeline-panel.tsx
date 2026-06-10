@@ -345,7 +345,8 @@ export function ProjectTimelinePanel({
 
 
   // ---- History (undo/redo) ----
-  const historyRef = useRef<{ past: string[][]; future: string[][] }>({
+  type Snapshot = { order: string[]; trims: Record<string, TimelineTrim> };
+  const historyRef = useRef<{ past: Snapshot[]; future: Snapshot[] }>({
     past: [],
     future: [],
   });
@@ -353,46 +354,61 @@ export function ProjectTimelinePanel({
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
 
-  const persistOrder = (nextOrder: string[]) => {
+  const persistSnapshot = (snap: Snapshot) => {
     if (!projectId) return;
     void updateState({
-      data: { id: projectId, patch: { timeline: { order: nextOrder } } },
+      data: {
+        id: projectId,
+        patch: { timeline: { order: snap.order, trims: snap.trims } },
+      },
     })
       .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
       .catch((e) => console.error("[timeline] persist failed", e));
   };
 
-  const commit = (nextOrder: string[]) => {
-    historyRef.current.past.push(effectiveOrder.slice());
+  const snapshot = (): Snapshot => ({
+    order: effectiveOrder.slice(),
+    trims: { ...effectiveTrims },
+  });
+
+  const commitSnap = (next: Snapshot) => {
+    historyRef.current.past.push(snapshot());
     if (historyRef.current.past.length > 50) historyRef.current.past.shift();
     historyRef.current.future = [];
     setHistoryTick((n) => n + 1);
-    setLocalOrder(nextOrder);
-    persistOrder(nextOrder);
+    setLocalOrder(next.order);
+    setLocalTrims(next.trims);
+    persistSnapshot(next);
   };
+
+  const commit = (nextOrder: string[], nextTrims?: Record<string, TimelineTrim>) =>
+    commitSnap({ order: nextOrder, trims: nextTrims ?? effectiveTrims });
 
   const persist = commit;
 
   const undo = () => {
     const prev = historyRef.current.past.pop();
     if (!prev) return;
-    historyRef.current.future.push(effectiveOrder.slice());
+    historyRef.current.future.push(snapshot());
     setHistoryTick((n) => n + 1);
-    setLocalOrder(prev);
-    persistOrder(prev);
+    setLocalOrder(prev.order);
+    setLocalTrims(prev.trims);
+    persistSnapshot(prev);
   };
   const redo = () => {
     const next = historyRef.current.future.pop();
     if (!next) return;
-    historyRef.current.past.push(effectiveOrder.slice());
+    historyRef.current.past.push(snapshot());
     setHistoryTick((n) => n + 1);
-    setLocalOrder(next);
-    persistOrder(next);
+    setLocalOrder(next.order);
+    setLocalTrims(next.trims);
+    persistSnapshot(next);
   };
 
   // ---- Zoom ----
   const [zoom, setZoom] = useState(1); // 0.5 - 2.5
   const clipPx = Math.round(80 * zoom);
+  const pxPerSec = clipPx / CLIP_SECONDS;
   const clipGapPx = 6;
   void historyTick;
 
