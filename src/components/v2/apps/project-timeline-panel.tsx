@@ -376,12 +376,24 @@ export function ProjectTimelinePanel({
     };
   };
 
-  const handleDropOnItem = (targetRef: string, e: React.DragEvent) => {
+  const handleDropOnItem = (
+    targetRef: string,
+    e: React.DragEvent,
+    kind: "visual" | "audio",
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     setDropHint(null);
     const { timelineRef, assetId } = readDragData(e);
     if (!assetId) return;
+    const mime =
+      e.dataTransfer.getData("application/x-v2-asset-mime") ||
+      assetsById.get(assetId)?.mime ||
+      "";
+    const isAudio = mime.startsWith("audio/");
+    const isVisual = mime.startsWith("image/") || mime.startsWith("video/");
+    if (kind === "visual" && !isVisual) return;
+    if (kind === "audio" && !isAudio) return;
     const next = effectiveOrder.slice();
     insertTimelineItem(next, assetId, timelineRef, targetRef, dropPlacementFromElement(e.currentTarget as HTMLElement, e.clientX));
     setLocalOrder(next);
@@ -664,7 +676,7 @@ export function ProjectTimelinePanel({
                             e.dataTransfer.effectAllowed = "copyMove";
                           }}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDropOnItem(ref, e)}
+                          onDrop={(e) => handleDropOnItem(ref, e, "visual")}
                           onClick={() => {
                             setSelectedId(ref);
                             const idx = visualEntries.findIndex((v) => v.ref === ref);
@@ -810,7 +822,7 @@ export function ProjectTimelinePanel({
                             e.dataTransfer.effectAllowed = "copyMove";
                           }}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDropOnItem(ref, e)}
+                          onDrop={(e) => handleDropOnItem(ref, e, "audio")}
                           className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
                         >
                           <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
