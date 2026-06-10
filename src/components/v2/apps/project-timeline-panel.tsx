@@ -862,8 +862,9 @@ export function ProjectTimelinePanel({
                             if (idx >= 0) seekTo(idx * CLIP_SECONDS);
                             setEditClipFor(ref);
                           }}
+                          style={{ width: clipPx }}
                           className={cn(
-                            "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
+                            "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
