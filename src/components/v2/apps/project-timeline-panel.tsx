@@ -504,9 +504,13 @@ export function ProjectTimelinePanel({
     const baseTrims = { ...effectiveTrims };
     const asset = assetsById.get(assetIdFromTimelineRef(ref));
     const isImage = asset?.mime.startsWith("image/") ?? false;
-    // Images are a single frame — they can be held on screen indefinitely.
-    // Videos are capped at the source clip's natural length (CLIP_SECONDS).
-    const maxEnd = isImage ? 600 : CLIP_SECONDS;
+    // Images can be held indefinitely; video/audio are capped at the source
+    // asset's natural length when we know it.
+    const naturalDur =
+      typeof asset?.duration === "number" && asset.duration > 0
+        ? asset.duration
+        : null;
+    const maxEnd = isImage ? 600 : naturalDur ?? CLIP_SECONDS;
     let latest = baseTrim;
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
@@ -518,12 +522,88 @@ export function ProjectTimelinePanel({
       } else {
         nextEnd = Math.max(Math.min(maxEnd, baseTrim.end + dSec), baseTrim.start + 0.2);
       }
-      latest = { start: nextStart, end: nextEnd };
+      latest = { ...baseTrim, start: nextStart, end: nextEnd };
       setLocalTrims({ ...baseTrims, [ref]: latest });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      const nextTrims = { ...baseTrims, [ref]: latest };
+      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // ---- Move handles (drag a clip/audio body to reposition in time) ----
+  const SNAP_PX = 12;
+  const collectSnapTargets = (excludeRef: string): number[] => {
+    const out: number[] = [0];
+    visualEntries.forEach((e, i) => {
+      if (e.ref === excludeRef) return;
+      out.push(cumStarts[i]);
+      out.push(cumStarts[i] + getDur(e.ref));
+    });
+    audioEntries.forEach((e, i) => {
+      if (e.ref === excludeRef) return;
+      out.push(audioStarts[i]);
+      out.push(audioStarts[i] + getDur(e.ref));
+    });
+    return out;
+  };
+  const snapTime = (t: number, dur: number, targets: number[]) => {
+    const snapSec = SNAP_PX / Math.max(1, pxPerSec);
+    let best = t;
+    let bestDist = snapSec;
+    for (const target of targets) {
+      // Snap clip start
+      const d1 = Math.abs(t - target);
+      if (d1 < bestDist) {
+        best = target;
+        bestDist = d1;
+      }
+      // Snap clip end (so end aligns with target)
+      const d2 = Math.abs(t + dur - target);
+      if (d2 < bestDist) {
+        best = target - dur;
+        bestDist = d2;
+      }
+    }
+    return Math.max(0, best);
+  };
+
+  const beginMove = (
+    ref: string,
+    e: React.PointerEvent,
+    kind: "visual" | "audio",
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const baseTrim = getTrim(ref);
+    const starts = kind === "visual" ? cumStarts : audioStarts;
+    const entries = kind === "visual" ? visualEntries : audioEntries;
+    const idx = entries.findIndex((x) => x.ref === ref);
+    const baseStart = starts[idx] ?? 0;
+    const dur = getDur(ref);
+    const baseTrims = { ...effectiveTrims };
+    const targets = collectSnapTargets(ref);
+    let latest = { ...baseTrim, offset: baseStart };
+    let moved = false;
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      if (!moved && Math.abs(dx) < 3) return;
+      moved = true;
+      const dSec = dx / Math.max(1, pxPerSec);
+      const desired = Math.max(0, baseStart + dSec);
+      const snapped = snapTime(desired, dur, targets);
+      latest = { ...baseTrim, offset: snapped };
+      setLocalTrims({ ...baseTrims, [ref]: latest });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (!moved) return; // treat as click
       const nextTrims = { ...baseTrims, [ref]: latest };
       commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
     };
