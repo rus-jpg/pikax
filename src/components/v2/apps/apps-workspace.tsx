@@ -437,7 +437,7 @@ export function AppsWorkspace({
                 key={s.id}
                 className={cn(
                   "group relative flex flex-col items-start rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant",
-                  isDefaultGrid ? "gap-3 p-5" : "gap-2 p-3",
+                  isDefaultGrid ? "gap-3 p-3" : "gap-2 p-3",
                 )}
               >
                 <button
@@ -448,7 +448,7 @@ export function AppsWorkspace({
                   }}
                   aria-label={fav ? "Remove from favorites" : "Add to favorites"}
                   className={cn(
-                    "absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition",
+                    "absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-full transition",
                     fav
                       ? "text-rose-500 opacity-100"
                       : "text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100",
@@ -460,38 +460,50 @@ export function AppsWorkspace({
                   type="button"
                   onClick={() => onSelectApp(s.id)}
                   className={cn(
-                    "flex w-full flex-col items-start text-left",
+                    "flex w-full flex-col text-left",
                     isDefaultGrid ? "gap-3" : "gap-2",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "grid place-items-center rounded-[30%]",
-                      isDefaultGrid ? "h-14 w-14" : "h-9 w-9",
-                    )}
-                    style={{ backgroundColor: swatch.bg, color: swatch.fg }}
-                  >
-                    <Icon className={cn(isDefaultGrid ? "h-7 w-7" : "h-4 w-4")} />
-                  </div>
-                  <div
-                    className={cn(
-                      "pr-6 font-semibold leading-tight text-foreground",
-                      isDefaultGrid ? "text-lg" : "text-sm",
-                    )}
-                  >
-                    {s.label}
-                  </div>
-                  <div
-                    className={cn(
-                      "line-clamp-2 text-muted-foreground",
-                      isDefaultGrid ? "text-sm" : "text-[11px]",
-                    )}
-                  >
-                    {s.description}
-                  </div>
+                  {isDefaultGrid ? (
+                    <>
+                      <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted" />
+                      <div className="flex items-start gap-3 px-1 pb-1">
+                        <div
+                          className="grid h-12 w-12 shrink-0 place-items-center rounded-[24%]"
+                          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                        >
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0 flex-1 pr-6">
+                          <div className="truncate text-base font-semibold leading-tight text-foreground">
+                            {s.label}
+                          </div>
+                          <div className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                            {s.description}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className="grid h-9 w-9 place-items-center rounded-[30%]"
+                        style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="pr-6 text-sm font-semibold leading-tight text-foreground">
+                        {s.label}
+                      </div>
+                      <div className="line-clamp-2 text-[11px] text-muted-foreground">
+                        {s.description}
+                      </div>
+                    </>
+                  )}
                 </button>
               </div>
             );
+
           })}
         </div>
         {filtered.length === 0 && (
