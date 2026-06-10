@@ -159,9 +159,12 @@ export function AppsWorkspace({
     const runId = crypto.randomUUID();
     const intent = pendingIntent;
     setPendingIntent(null);
+    const refImageUrls = assets
+      .filter((a) => a.mime.startsWith("image/"))
+      .map((a) => a.url);
     setRuns((prev) => ({
       ...prev,
-      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined },
+      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined, refImageUrls },
     }));
     onProjectIdChange(pid);
 
