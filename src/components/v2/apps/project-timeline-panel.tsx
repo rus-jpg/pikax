@@ -1035,27 +1035,26 @@ export function ProjectTimelinePanel({
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualTotal * pxPerSec + visualEntries.length * clipGapPx + 80, 480) }}
+              style={{ width: Math.max(totalSeconds * pxPerSec + 80, 480) }}
             >
               {/* Ruler */}
               <div
                 className="relative mb-1 h-5 cursor-pointer select-none"
                 onClick={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
-                  const pct = (e.clientX - r.left) / r.width;
-                  seekTo(pct * totalSeconds);
+                  const x = e.clientX - r.left;
+                  seekTo(x / Math.max(1, pxPerSec));
                 }}
               >
                 {Array.from({
                   length: Math.max(Math.ceil(totalSeconds) + 1, 1),
                 }).map((_, i) => {
                   const isMajor = i % 5 === 0;
-                  const left = (i / totalSeconds) * 100;
                   return (
                     <div
                       key={i}
                       className="absolute top-0 flex flex-col items-center"
-                      style={{ left: `${left}%` }}
+                      style={{ left: `${i * pxPerSec}px` }}
                     >
                       <div
                         className={cn(
