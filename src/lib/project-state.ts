@@ -316,6 +316,10 @@ export function applyPatch(
           typeof patch.timeline.seeded === "boolean"
             ? patch.timeline.seeded
             : base.seeded,
+        trims:
+          patch.timeline.trims && typeof patch.timeline.trims === "object"
+            ? (patch.timeline.trims as Record<string, TimelineTrim>)
+            : base.trims,
       },
     };
   }
