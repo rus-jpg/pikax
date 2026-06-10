@@ -16,6 +16,10 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // If already signed in on mount, forward immediately.
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) void navigate({ to: "/v2/projects" });
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) void navigate({ to: "/v2/projects" });
