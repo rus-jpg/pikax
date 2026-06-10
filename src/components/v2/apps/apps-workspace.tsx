@@ -176,11 +176,17 @@ export function AppsWorkspace({
     projectId: pid,
     prompt,
     assets,
+    modeOverride,
+    modelOverride,
+    params,
   }: {
     skill: Skill;
     projectId: string;
     prompt: string;
     assets: ProjectAsset[];
+    modeOverride?: SkillKind;
+    modelOverride?: string;
+    params?: Record<string, string | number | boolean>;
   }) => {
     const runId = crypto.randomUUID();
     const intent = pendingIntent;
@@ -188,9 +194,15 @@ export function AppsWorkspace({
     const refImageUrls = assets
       .filter((a) => a.mime.startsWith("image/"))
       .map((a) => a.url);
+    const effectiveMode: SkillKind = modeOverride ?? skill.kind;
+    const effectiveModel =
+      modelOverride || skill.model || DEFAULT_MODEL_BY_KIND[effectiveMode];
+    const runSkill: Skill = modeOverride || modelOverride
+      ? { ...skill, kind: effectiveMode, model: effectiveModel }
+      : skill;
     setRuns((prev) => ({
       ...prev,
-      [runId]: { id: runId, skill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined, refImageUrls },
+      [runId]: { id: runId, skill: runSkill, projectId: pid, prompt, phase: "starting", intent: intent ?? undefined, refImageUrls },
     }));
     onProjectIdChange(pid);
 
@@ -213,11 +225,12 @@ export function AppsWorkspace({
         data: {
           projectId: pid,
           prompt,
-          mode: skill.kind,
-          model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
+          mode: effectiveMode,
+          model: effectiveModel,
           userMessageId: userId,
           assistantMessageId: assistantId,
           referenceImageUrls: refUrls.length ? refUrls : undefined,
+          params,
         },
       });
       if (!started.ok) {
@@ -233,8 +246,8 @@ export function AppsWorkspace({
         const tick = await runPoll({
           data: {
             projectId: pid,
-            mode: skill.kind,
-            model: skill.model || DEFAULT_MODEL_BY_KIND[skill.kind],
+            mode: effectiveMode,
+            model: effectiveModel,
             prompt,
             assistantMessageId: assistantId,
             statusUrl: started.statusUrl,
