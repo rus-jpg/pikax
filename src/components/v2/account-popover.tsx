@@ -98,7 +98,7 @@ export function AccountPopoverV2() {
           onClick={switchToClassic}
         >
           <LayoutDashboard className="h-4 w-4" />
-          Switch to classic layout
+          Try Agent
         </Button>
         <Button
           variant="ghost"

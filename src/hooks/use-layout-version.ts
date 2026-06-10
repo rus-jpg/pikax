@@ -5,9 +5,9 @@ export type LayoutVersion = "v1" | "v2";
 const STORAGE_KEY = "pikax.layoutVersion";
 
 export function getStoredLayoutVersion(): LayoutVersion {
-  if (typeof window === "undefined") return "v1";
+  if (typeof window === "undefined") return "v2";
   const v = window.localStorage.getItem(STORAGE_KEY);
-  return v === "v2" ? "v2" : "v1";
+  return v === "v1" ? "v1" : "v2";
 }
 
 /**
@@ -28,7 +28,7 @@ export function getMirrorPath(pathname: string, target: LayoutVersion): string {
 }
 
 export function useLayoutVersion() {
-  const [version, setVersionState] = useState<LayoutVersion>("v1");
+  const [version, setVersionState] = useState<LayoutVersion>("v2");
 
   useEffect(() => {
     setVersionState(getStoredLayoutVersion());
