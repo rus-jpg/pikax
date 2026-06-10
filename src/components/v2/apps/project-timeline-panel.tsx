@@ -300,14 +300,21 @@ export function ProjectTimelinePanel({
   }, [isPlaying, totalSeconds]);
 
   useEffect(() => {
-    if (!visualAssets.length) return;
-    const idx = Math.min(
-      Math.floor(currentTime / CLIP_SECONDS),
-      visualAssets.length - 1,
-    );
+    if (!visualEntries.length) return;
+    let idx = 0;
+    for (let i = 0; i < visualEntries.length; i++) {
+      const start = cumStarts[i];
+      const end = start + getDur(visualEntries[i].ref);
+      if (currentTime >= start && currentTime < end) {
+        idx = i;
+        break;
+      }
+      if (currentTime >= end) idx = i;
+    }
     const ref = visualEntries[idx]?.ref;
     if (ref && ref !== selectedId) setSelectedId(ref);
-  }, [currentTime, visualAssets, visualEntries, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTime, visualEntries, cumStarts]);
 
   useEffect(() => {
     const v = videoRef.current;
