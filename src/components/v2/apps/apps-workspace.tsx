@@ -116,6 +116,10 @@ export function AppsWorkspace({
   onSelectApp,
   onProjectIdChange,
   lockedProject,
+  seedPrompt,
+  seedMode,
+  seedModel,
+  onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
   const qc = useQueryClient();
