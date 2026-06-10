@@ -442,11 +442,11 @@ export function ProjectTimelinePanel({
   const [editAudioFor, setEditAudioFor] = useState<string | null>(null);
   const [addAudioOpen, setAddAudioOpen] = useState(false);
 
-  const pickEditClip = (skill: Skill, asset: ProjectAsset) => {
+  const pickEditClip = (skill: Skill, asset: ProjectAsset, targetRef: string) => {
     onUseInApp?.({
       skill,
       asset,
-      intent: { kind: "replaceClip", assetId: asset.id },
+      intent: { kind: "replaceClip", targetRef },
     });
     setEditClipFor(null);
   };
@@ -454,11 +454,11 @@ export function ProjectTimelinePanel({
     onUseInApp?.({ skill, asset: null, intent: { kind: "appendVisual" } });
     setAddClipOpen(false);
   };
-  const pickEditAudio = (skill: Skill, asset: ProjectAsset) => {
+  const pickEditAudio = (skill: Skill, asset: ProjectAsset, targetRef: string) => {
     onUseInApp?.({
       skill,
       asset,
-      intent: { kind: "replaceAudio", assetId: asset.id },
+      intent: { kind: "replaceAudio", targetRef },
     });
     setEditAudioFor(null);
   };
@@ -723,7 +723,7 @@ export function ProjectTimelinePanel({
                           apps={appsAcceptingKind(
                             a.mime.startsWith("video/") ? "video" : "image",
                           )}
-                          onPick={(s) => pickEditClip(s, a)}
+                          onPick={(s) => pickEditClip(s, a, ref)}
                         />
                       </PopoverContent>
                     </Popover>
@@ -839,7 +839,7 @@ export function ProjectTimelinePanel({
                         </div>
                         <AppPickerList
                           apps={appsAcceptingKind("audio")}
-                          onPick={(s) => pickEditAudio(s, a)}
+                          onPick={(s) => pickEditAudio(s, a, ref)}
                         />
                       </PopoverContent>
                     </Popover>
