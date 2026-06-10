@@ -37,6 +37,7 @@ import { getAppSwatch } from "@/lib/app-swatch";
 const TABS = [
   "Favorites",
   "Featured",
+  "Custom",
   "Photo",
   "Video",
   "Image",
@@ -49,6 +50,7 @@ type Tab = (typeof TABS)[number];
 function tabMatches(skill: Skill, tab: Tab, favorites: string[]): boolean {
   if (tab === "Favorites") return favorites.includes(skill.id);
   if (tab === "Featured") return skill.id.startsWith("app-");
+  if (tab === "Custom") return skill.category === "Custom";
   if (tab === "Photo") return skill.category === "Photo Apps";
   if (tab === "Video")
     return skill.category === "Video Apps" || skill.category === "Video";
@@ -410,7 +412,7 @@ export function AppsWorkspace({
                   <Sparkles className="h-4 w-4" />
                 </button>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">Create</div>
+                  <div className="truncate text-sm font-semibold">Custom</div>
                   <div className="truncate text-[11px] text-muted-foreground">
                     Direct prompt → media
                   </div>
