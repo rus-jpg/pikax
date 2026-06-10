@@ -347,6 +347,42 @@ export function AppsWorkspace({
     await startRun({ skill, projectId: pid, prompt, assets });
   };
 
+  const handleStartFromCreate = async (args: CreateSubmit) => {
+    const createSkill = selected!;
+    let pid = projectId;
+    if (!pid) {
+      const out = await createProj({
+        data: {
+          title: args.prompt.slice(0, 60) || createSkill.label,
+          skill: createSkill.id,
+          studioMode: args.mode,
+          studioModel: args.model,
+        },
+      });
+      pid = out.id;
+    }
+    await startRun({
+      skill: createSkill,
+      projectId: pid,
+      prompt: args.prompt,
+      assets: args.assets,
+      modeOverride: args.mode,
+      modelOverride: args.model,
+      params: args.params,
+    });
+  };
+
+  // Consume seed once it's been handed off to the wizard.
+  const consumedSeedRef = useRef(false);
+  useEffect(() => {
+    if (!seedPrompt && !seedMode && !seedModel) return;
+    if (consumedSeedRef.current) return;
+    consumedSeedRef.current = true;
+    // Defer so the wizard mounts with the seed first.
+    const t = setTimeout(() => onSeedConsumed?.(), 50);
+    return () => clearTimeout(t);
+  }, [seedPrompt, seedMode, seedModel, onSeedConsumed]);
+
   // Right column: outputs once we have a project/runs; how-it-works when an
   // app is selected without a project yet; otherwise a generic placeholder.
   const hasOutputsContext =
