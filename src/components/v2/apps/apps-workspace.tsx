@@ -65,6 +65,7 @@ type ActiveRun = {
   phase: "starting" | "polling" | "error";
   error?: string;
   intent?: TimelineIntent;
+  refImageUrls?: string[];
 };
 
 export type TimelineIntent =
