@@ -87,6 +87,8 @@ export type ProjectMeta = {
   resolution: string; // "1080p", "4K"
 };
 
+export type TimelineTrim = { start: number; end: number };
+
 export type TimelineState = {
   // Explicit allowlist of asset ids on the timeline, in display order.
   order?: string[];
@@ -96,6 +98,8 @@ export type TimelineState = {
   // "Open Timeline" seeds it with existing assets). Prevents re-seeding
   // after the user intentionally clears the timeline.
   seeded?: boolean;
+  // Per-ref trim windows (seconds within the clip's nominal duration).
+  trims?: Record<string, TimelineTrim>;
 };
 
 export type ProjectState = {
