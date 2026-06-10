@@ -96,7 +96,11 @@ export function CreateAppWizard({
   }, [seedAsset, onSeedConsumed]);
 
   // Available models for the current mode.
-  const models = useMemo(() => SKILLS_BY_KIND(mode), [mode]);
+  const MODEL_CATEGORIES = new Set(["Image", "Video", "Music", "Speech"]);
+  const models = useMemo(
+    () => SKILLS_BY_KIND(mode).filter((s) => MODEL_CATEGORIES.has(s.category)),
+    [mode],
+  );
   const controls = useMemo(() => paramsFor(model), [model]);
 
   const handleModeChange = (next: SkillKind) => {
