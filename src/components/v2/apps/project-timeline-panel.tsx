@@ -174,6 +174,7 @@ export function ProjectTimelinePanel({
   const timeline = projectQ.data?.project?.projectState?.timeline;
 
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  const [localTrims, setLocalTrims] = useState<Record<string, TimelineTrim> | null>(null);
 
   // Seed timeline with all existing project assets the first time it's
   // opened. After this, only outputs from apps invoked from the timeline
@@ -202,6 +203,14 @@ export function ProjectTimelinePanel({
   }, [projectId, projectQ.data, timeline?.seeded, serverAssets, updateState, qc]);
 
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
+  const effectiveTrims = localTrims ?? timeline?.trims ?? {};
+
+  const getTrim = (ref: string): TimelineTrim =>
+    effectiveTrims[ref] ?? { start: 0, end: CLIP_SECONDS };
+  const getDur = (ref: string) => {
+    const t = getTrim(ref);
+    return Math.max(0.2, t.end - t.start);
+  };
 
   // Allowlist semantics: only assets whose ids appear in `order` are shown.
   const assetsById = useMemo(
@@ -234,7 +243,22 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
-  const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
+  // Cumulative starts (seconds) per visual entry.
+  const cumStarts = useMemo(() => {
+    const out: number[] = [];
+    let t = 0;
+    for (const e of visualEntries) {
+      out.push(t);
+      t += getDur(e.ref);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visualEntries, effectiveTrims]);
+
+  const visualTotal = cumStarts.length
+    ? cumStarts[cumStarts.length - 1] + getDur(visualEntries[visualEntries.length - 1].ref)
+    : 0;
+  const totalSeconds = Math.max(visualTotal, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
