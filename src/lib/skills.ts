@@ -43,13 +43,13 @@ export type Skill = {
 };
 
 export const SKILLS: Skill[] = [
-  // ── Create (free-form direct-prompt app) ──────────────────────────
+  // ── Custom (free-form direct-prompt app) ──────────────────────────
   {
     id: "app-create",
-    label: "Create",
+    label: "Custom",
     description:
-      "Type a prompt, pick a mode and model, tune the parameters, generate. The blank canvas.",
-    category: "Create",
+      "Direct prompt to media. Pick a mode and model, tune parameters, generate. The blank canvas.",
+    category: "Custom",
     kind: "image",
     model: "fal-ai/nano-banana",
     icon: SparklesIcon,
