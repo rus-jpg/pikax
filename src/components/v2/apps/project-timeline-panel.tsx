@@ -20,12 +20,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getProject, updateProjectState } from "@/lib/projects.functions";
+import {
+  getProject,
+  updateProjectState,
+  attachLibraryAssetToProject,
+} from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { SKILLS, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { getAppSwatch } from "@/lib/app-swatch";
 import { cn } from "@/lib/utils";
+import { LibraryPickerModal } from "@/components/v2/library-picker-modal";
 import type { TimelineIntent } from "@/components/v2/apps/apps-workspace";
 
 const CLIP_SECONDS = 5;
