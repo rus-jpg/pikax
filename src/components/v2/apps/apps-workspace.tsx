@@ -101,6 +101,13 @@ export type AppsWorkspaceProps = {
    * dropdown's "New project" should navigate away to /v2/apps instead of
    * clearing in-place. */
   lockedProject?: boolean;
+  /** Optional one-shot seed for the Create app — populated when arriving from
+   * the home composer (?app=app-create&seedPrompt=...&seedMode=...). */
+  seedPrompt?: string;
+  seedMode?: SkillKind;
+  seedModel?: string;
+  /** Called after the seed is consumed so the parent can clear the URL. */
+  onSeedConsumed?: () => void;
 };
 
 export function AppsWorkspace({
