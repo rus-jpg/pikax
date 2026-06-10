@@ -280,9 +280,9 @@ export function ProjectTimelinePanel({
       Math.floor(currentTime / CLIP_SECONDS),
       visualAssets.length - 1,
     );
-    const id = visualAssets[idx]?.id;
-    if (id && id !== selectedId) setSelectedId(id);
-  }, [currentTime, visualAssets, selectedId]);
+    const ref = visualEntries[idx]?.ref;
+    if (ref && ref !== selectedId) setSelectedId(ref);
+  }, [currentTime, visualAssets, visualEntries, selectedId]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -290,7 +290,7 @@ export function ProjectTimelinePanel({
     v.muted = muted;
     if (isPlaying) v.play().catch(() => {});
     else v.pause();
-  }, [isPlaying, muted, selected?.id]);
+  }, [isPlaying, muted, selectedId]);
 
   // Audio playback sync — play all timeline audio tracks together with transport
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
@@ -309,7 +309,7 @@ export function ProjectTimelinePanel({
     }
     // Only react to play/mute toggles, not every tick
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, muted, audioAssets.map((a) => a.id).join(",")]);
+  }, [isPlaying, muted, audioEntries.map((entry) => entry.ref).join(",")]);
 
 
   const persist = (nextOrder: string[]) => {
