@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 ] as const;
 
 const ITEM_CLASS =
-  "group flex w-full flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium tracking-wide transition";
+  "group flex w-full flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium tracking-wide transition";
 
 export function VerticalNavV2() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
