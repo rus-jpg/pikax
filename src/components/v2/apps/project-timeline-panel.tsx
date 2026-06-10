@@ -9,7 +9,7 @@ import {
   Play,
   Plus,
   Redo2,
-  
+  Scissors,
   Trash2,
   Undo2,
   Volume2,
@@ -31,7 +31,7 @@ import {
   updateProjectState,
   attachLibraryAssetToProject,
 } from "@/lib/projects.functions";
-import type { ProjectAsset } from "@/lib/project-state";
+import type { ProjectAsset, TimelineTrim } from "@/lib/project-state";
 import { SKILLS, type Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { getAppSwatch } from "@/lib/app-swatch";
@@ -174,6 +174,7 @@ export function ProjectTimelinePanel({
   const timeline = projectQ.data?.project?.projectState?.timeline;
 
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  const [localTrims, setLocalTrims] = useState<Record<string, TimelineTrim> | null>(null);
 
   // Seed timeline with all existing project assets the first time it's
   // opened. After this, only outputs from apps invoked from the timeline
@@ -202,6 +203,14 @@ export function ProjectTimelinePanel({
   }, [projectId, projectQ.data, timeline?.seeded, serverAssets, updateState, qc]);
 
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
+  const effectiveTrims = localTrims ?? timeline?.trims ?? {};
+
+  const getTrim = (ref: string): TimelineTrim =>
+    effectiveTrims[ref] ?? { start: 0, end: CLIP_SECONDS };
+  const getDur = (ref: string) => {
+    const t = getTrim(ref);
+    return Math.max(0.2, t.end - t.start);
+  };
 
   // Allowlist semantics: only assets whose ids appear in `order` are shown.
   const assetsById = useMemo(
@@ -234,7 +243,22 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
-  const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
+  // Cumulative starts (seconds) per visual entry.
+  const cumStarts = useMemo(() => {
+    const out: number[] = [];
+    let t = 0;
+    for (const e of visualEntries) {
+      out.push(t);
+      t += getDur(e.ref);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visualEntries, effectiveTrims]);
+
+  const visualTotal = cumStarts.length
+    ? cumStarts[cumStarts.length - 1] + getDur(visualEntries[visualEntries.length - 1].ref)
+    : 0;
+  const totalSeconds = Math.max(visualTotal, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
@@ -276,14 +300,21 @@ export function ProjectTimelinePanel({
   }, [isPlaying, totalSeconds]);
 
   useEffect(() => {
-    if (!visualAssets.length) return;
-    const idx = Math.min(
-      Math.floor(currentTime / CLIP_SECONDS),
-      visualAssets.length - 1,
-    );
+    if (!visualEntries.length) return;
+    let idx = 0;
+    for (let i = 0; i < visualEntries.length; i++) {
+      const start = cumStarts[i];
+      const end = start + getDur(visualEntries[i].ref);
+      if (currentTime >= start && currentTime < end) {
+        idx = i;
+        break;
+      }
+      if (currentTime >= end) idx = i;
+    }
     const ref = visualEntries[idx]?.ref;
     if (ref && ref !== selectedId) setSelectedId(ref);
-  }, [currentTime, visualAssets, visualEntries, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTime, visualEntries, cumStarts]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -314,7 +345,8 @@ export function ProjectTimelinePanel({
 
 
   // ---- History (undo/redo) ----
-  const historyRef = useRef<{ past: string[][]; future: string[][] }>({
+  type Snapshot = { order: string[]; trims: Record<string, TimelineTrim> };
+  const historyRef = useRef<{ past: Snapshot[]; future: Snapshot[] }>({
     past: [],
     future: [],
   });
@@ -322,46 +354,61 @@ export function ProjectTimelinePanel({
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
 
-  const persistOrder = (nextOrder: string[]) => {
+  const persistSnapshot = (snap: Snapshot) => {
     if (!projectId) return;
     void updateState({
-      data: { id: projectId, patch: { timeline: { order: nextOrder } } },
+      data: {
+        id: projectId,
+        patch: { timeline: { order: snap.order, trims: snap.trims } },
+      },
     })
       .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
       .catch((e) => console.error("[timeline] persist failed", e));
   };
 
-  const commit = (nextOrder: string[]) => {
-    historyRef.current.past.push(effectiveOrder.slice());
+  const snapshot = (): Snapshot => ({
+    order: effectiveOrder.slice(),
+    trims: { ...effectiveTrims },
+  });
+
+  const commitSnap = (next: Snapshot) => {
+    historyRef.current.past.push(snapshot());
     if (historyRef.current.past.length > 50) historyRef.current.past.shift();
     historyRef.current.future = [];
     setHistoryTick((n) => n + 1);
-    setLocalOrder(nextOrder);
-    persistOrder(nextOrder);
+    setLocalOrder(next.order);
+    setLocalTrims(next.trims);
+    persistSnapshot(next);
   };
+
+  const commit = (nextOrder: string[], nextTrims?: Record<string, TimelineTrim>) =>
+    commitSnap({ order: nextOrder, trims: nextTrims ?? effectiveTrims });
 
   const persist = commit;
 
   const undo = () => {
     const prev = historyRef.current.past.pop();
     if (!prev) return;
-    historyRef.current.future.push(effectiveOrder.slice());
+    historyRef.current.future.push(snapshot());
     setHistoryTick((n) => n + 1);
-    setLocalOrder(prev);
-    persistOrder(prev);
+    setLocalOrder(prev.order);
+    setLocalTrims(prev.trims);
+    persistSnapshot(prev);
   };
   const redo = () => {
     const next = historyRef.current.future.pop();
     if (!next) return;
-    historyRef.current.past.push(effectiveOrder.slice());
+    historyRef.current.past.push(snapshot());
     setHistoryTick((n) => n + 1);
-    setLocalOrder(next);
-    persistOrder(next);
+    setLocalOrder(next.order);
+    setLocalTrims(next.trims);
+    persistSnapshot(next);
   };
 
   // ---- Zoom ----
   const [zoom, setZoom] = useState(1); // 0.5 - 2.5
   const clipPx = Math.round(80 * zoom);
+  const pxPerSec = clipPx / CLIP_SECONDS;
   const clipGapPx = 6;
   void historyTick;
 
@@ -373,8 +420,79 @@ export function ProjectTimelinePanel({
     const next = effectiveOrder.slice();
     const newRef = makeTimelineRef(selectedEntry.asset.id);
     next.splice(idx + 1, 0, newRef);
-    commit(next);
+    // Inherit the same trim window so a duplicate is truly a copy.
+    const nextTrims = { ...effectiveTrims, [newRef]: { ...getTrim(selectedEntry.ref) } };
+    commit(next, nextTrims);
     setSelectedId(newRef);
+  };
+
+  // ---- Split at playhead ----
+  const splitAtPlayhead = () => {
+    if (!visualEntries.length) return;
+    // Find clip under playhead.
+    let idx = -1;
+    let localOffset = 0;
+    for (let i = 0; i < visualEntries.length; i++) {
+      const start = cumStarts[i];
+      const end = start + getDur(visualEntries[i].ref);
+      if (currentTime >= start && currentTime < end) {
+        idx = i;
+        localOffset = currentTime - start;
+        break;
+      }
+    }
+    if (idx < 0) return;
+    const entry = visualEntries[idx];
+    const trim = getTrim(entry.ref);
+    const cutAt = trim.start + localOffset;
+    // Need at least 0.2s on each side.
+    if (cutAt - trim.start < 0.2 || trim.end - cutAt < 0.2) return;
+    const newRef = makeTimelineRef(entry.asset.id);
+    const next = effectiveOrder.slice();
+    const orderIdx = next.indexOf(entry.ref);
+    next.splice(orderIdx + 1, 0, newRef);
+    const nextTrims = {
+      ...effectiveTrims,
+      [entry.ref]: { start: trim.start, end: cutAt },
+      [newRef]: { start: cutAt, end: trim.end },
+    };
+    commit(next, nextTrims);
+    setSelectedId(newRef);
+  };
+
+  // ---- Trim handles (drag left/right edges of a clip) ----
+  const beginTrim = (
+    ref: string,
+    edge: "start" | "end",
+    e: React.PointerEvent,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const baseTrim = getTrim(ref);
+    const baseTrims = { ...effectiveTrims };
+    let latest = baseTrim;
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dSec = dx / Math.max(1, pxPerSec);
+      let nextStart = baseTrim.start;
+      let nextEnd = baseTrim.end;
+      if (edge === "start") {
+        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
+      } else {
+        nextEnd = Math.max(Math.min(CLIP_SECONDS, baseTrim.end + dSec), baseTrim.start + 0.2);
+      }
+      latest = { start: nextStart, end: nextEnd };
+      setLocalTrims({ ...baseTrims, [ref]: latest });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const nextTrims = { ...baseTrims, [ref]: latest };
+      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   };
 
   // ---- Keyboard shortcuts ----
@@ -407,26 +525,33 @@ export function ProjectTimelinePanel({
       if (e.key === "ArrowRight" && visualEntries.length) {
         e.preventDefault();
         const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const next = visualEntries[Math.min(i + 1, visualEntries.length - 1)];
+        const ni = Math.min(i + 1, visualEntries.length - 1);
+        const next = visualEntries[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+          seekTo(cumStarts[ni] ?? 0);
         }
         return;
       }
       if (e.key === "ArrowLeft" && visualEntries.length) {
         e.preventDefault();
         const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const next = visualEntries[Math.max(i - 1, 0)];
+        const ni = Math.max(i - 1, 0);
+        const next = visualEntries[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+          seekTo(cumStarts[ni] ?? 0);
         }
         return;
       }
       if (mod && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateSelected();
+        return;
+      }
+      if (e.key.toLowerCase() === "s" && !mod) {
+        e.preventDefault();
+        splitAtPlayhead();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -560,7 +685,8 @@ export function ProjectTimelinePanel({
     setCurrentTime(clamped);
   };
 
-  const playheadPct = totalSeconds > 0 ? (currentTime / totalSeconds) * 100 : 0;
+
+
 
   // Popover open state
   const [editClipFor, setEditClipFor] = useState<string | null>(null);
@@ -746,6 +872,16 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={splitAtPlayhead}
+                disabled={!visualEntries.length}
+                aria-label="Split at playhead"
+                title="Split at playhead (S)"
+              >
+                <Scissors className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={duplicateSelected}
                 disabled={!selectedEntry}
                 aria-label="Duplicate clip"
@@ -783,7 +919,7 @@ export function ProjectTimelinePanel({
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualAssets.length * (clipPx + clipGapPx) + 80, 480) }}
+              style={{ width: Math.max(visualTotal * pxPerSec + visualEntries.length * clipGapPx + 80, 480) }}
             >
               {/* Ruler */}
               <div
@@ -834,8 +970,10 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
-                {visualEntries.map(({ ref, asset: a }) => {
+                {visualEntries.map(({ ref, asset: a }, idx) => {
                   const isSel = ref === selectedId;
+                  const dur = getDur(ref);
+                  const widthPx = Math.max(24, dur * pxPerSec);
                   return (
                     <Popover
                       key={ref}
@@ -848,6 +986,11 @@ export function ProjectTimelinePanel({
                           data-timeline-kind="visual"
                           data-timeline-ref={ref}
                           onDragStart={(e) => {
+                            const t = e.target as HTMLElement;
+                            if (t.closest && t.closest("[data-trim-handle]")) {
+                              e.preventDefault();
+                              return;
+                            }
                             setDragId(ref);
                             e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
                             e.dataTransfer.setData("application/x-v2-asset-id", a.id);
@@ -858,11 +1001,10 @@ export function ProjectTimelinePanel({
                           onDrop={(e) => handleDropOnItem(ref, e, "visual")}
                           onClick={() => {
                             setSelectedId(ref);
-                            const idx = visualEntries.findIndex((v) => v.ref === ref);
-                            if (idx >= 0) seekTo(idx * CLIP_SECONDS);
+                            seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: clipPx }}
+                          style={{ width: widthPx }}
                           className={cn(
                             "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
                             isSel
@@ -885,13 +1027,30 @@ export function ProjectTimelinePanel({
                               className="h-full w-full object-cover"
                             />
                           )}
+                          {/* Trim handles */}
+                          <div
+                            data-trim-handle="start"
+                            onPointerDown={(e) => beginTrim(ref, "start", e)}
+                            onClick={(e) => e.stopPropagation()}
+                            draggable={false}
+                            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            title="Trim start"
+                          />
+                          <div
+                            data-trim-handle="end"
+                            onPointerDown={(e) => beginTrim(ref, "end", e)}
+                            onClick={(e) => e.stopPropagation()}
+                            draggable={false}
+                            className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            title="Trim end"
+                          />
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(ref);
                             }}
-                            className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
+                            className="absolute right-1.5 top-0.5 z-20 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -956,16 +1115,31 @@ export function ProjectTimelinePanel({
                 </Popover>
 
                 {/* Playhead */}
-                {visualAssets.length > 0 && (
-                  <div
-                    className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
-                    style={{
-                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (clipPx + clipGapPx))}px)`,
-                    }}
-                  >
-                    <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
-                  </div>
-                )}
+                {visualEntries.length > 0 && (() => {
+                  let px = 4; // p-1
+                  let placed = false;
+                  for (let i = 0; i < visualEntries.length; i++) {
+                    const dur = getDur(visualEntries[i].ref);
+                    const w = Math.max(24, dur * pxPerSec);
+                    const start = cumStarts[i];
+                    const end = start + dur;
+                    if (!placed && currentTime <= end) {
+                      px += Math.max(0, (currentTime - start)) * pxPerSec;
+                      placed = true;
+                      break;
+                    }
+                    px += w + clipGapPx;
+                  }
+                  if (!placed) px += 0;
+                  return (
+                    <div
+                      className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
+                      style={{ left: `${px}px` }}
+                    >
+                      <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Audio tracks */}
