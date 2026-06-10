@@ -308,6 +308,10 @@ export function applyPatch(
       timeline: {
         order: Array.isArray(patch.timeline.order) ? patch.timeline.order : base.order,
         hidden: Array.isArray(patch.timeline.hidden) ? patch.timeline.hidden : base.hidden,
+        seeded:
+          typeof patch.timeline.seeded === "boolean"
+            ? patch.timeline.seeded
+            : base.seeded,
       },
     };
   }
