@@ -986,6 +986,11 @@ export function ProjectTimelinePanel({
                           data-timeline-kind="visual"
                           data-timeline-ref={ref}
                           onDragStart={(e) => {
+                            const t = e.target as HTMLElement;
+                            if (t.closest && t.closest("[data-trim-handle]")) {
+                              e.preventDefault();
+                              return;
+                            }
                             setDragId(ref);
                             e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
                             e.dataTransfer.setData("application/x-v2-asset-id", a.id);
