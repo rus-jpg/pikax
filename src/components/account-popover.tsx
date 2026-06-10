@@ -102,7 +102,7 @@ export function AccountPopover() {
           }}
         >
           <Sparkles className="h-4 w-4" />
-          Try new layout
+          Back to default
         </Button>
         <Button
           variant="ghost"
