@@ -474,7 +474,7 @@ export function ProjectTimelinePanel({
         data: { sourceAssetId: item.id, targetProjectId: projectId },
       });
       const next = effectiveOrder.slice();
-      if (!next.includes(asset.id)) next.push(asset.id);
+      next.push(makeTimelineRef(asset.id));
       setLocalOrder(next);
       persist(next);
       await qc.invalidateQueries({ queryKey: ["v2-project", projectId] });
@@ -520,14 +520,15 @@ export function ProjectTimelinePanel({
                   <video
                     key={selected.id}
                     ref={videoRef}
-                    src={selected.url}
+                  key={selectedId}
+                  src={selected.url}
                     className="h-full w-full object-cover"
                     playsInline
                     muted={muted}
                   />
                 ) : (
                   <img
-                    key={selected.id}
+                    key={selectedId}
                     src={selected.url}
                     alt={selected.label ?? selected.name}
                     className="h-full w-full object-cover"
@@ -542,13 +543,13 @@ export function ProjectTimelinePanel({
           </div>
 
           {/* Hidden audio elements for timeline preview playback */}
-          {audioAssets.map((a) => (
+          {audioEntries.map(({ ref, asset: a }) => (
             <audio
-              key={a.id}
+              key={ref}
               src={a.url}
               ref={(el) => {
-                if (el) audioRefs.current.set(a.id, el);
-                else audioRefs.current.delete(a.id);
+                if (el) audioRefs.current.set(ref, el);
+                else audioRefs.current.delete(ref);
               }}
               preload="auto"
               className="hidden"
