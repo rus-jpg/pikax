@@ -1072,10 +1072,10 @@ export function ProjectTimelinePanel({
                 })}
               </div>
 
-              {/* Clip strip */}
+              {/* Clip strip — absolute positioning by time */}
               <div
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-lg p-1 -m-1 transition",
+                  "relative h-14 rounded-lg transition",
                   dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -1089,6 +1089,7 @@ export function ProjectTimelinePanel({
                   const isSel = ref === selectedId;
                   const dur = getDur(ref);
                   const widthPx = Math.max(24, dur * pxPerSec);
+                  const leftPx = cumStarts[idx] * pxPerSec;
                   return (
                     <Popover
                       key={ref}
@@ -1097,20 +1098,12 @@ export function ProjectTimelinePanel({
                     >
                       <PopoverTrigger asChild>
                         <div
-                          draggable
                           data-timeline-kind="visual"
                           data-timeline-ref={ref}
-                          onDragStart={(e) => {
+                          onPointerDown={(e) => {
                             const t = e.target as HTMLElement;
-                            if (t.closest && t.closest("[data-trim-handle]")) {
-                              e.preventDefault();
-                              return;
-                            }
-                            setDragId(ref);
-                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
-                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
-                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
-                            e.dataTransfer.effectAllowed = "copyMove";
+                            if (t.closest && t.closest("[data-trim-handle]")) return;
+                            beginMove(ref, e, "visual");
                           }}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => handleDropOnItem(ref, e, "visual")}
@@ -1119,9 +1112,9 @@ export function ProjectTimelinePanel({
                             seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: widthPx }}
+                          style={{ width: widthPx, left: `${leftPx}px` }}
                           className={cn(
-                            "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
+                            "group absolute top-0 h-14 cursor-grab overflow-hidden rounded-lg bg-muted transition active:cursor-grabbing",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
@@ -1192,12 +1185,13 @@ export function ProjectTimelinePanel({
                   );
                 })}
 
-                {/* Add-clip + button */}
+                {/* Add-clip + button — pinned to right end of last visual clip */}
                 <Popover open={addClipOpen} onOpenChange={setAddClipOpen}>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="grid h-14 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+                      style={{ left: `${visualEnd * pxPerSec + 6}px` }}
+                      className="absolute top-0 grid h-14 w-10 place-items-center rounded-lg border border-border bg-muted text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
                       aria-label="Add clip"
                     >
                       <Plus className="h-4 w-4" />
@@ -1230,31 +1224,12 @@ export function ProjectTimelinePanel({
                 </Popover>
 
                 {/* Playhead */}
-                {visualEntries.length > 0 && (() => {
-                  let px = 4; // p-1
-                  let placed = false;
-                  for (let i = 0; i < visualEntries.length; i++) {
-                    const dur = getDur(visualEntries[i].ref);
-                    const w = Math.max(24, dur * pxPerSec);
-                    const start = cumStarts[i];
-                    const end = start + dur;
-                    if (!placed && currentTime <= end) {
-                      px += Math.max(0, (currentTime - start)) * pxPerSec;
-                      placed = true;
-                      break;
-                    }
-                    px += w + clipGapPx;
-                  }
-                  if (!placed) px += 0;
-                  return (
-                    <div
-                      className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
-                      style={{ left: `${px}px` }}
-                    >
-                      <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
-                    </div>
-                  );
-                })()}
+                <div
+                  className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
+                  style={{ left: `${currentTime * pxPerSec}px` }}
+                >
+                  <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
+                </div>
               </div>
 
               {/* Audio tracks */}
