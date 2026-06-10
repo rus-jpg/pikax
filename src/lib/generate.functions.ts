@@ -30,6 +30,11 @@ const InputSchema = z.object({
   assistantMessageId: z.string().min(1).max(64),
   // Optional reference images (e.g. nano-banana/edit requires `image_urls`).
   referenceImageUrls: z.array(z.string().url()).max(8).optional(),
+  // Optional extra per-model parameters (aspect, duration, voice, ...). Merged
+  // into the upstream fal body, overriding the mode defaults below.
+  params: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+    .optional(),
 });
 
 function fallbackMimeFor(mode: z.infer<typeof ModeSchema>): string {
