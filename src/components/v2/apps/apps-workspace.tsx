@@ -435,7 +435,10 @@ export function AppsWorkspace({
             return (
               <div
                 key={s.id}
-                className="group relative flex flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-3 text-left transition hover:border-foreground/40 hover:shadow-elegant"
+                className={cn(
+                  "group relative flex flex-col items-start rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant",
+                  isDefaultGrid ? "gap-3 p-5" : "gap-2 p-3",
+                )}
               >
                 <button
                   type="button"
@@ -456,18 +459,34 @@ export function AppsWorkspace({
                 <button
                   type="button"
                   onClick={() => onSelectApp(s.id)}
-                  className="flex w-full flex-col items-start gap-2 text-left"
+                  className={cn(
+                    "flex w-full flex-col items-start text-left",
+                    isDefaultGrid ? "gap-3" : "gap-2",
+                  )}
                 >
                   <div
-                    className="grid h-9 w-9 place-items-center rounded-[30%]"
+                    className={cn(
+                      "grid place-items-center rounded-[30%]",
+                      isDefaultGrid ? "h-14 w-14" : "h-9 w-9",
+                    )}
                     style={{ backgroundColor: swatch.bg, color: swatch.fg }}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={cn(isDefaultGrid ? "h-7 w-7" : "h-4 w-4")} />
                   </div>
-                  <div className="pr-6 text-sm font-semibold leading-tight text-foreground">
+                  <div
+                    className={cn(
+                      "pr-6 font-semibold leading-tight text-foreground",
+                      isDefaultGrid ? "text-lg" : "text-sm",
+                    )}
+                  >
                     {s.label}
                   </div>
-                  <div className="line-clamp-2 text-[11px] text-muted-foreground">
+                  <div
+                    className={cn(
+                      "line-clamp-2 text-muted-foreground",
+                      isDefaultGrid ? "text-sm" : "text-[11px]",
+                    )}
+                  >
                     {s.description}
                   </div>
                 </button>
