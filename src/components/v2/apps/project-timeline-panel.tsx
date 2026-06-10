@@ -471,6 +471,7 @@ export function ProjectTimelinePanel({
     const startX = e.clientX;
     const baseTrim = getTrim(ref);
     const baseTrims = { ...effectiveTrims };
+    let latest = baseTrim;
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
       const dSec = dx / Math.max(1, pxPerSec);
@@ -481,14 +482,13 @@ export function ProjectTimelinePanel({
       } else {
         nextEnd = Math.max(Math.min(CLIP_SECONDS, baseTrim.end + dSec), baseTrim.start + 0.2);
       }
-      setLocalTrims({ ...baseTrims, [ref]: { start: nextStart, end: nextEnd } });
+      latest = { start: nextStart, end: nextEnd };
+      setLocalTrims({ ...baseTrims, [ref]: latest });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      // Commit final value to history + persist.
-      const finalTrim = (localTrims ?? effectiveTrims)[ref] ?? baseTrim;
-      const nextTrims = { ...baseTrims, [ref]: finalTrim };
+      const nextTrims = { ...baseTrims, [ref]: latest };
       commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
