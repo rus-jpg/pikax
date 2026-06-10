@@ -624,7 +624,18 @@ export function ProjectTimelinePanel({
               </div>
 
               {/* Audio tracks */}
-              <div className="mt-3 space-y-1.5">
+              <div
+                className={cn(
+                  "mt-3 space-y-1.5 rounded-lg p-1 -m-1 transition",
+                  dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDropHint("audio");
+                }}
+                onDragLeave={() => setDropHint(null)}
+                onDrop={(e) => handleAppendDrop(e, "audio")}
+              >
                 {audioAssets.map((a) => {
                   const wave = fakeWave(a.id, 96);
                   return (
