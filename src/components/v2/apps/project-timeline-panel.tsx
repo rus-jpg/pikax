@@ -34,6 +34,27 @@ import { LibraryPickerModal } from "@/components/v2/library-picker-modal";
 import type { TimelineIntent } from "@/components/v2/apps/apps-workspace";
 
 const CLIP_SECONDS = 5;
+const TIMELINE_INSTANCE_SEP = "::timeline-instance::";
+
+function makeTimelineRef(assetId: string) {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${assetId}${TIMELINE_INSTANCE_SEP}${id}`;
+}
+
+function assetIdFromTimelineRef(ref: string) {
+  return ref.includes(TIMELINE_INSTANCE_SEP)
+    ? ref.split(TIMELINE_INSTANCE_SEP)[0]
+    : ref;
+}
+
+function timelineRefAssetId(refOrAssetId: string, existingRefs: string[]) {
+  return existingRefs.includes(refOrAssetId)
+    ? assetIdFromTimelineRef(refOrAssetId)
+    : refOrAssetId;
+}
 
 function fmt(t: number) {
   const m = Math.floor(t / 60);
@@ -182,22 +203,27 @@ export function ProjectTimelinePanel({
     [serverAssets],
   );
 
-  const visualAssets = useMemo(() => {
-    const out: ProjectAsset[] = [];
-    for (const id of effectiveOrder) {
-      const a = assetsById.get(id);
+  const visualEntries = useMemo(() => {
+    const out: { ref: string; asset: ProjectAsset }[] = [];
+    for (const ref of effectiveOrder) {
+      const a = assetsById.get(assetIdFromTimelineRef(ref));
       if (a && (a.mime.startsWith("image/") || a.mime.startsWith("video/"))) {
-        out.push(a);
+        out.push({ ref, asset: a });
       }
     }
     return out;
   }, [effectiveOrder, assetsById]);
 
-  const audioAssets = useMemo(() => {
-    const out: ProjectAsset[] = [];
-    for (const id of effectiveOrder) {
-      const a = assetsById.get(id);
-      if (a && a.mime.startsWith("audio/")) out.push(a);
+  const visualAssets = useMemo(
+    () => visualEntries.map((entry) => entry.asset),
+    [visualEntries],
+  );
+
+  const audioEntries = useMemo(() => {
+    const out: { ref: string; asset: ProjectAsset }[] = [];
+    for (const ref of effectiveOrder) {
+      const a = assetsById.get(assetIdFromTimelineRef(ref));
+      if (a && a.mime.startsWith("audio/")) out.push({ ref, asset: a });
     }
     return out;
   }, [effectiveOrder, assetsById]);
@@ -205,11 +231,12 @@ export function ProjectTimelinePanel({
   const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected =
-    visualAssets.find((a) => a.id === selectedId) ?? visualAssets[0] ?? null;
+  const selectedEntry =
+    visualEntries.find((entry) => entry.ref === selectedId) ?? visualEntries[0] ?? null;
+  const selected = selectedEntry?.asset ?? null;
   useEffect(() => {
-    if (!selected && visualAssets[0]) setSelectedId(visualAssets[0].id);
-  }, [visualAssets, selected]);
+    if (!selectedEntry && visualEntries[0]) setSelectedId(visualEntries[0].ref);
+  }, [visualEntries, selectedEntry]);
 
   // Transport
   const [isPlaying, setIsPlaying] = useState(false);
@@ -248,9 +275,9 @@ export function ProjectTimelinePanel({
       Math.floor(currentTime / CLIP_SECONDS),
       visualAssets.length - 1,
     );
-    const id = visualAssets[idx]?.id;
-    if (id && id !== selectedId) setSelectedId(id);
-  }, [currentTime, visualAssets, selectedId]);
+    const ref = visualEntries[idx]?.ref;
+    if (ref && ref !== selectedId) setSelectedId(ref);
+  }, [currentTime, visualAssets, visualEntries, selectedId]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -258,7 +285,7 @@ export function ProjectTimelinePanel({
     v.muted = muted;
     if (isPlaying) v.play().catch(() => {});
     else v.pause();
-  }, [isPlaying, muted, selected?.id]);
+  }, [isPlaying, muted, selectedId]);
 
   // Audio playback sync — play all timeline audio tracks together with transport
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
@@ -277,7 +304,7 @@ export function ProjectTimelinePanel({
     }
     // Only react to play/mute toggles, not every tick
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, muted, audioAssets.map((a) => a.id).join(",")]);
+  }, [isPlaying, muted, audioEntries.map((entry) => entry.ref).join(",")]);
 
 
   const persist = (nextOrder: string[]) => {
@@ -292,26 +319,83 @@ export function ProjectTimelinePanel({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<"visual" | "audio" | null>(null);
 
-  const readDragAssetId = (e: React.DragEvent): string | null => {
-    const fromDt = e.dataTransfer.getData("application/x-v2-asset-id");
-    return fromDt || dragId;
+  const readDragData = (e: React.DragEvent) => {
+    const timelineRef =
+      e.dataTransfer.getData("application/x-v2-timeline-ref") || dragId;
+    const assetId =
+      e.dataTransfer.getData("application/x-v2-asset-id") ||
+      (timelineRef ? timelineRefAssetId(timelineRef, effectiveOrder) : "");
+    return { timelineRef, assetId };
   };
 
-  const handleDrop = (targetId: string, e: React.DragEvent) => {
-    const id = readDragAssetId(e);
-    if (!id || id === targetId) return;
-    const next = effectiveOrder.slice();
-    const from = next.indexOf(id);
-    const to = next.indexOf(targetId);
-    if (to < 0) return;
-    if (from >= 0) {
-      const [m] = next.splice(from, 1);
-      const insertAt = next.indexOf(targetId);
-      next.splice(insertAt, 0, m);
-    } else {
-      // External asset — insert before the target clip
-      next.splice(to, 0, id);
+  const insertTimelineItem = (
+    next: string[],
+    assetId: string,
+    timelineRef: string | null,
+    targetRef: string | null,
+    place: "before" | "after" | "append",
+  ) => {
+    const isMove = !!timelineRef && next.includes(timelineRef);
+    const refToInsert = isMove ? timelineRef : makeTimelineRef(assetId);
+    if (targetRef === refToInsert) return next;
+    if (isMove) next.splice(next.indexOf(refToInsert), 1);
+    if (!targetRef || place === "append") {
+      next.push(refToInsert);
+      return next;
     }
+    const targetIndex = next.indexOf(targetRef);
+    if (targetIndex < 0) {
+      next.push(refToInsert);
+      return next;
+    }
+    next.splice(place === "before" ? targetIndex : targetIndex + 1, 0, refToInsert);
+    return next;
+  };
+
+  const dropPlacementFromElement = (el: HTMLElement, clientX: number) => {
+    const rect = el.getBoundingClientRect();
+    return clientX < rect.left + rect.width / 2 ? "before" : "after";
+  };
+
+  const dropTargetFromTrack = (
+    track: HTMLElement,
+    clientX: number,
+    selector: string,
+  ) => {
+    const items = Array.from(track.querySelectorAll<HTMLElement>(selector));
+    for (const item of items) {
+      const rect = item.getBoundingClientRect();
+      if (clientX < rect.left + rect.width / 2) {
+        return { targetRef: item.dataset.timelineRef ?? null, place: "before" as const };
+      }
+    }
+    const last = items.at(-1);
+    return {
+      targetRef: last?.dataset.timelineRef ?? null,
+      place: last ? ("after" as const) : ("append" as const),
+    };
+  };
+
+  const handleDropOnItem = (
+    targetRef: string,
+    e: React.DragEvent,
+    kind: "visual" | "audio",
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropHint(null);
+    const { timelineRef, assetId } = readDragData(e);
+    if (!assetId) return;
+    const mime =
+      e.dataTransfer.getData("application/x-v2-asset-mime") ||
+      assetsById.get(assetId)?.mime ||
+      "";
+    const isAudio = mime.startsWith("audio/");
+    const isVisual = mime.startsWith("image/") || mime.startsWith("video/");
+    if (kind === "visual" && !isVisual) return;
+    if (kind === "audio" && !isAudio) return;
+    const next = effectiveOrder.slice();
+    insertTimelineItem(next, assetId, timelineRef, targetRef, dropPlacementFromElement(e.currentTarget as HTMLElement, e.clientX));
     setLocalOrder(next);
     persist(next);
     setDragId(null);
@@ -323,31 +407,31 @@ export function ProjectTimelinePanel({
   ) => {
     e.preventDefault();
     setDropHint(null);
-    const id = readDragAssetId(e);
-    if (!id) return;
+    const { timelineRef, assetId } = readDragData(e);
+    if (!assetId) return;
     const mime =
       e.dataTransfer.getData("application/x-v2-asset-mime") ||
-      assetsById.get(id)?.mime ||
+      assetsById.get(assetId)?.mime ||
       "";
     const isAudio = mime.startsWith("audio/");
     const isVisual = mime.startsWith("image/") || mime.startsWith("video/");
     if (kind === "visual" && !isVisual) return;
     if (kind === "audio" && !isAudio) return;
     const next = effectiveOrder.slice();
-    const from = next.indexOf(id);
-    if (from >= 0) next.splice(from, 1);
-    next.push(id);
+    const selector = kind === "visual" ? "[data-timeline-kind='visual']" : "[data-timeline-kind='audio']";
+    const target = dropTargetFromTrack(e.currentTarget as HTMLElement, e.clientX, selector);
+    insertTimelineItem(next, assetId, timelineRef, target.targetRef, target.place);
     setLocalOrder(next);
     persist(next);
     setDragId(null);
   };
 
-  const handleDelete = (id: string) => {
-    const next = effectiveOrder.filter((x) => x !== id);
+  const handleDelete = (ref: string) => {
+    const next = effectiveOrder.filter((x) => x !== ref);
     setLocalOrder(next);
-    if (selectedId === id) {
-      const remaining = visualAssets.filter((a) => a.id !== id);
-      setSelectedId(remaining[0]?.id ?? null);
+    if (selectedId === ref) {
+      const remaining = visualEntries.filter((entry) => entry.ref !== ref);
+      setSelectedId(remaining[0]?.ref ?? null);
     }
     persist(next);
   };
@@ -365,11 +449,11 @@ export function ProjectTimelinePanel({
   const [editAudioFor, setEditAudioFor] = useState<string | null>(null);
   const [addAudioOpen, setAddAudioOpen] = useState(false);
 
-  const pickEditClip = (skill: Skill, asset: ProjectAsset) => {
+  const pickEditClip = (skill: Skill, asset: ProjectAsset, targetRef: string) => {
     onUseInApp?.({
       skill,
       asset,
-      intent: { kind: "replaceClip", assetId: asset.id },
+      intent: { kind: "replaceClip", targetRef },
     });
     setEditClipFor(null);
   };
@@ -377,11 +461,11 @@ export function ProjectTimelinePanel({
     onUseInApp?.({ skill, asset: null, intent: { kind: "appendVisual" } });
     setAddClipOpen(false);
   };
-  const pickEditAudio = (skill: Skill, asset: ProjectAsset) => {
+  const pickEditAudio = (skill: Skill, asset: ProjectAsset, targetRef: string) => {
     onUseInApp?.({
       skill,
       asset,
-      intent: { kind: "replaceAudio", assetId: asset.id },
+      intent: { kind: "replaceAudio", targetRef },
     });
     setEditAudioFor(null);
   };
@@ -397,7 +481,7 @@ export function ProjectTimelinePanel({
         data: { sourceAssetId: item.id, targetProjectId: projectId },
       });
       const next = effectiveOrder.slice();
-      if (!next.includes(asset.id)) next.push(asset.id);
+      next.push(makeTimelineRef(asset.id));
       setLocalOrder(next);
       persist(next);
       await qc.invalidateQueries({ queryKey: ["v2-project", projectId] });
@@ -441,7 +525,7 @@ export function ProjectTimelinePanel({
               {selected ? (
                 selected.mime.startsWith("video/") ? (
                   <video
-                    key={selected.id}
+                    key={selectedId}
                     ref={videoRef}
                     src={selected.url}
                     className="h-full w-full object-cover"
@@ -450,7 +534,7 @@ export function ProjectTimelinePanel({
                   />
                 ) : (
                   <img
-                    key={selected.id}
+                    key={selectedId}
                     src={selected.url}
                     alt={selected.label ?? selected.name}
                     className="h-full w-full object-cover"
@@ -465,13 +549,13 @@ export function ProjectTimelinePanel({
           </div>
 
           {/* Hidden audio elements for timeline preview playback */}
-          {audioAssets.map((a) => (
+          {audioEntries.map(({ ref, asset: a }) => (
             <audio
-              key={a.id}
+              key={ref}
               src={a.url}
               ref={(el) => {
-                if (el) audioRefs.current.set(a.id, el);
-                else audioRefs.current.delete(a.id);
+                if (el) audioRefs.current.set(ref, el);
+                else audioRefs.current.delete(ref);
               }}
               preload="auto"
               className="hidden"
@@ -571,27 +655,33 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
-                {visualAssets.map((a) => {
-                  const isSel = a.id === selected?.id;
+                {visualEntries.map(({ ref, asset: a }) => {
+                  const isSel = ref === selectedId;
                   return (
                     <Popover
-                      key={a.id}
-                      open={editClipFor === a.id}
-                      onOpenChange={(o) => setEditClipFor(o ? a.id : null)}
+                      key={ref}
+                      open={editClipFor === ref}
+                      onOpenChange={(o) => setEditClipFor(o ? ref : null)}
                     >
                       <PopoverTrigger asChild>
                         <div
                           draggable
-                          onDragStart={() => setDragId(a.id)}
+                          data-timeline-kind="visual"
+                          data-timeline-ref={ref}
+                          onDragStart={(e) => {
+                            setDragId(ref);
+                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
+                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
+                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
+                            e.dataTransfer.effectAllowed = "copyMove";
+                          }}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDrop(a.id, e)}
+                          onDrop={(e) => handleDropOnItem(ref, e, "visual")}
                           onClick={() => {
-                            setSelectedId(a.id);
-                            const idx = visualAssets.findIndex(
-                              (v) => v.id === a.id,
-                            );
+                            setSelectedId(ref);
+                            const idx = visualEntries.findIndex((v) => v.ref === ref);
                             if (idx >= 0) seekTo(idx * CLIP_SECONDS);
-                            setEditClipFor(a.id);
+                            setEditClipFor(ref);
                           }}
                           className={cn(
                             "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
@@ -611,6 +701,7 @@ export function ProjectTimelinePanel({
                             <video
                               src={a.url}
                               muted
+                              draggable={false}
                               className="h-full w-full object-cover"
                             />
                           )}
@@ -618,7 +709,7 @@ export function ProjectTimelinePanel({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(a.id);
+                              handleDelete(ref);
                             }}
                             className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
@@ -640,7 +731,7 @@ export function ProjectTimelinePanel({
                           apps={appsAcceptingKind(
                             a.mime.startsWith("video/") ? "video" : "image",
                           )}
-                          onPick={(s) => pickEditClip(s, a)}
+                          onPick={(s) => pickEditClip(s, a, ref)}
                         />
                       </PopoverContent>
                     </Popover>
@@ -710,17 +801,29 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
-                {audioAssets.map((a) => {
+                {audioEntries.map(({ ref, asset: a }) => {
                   const wave = fakeWave(a.id, 96);
                   return (
                     <Popover
-                      key={a.id}
-                      open={editAudioFor === a.id}
-                      onOpenChange={(o) => setEditAudioFor(o ? a.id : null)}
+                      key={ref}
+                      open={editAudioFor === ref}
+                      onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
                     >
                       <PopoverTrigger asChild>
                         <button
                           type="button"
+                          draggable
+                          data-timeline-kind="audio"
+                          data-timeline-ref={ref}
+                          onDragStart={(e) => {
+                            setDragId(ref);
+                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
+                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
+                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
+                            e.dataTransfer.effectAllowed = "copyMove";
+                          }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => handleDropOnItem(ref, e, "audio")}
                           className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
                         >
                           <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
@@ -744,7 +847,7 @@ export function ProjectTimelinePanel({
                         </div>
                         <AppPickerList
                           apps={appsAcceptingKind("audio")}
-                          onPick={(s) => pickEditAudio(s, a)}
+                          onPick={(s) => pickEditAudio(s, a, ref)}
                         />
                       </PopoverContent>
                     </Popover>
