@@ -399,7 +399,7 @@ export function AppsWorkspace({
       <ResizableHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel defaultSize={showTimeline ? "42%" : "72%"} minSize="30%">
+      <ResizablePanel defaultSize={showTimeline ? "30%" : "72%"} minSize="25%">
         <div className="h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
             <ProjectOutputsPanel
@@ -427,7 +427,7 @@ export function AppsWorkspace({
         <>
           <ResizableHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize="30%" minSize="20%" maxSize="50%">
+          <ResizablePanel defaultSize="45%" minSize="25%" maxSize="65%">
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
