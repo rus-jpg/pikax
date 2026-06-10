@@ -420,8 +420,79 @@ export function ProjectTimelinePanel({
     const next = effectiveOrder.slice();
     const newRef = makeTimelineRef(selectedEntry.asset.id);
     next.splice(idx + 1, 0, newRef);
-    commit(next);
+    // Inherit the same trim window so a duplicate is truly a copy.
+    const nextTrims = { ...effectiveTrims, [newRef]: { ...getTrim(selectedEntry.ref) } };
+    commit(next, nextTrims);
     setSelectedId(newRef);
+  };
+
+  // ---- Split at playhead ----
+  const splitAtPlayhead = () => {
+    if (!visualEntries.length) return;
+    // Find clip under playhead.
+    let idx = -1;
+    let localOffset = 0;
+    for (let i = 0; i < visualEntries.length; i++) {
+      const start = cumStarts[i];
+      const end = start + getDur(visualEntries[i].ref);
+      if (currentTime >= start && currentTime < end) {
+        idx = i;
+        localOffset = currentTime - start;
+        break;
+      }
+    }
+    if (idx < 0) return;
+    const entry = visualEntries[idx];
+    const trim = getTrim(entry.ref);
+    const cutAt = trim.start + localOffset;
+    // Need at least 0.2s on each side.
+    if (cutAt - trim.start < 0.2 || trim.end - cutAt < 0.2) return;
+    const newRef = makeTimelineRef(entry.asset.id);
+    const next = effectiveOrder.slice();
+    const orderIdx = next.indexOf(entry.ref);
+    next.splice(orderIdx + 1, 0, newRef);
+    const nextTrims = {
+      ...effectiveTrims,
+      [entry.ref]: { start: trim.start, end: cutAt },
+      [newRef]: { start: cutAt, end: trim.end },
+    };
+    commit(next, nextTrims);
+    setSelectedId(newRef);
+  };
+
+  // ---- Trim handles (drag left/right edges of a clip) ----
+  const beginTrim = (
+    ref: string,
+    edge: "start" | "end",
+    e: React.PointerEvent,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const baseTrim = getTrim(ref);
+    const baseTrims = { ...effectiveTrims };
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dSec = dx / Math.max(1, pxPerSec);
+      let nextStart = baseTrim.start;
+      let nextEnd = baseTrim.end;
+      if (edge === "start") {
+        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
+      } else {
+        nextEnd = Math.max(Math.min(CLIP_SECONDS, baseTrim.end + dSec), baseTrim.start + 0.2);
+      }
+      setLocalTrims({ ...baseTrims, [ref]: { start: nextStart, end: nextEnd } });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      // Commit final value to history + persist.
+      const finalTrim = (localTrims ?? effectiveTrims)[ref] ?? baseTrim;
+      const nextTrims = { ...baseTrims, [ref]: finalTrim };
+      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   };
 
   // ---- Keyboard shortcuts ----
