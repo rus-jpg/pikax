@@ -139,7 +139,7 @@ export function AppsWorkspace({
     onSelectApp(skill.id);
   };
 
-  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab)), [tab]);
+  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab, favorites)), [tab, favorites]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const activeRuns = useMemo(() => Object.values(runs), [runs]);
 
