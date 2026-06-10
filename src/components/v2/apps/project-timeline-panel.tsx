@@ -34,6 +34,27 @@ import { LibraryPickerModal } from "@/components/v2/library-picker-modal";
 import type { TimelineIntent } from "@/components/v2/apps/apps-workspace";
 
 const CLIP_SECONDS = 5;
+const TIMELINE_INSTANCE_SEP = "::timeline-instance::";
+
+function makeTimelineRef(assetId: string) {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${assetId}${TIMELINE_INSTANCE_SEP}${id}`;
+}
+
+function assetIdFromTimelineRef(ref: string) {
+  return ref.includes(TIMELINE_INSTANCE_SEP)
+    ? ref.split(TIMELINE_INSTANCE_SEP)[0]
+    : ref;
+}
+
+function timelineRefAssetId(refOrAssetId: string, existingRefs: string[]) {
+  return existingRefs.includes(refOrAssetId)
+    ? assetIdFromTimelineRef(refOrAssetId)
+    : refOrAssetId;
+}
 
 function fmt(t: number) {
   const m = Math.floor(t / 60);
@@ -182,34 +203,45 @@ export function ProjectTimelinePanel({
     [serverAssets],
   );
 
-  const visualAssets = useMemo(() => {
-    const out: ProjectAsset[] = [];
-    for (const id of effectiveOrder) {
-      const a = assetsById.get(id);
+  const visualEntries = useMemo(() => {
+    const out: { ref: string; asset: ProjectAsset }[] = [];
+    for (const ref of effectiveOrder) {
+      const a = assetsById.get(assetIdFromTimelineRef(ref));
       if (a && (a.mime.startsWith("image/") || a.mime.startsWith("video/"))) {
-        out.push(a);
+        out.push({ ref, asset: a });
       }
     }
     return out;
   }, [effectiveOrder, assetsById]);
 
-  const audioAssets = useMemo(() => {
-    const out: ProjectAsset[] = [];
-    for (const id of effectiveOrder) {
-      const a = assetsById.get(id);
-      if (a && a.mime.startsWith("audio/")) out.push(a);
+  const visualAssets = useMemo(
+    () => visualEntries.map((entry) => entry.asset),
+    [visualEntries],
+  );
+
+  const audioEntries = useMemo(() => {
+    const out: { ref: string; asset: ProjectAsset }[] = [];
+    for (const ref of effectiveOrder) {
+      const a = assetsById.get(assetIdFromTimelineRef(ref));
+      if (a && a.mime.startsWith("audio/")) out.push({ ref, asset: a });
     }
     return out;
   }, [effectiveOrder, assetsById]);
 
+  const audioAssets = useMemo(
+    () => audioEntries.map((entry) => entry.asset),
+    [audioEntries],
+  );
+
   const totalSeconds = Math.max(visualAssets.length * CLIP_SECONDS, CLIP_SECONDS);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected =
-    visualAssets.find((a) => a.id === selectedId) ?? visualAssets[0] ?? null;
+  const selectedEntry =
+    visualEntries.find((entry) => entry.ref === selectedId) ?? visualEntries[0] ?? null;
+  const selected = selectedEntry?.asset ?? null;
   useEffect(() => {
-    if (!selected && visualAssets[0]) setSelectedId(visualAssets[0].id);
-  }, [visualAssets, selected]);
+    if (!selectedEntry && visualEntries[0]) setSelectedId(visualEntries[0].ref);
+  }, [visualEntries, selectedEntry]);
 
   // Transport
   const [isPlaying, setIsPlaying] = useState(false);
