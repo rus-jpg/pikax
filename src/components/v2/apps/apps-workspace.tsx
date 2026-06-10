@@ -224,32 +224,29 @@ export function AppsWorkspace({
       }
       if (!finalAsset) throw new Error("Generation timed out.");
 
-      const isVisual =
-        finalAsset.mime.startsWith("image/") ||
-        finalAsset.mime.startsWith("video/");
-      if (isVisual) {
+      // Apply timeline intent (if any). Without an intent, the new asset
+      // simply lands in the Project Assets panel and the user adds it to
+      // the timeline manually via the + button.
+      if (intent) {
         try {
+          // Fetch current timeline order to compute the next state.
+          const cur = qc.getQueryData<{ project?: { projectState?: { timeline?: { order?: string[] } } } }>(
+            ["v2-project", pid],
+          );
+          const curOrder = cur?.project?.projectState?.timeline?.order ?? [];
+          let nextOrder = curOrder.slice();
+          if (intent.kind === "appendVisual" || intent.kind === "appendAudio") {
+            nextOrder.push(finalAsset.assetId);
+          } else if (intent.kind === "replaceClip" || intent.kind === "replaceAudio") {
+            const idx = nextOrder.indexOf(intent.assetId);
+            if (idx >= 0) nextOrder[idx] = finalAsset.assetId;
+            else nextOrder.push(finalAsset.assetId);
+          }
           await updateState({
-            data: {
-              id: pid,
-              patch: {
-                scenesAppend: [
-                  {
-                    title: prompt.slice(0, 60) || skill.label,
-                    prompt,
-                    duration: 5,
-                    thumb: finalAsset.assetId,
-                    clipUrl: finalAsset.mime.startsWith("video/")
-                      ? finalAsset.assetUrl
-                      : undefined,
-                    status: "ready",
-                  },
-                ],
-              },
-            },
+            data: { id: pid, patch: { timeline: { order: nextOrder } } },
           });
         } catch (e) {
-          console.error("[v2] scene append failed", e);
+          console.error("[v2] timeline intent apply failed", e);
         }
       }
 
