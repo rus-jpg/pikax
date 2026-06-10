@@ -518,10 +518,9 @@ export function ProjectTimelinePanel({
               {selected ? (
                 selected.mime.startsWith("video/") ? (
                   <video
-                    key={selected.id}
+                    key={selectedId}
                     ref={videoRef}
-                  key={selectedId}
-                  src={selected.url}
+                    src={selected.url}
                     className="h-full w-full object-cover"
                     playsInline
                     muted={muted}
@@ -649,27 +648,33 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
-                {visualAssets.map((a) => {
-                  const isSel = a.id === selected?.id;
+                {visualEntries.map(({ ref, asset: a }) => {
+                  const isSel = ref === selectedId;
                   return (
                     <Popover
-                      key={a.id}
-                      open={editClipFor === a.id}
-                      onOpenChange={(o) => setEditClipFor(o ? a.id : null)}
+                      key={ref}
+                      open={editClipFor === ref}
+                      onOpenChange={(o) => setEditClipFor(o ? ref : null)}
                     >
                       <PopoverTrigger asChild>
                         <div
                           draggable
-                          onDragStart={() => setDragId(a.id)}
+                          data-timeline-kind="visual"
+                          data-timeline-ref={ref}
+                          onDragStart={(e) => {
+                            setDragId(ref);
+                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
+                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
+                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
+                            e.dataTransfer.effectAllowed = "copyMove";
+                          }}
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDrop(a.id, e)}
+                          onDrop={(e) => handleDropOnItem(ref, e)}
                           onClick={() => {
-                            setSelectedId(a.id);
-                            const idx = visualAssets.findIndex(
-                              (v) => v.id === a.id,
-                            );
+                            setSelectedId(ref);
+                            const idx = visualEntries.findIndex((v) => v.ref === ref);
                             if (idx >= 0) seekTo(idx * CLIP_SECONDS);
-                            setEditClipFor(a.id);
+                            setEditClipFor(ref);
                           }}
                           className={cn(
                             "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
@@ -696,7 +701,7 @@ export function ProjectTimelinePanel({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(a.id);
+                              handleDelete(ref);
                             }}
                             className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
