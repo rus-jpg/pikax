@@ -2,17 +2,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  Copy,
   Maximize2,
   PanelRightClose,
   Pause,
   Play,
   Plus,
-  Share2,
+  Redo2,
+  
   Trash2,
+  Undo2,
   Volume2,
   VolumeX,
   Wand2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -307,7 +313,16 @@ export function ProjectTimelinePanel({
   }, [isPlaying, muted, audioEntries.map((entry) => entry.ref).join(",")]);
 
 
-  const persist = (nextOrder: string[]) => {
+  // ---- History (undo/redo) ----
+  const historyRef = useRef<{ past: string[][]; future: string[][] }>({
+    past: [],
+    future: [],
+  });
+  const [historyTick, setHistoryTick] = useState(0);
+  const canUndo = historyRef.current.past.length > 0;
+  const canRedo = historyRef.current.future.length > 0;
+
+  const persistOrder = (nextOrder: string[]) => {
     if (!projectId) return;
     void updateState({
       data: { id: projectId, patch: { timeline: { order: nextOrder } } },
@@ -315,6 +330,110 @@ export function ProjectTimelinePanel({
       .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
       .catch((e) => console.error("[timeline] persist failed", e));
   };
+
+  const commit = (nextOrder: string[]) => {
+    historyRef.current.past.push(effectiveOrder.slice());
+    if (historyRef.current.past.length > 50) historyRef.current.past.shift();
+    historyRef.current.future = [];
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(nextOrder);
+    persistOrder(nextOrder);
+  };
+
+  const persist = commit;
+
+  const undo = () => {
+    const prev = historyRef.current.past.pop();
+    if (!prev) return;
+    historyRef.current.future.push(effectiveOrder.slice());
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(prev);
+    persistOrder(prev);
+  };
+  const redo = () => {
+    const next = historyRef.current.future.pop();
+    if (!next) return;
+    historyRef.current.past.push(effectiveOrder.slice());
+    setHistoryTick((n) => n + 1);
+    setLocalOrder(next);
+    persistOrder(next);
+  };
+
+  // ---- Zoom ----
+  const [zoom, setZoom] = useState(1); // 0.5 - 2.5
+  const clipPx = Math.round(80 * zoom);
+  const clipGapPx = 6;
+  void historyTick;
+
+  // ---- Duplicate selected clip ----
+  const duplicateSelected = () => {
+    if (!selectedEntry) return;
+    const idx = effectiveOrder.indexOf(selectedEntry.ref);
+    if (idx < 0) return;
+    const next = effectiveOrder.slice();
+    const newRef = makeTimelineRef(selectedEntry.asset.id);
+    next.splice(idx + 1, 0, newRef);
+    commit(next);
+    setSelectedId(newRef);
+  };
+
+  // ---- Keyboard shortcuts ----
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        e.preventDefault();
+        handleDelete(selectedId);
+        return;
+      }
+      if (e.key === "ArrowRight" && visualEntries.length) {
+        e.preventDefault();
+        const i = visualEntries.findIndex((v) => v.ref === selectedId);
+        const next = visualEntries[Math.min(i + 1, visualEntries.length - 1)];
+        if (next) {
+          setSelectedId(next.ref);
+          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+        }
+        return;
+      }
+      if (e.key === "ArrowLeft" && visualEntries.length) {
+        e.preventDefault();
+        const i = visualEntries.findIndex((v) => v.ref === selectedId);
+        const next = visualEntries[Math.max(i - 1, 0)];
+        if (next) {
+          setSelectedId(next.ref);
+          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+        }
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        duplicateSelected();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, visualEntries, effectiveOrder]);
+
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropHint, setDropHint] = useState<"visual" | "audio" | null>(null);
@@ -600,11 +719,71 @@ export function ProjectTimelinePanel({
             </button>
           </div>
 
+          {/* Editor toolbar */}
+          <div className="flex w-full items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={undo}
+                disabled={!canUndo}
+                aria-label="Undo"
+                title="Undo (⌘Z)"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={redo}
+                disabled={!canRedo}
+                aria-label="Redo"
+                title="Redo (⇧⌘Z)"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
+              <div className="mx-1 h-4 w-px bg-border" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={duplicateSelected}
+                disabled={!selectedEntry}
+                aria-label="Duplicate clip"
+                title="Duplicate clip (⌘D)"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => selectedId && handleDelete(selectedId)}
+                disabled={!selectedId}
+                aria-label="Delete clip"
+                title="Delete (⌫)"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ZoomOut className="h-3.5 w-3.5" />
+              <Slider
+                value={[zoom]}
+                min={0.5}
+                max={2.5}
+                step={0.1}
+                onValueChange={(v) => setZoom(v[0] ?? 1)}
+                className="w-32"
+                aria-label="Zoom"
+              />
+              <ZoomIn className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
           {/* Time ruler + clip strip */}
           <div className="w-full overflow-x-auto">
             <div
               className="relative min-w-full"
-              style={{ width: Math.max(visualAssets.length * 96 + 64, 480) }}
+              style={{ width: Math.max(visualAssets.length * (clipPx + clipGapPx) + 80, 480) }}
             >
               {/* Ruler */}
               <div
@@ -683,8 +862,9 @@ export function ProjectTimelinePanel({
                             if (idx >= 0) seekTo(idx * CLIP_SECONDS);
                             setEditClipFor(ref);
                           }}
+                          style={{ width: clipPx }}
                           className={cn(
-                            "group relative h-14 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
+                            "group relative h-14 shrink-0 cursor-pointer overflow-hidden rounded-lg bg-muted transition",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
@@ -780,7 +960,7 @@ export function ProjectTimelinePanel({
                   <div
                     className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
                     style={{
-                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (80 + 6))}px)`,
+                      left: `calc(${(playheadPct / 100) * (visualAssets.length * (clipPx + clipGapPx))}px)`,
                     }}
                   >
                     <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-[oklch(0.7_0.18_45)]" />
