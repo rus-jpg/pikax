@@ -330,10 +330,10 @@ export function ProjectTimelinePanel({
           Timeline
         </h2>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="hover:bg-foreground hover:text-background">
+          <Button variant="secondary" size="sm" className="shadow-none hover:bg-foreground hover:text-background">
             Share
           </Button>
-          <Button variant="secondary" size="sm" className="hover:bg-foreground hover:text-background">
+          <Button variant="secondary" size="sm" className="shadow-none hover:bg-foreground hover:text-background">
             Export
           </Button>
           <Button
