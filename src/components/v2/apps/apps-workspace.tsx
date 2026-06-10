@@ -399,7 +399,37 @@ export function AppsWorkspace({
       {/* Left column — apps / runner */}
       <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
         <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
-          {selected ? (
+          {selected?.id === "app-create" ? (
+            <div className="flex h-full flex-col">
+              <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
+                <button
+                  onClick={() => onSelectApp(undefined)}
+                  className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
+                  aria-label="Back to apps"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">Create</div>
+                  <div className="truncate text-[11px] text-muted-foreground">
+                    Direct prompt → media
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <CreateAppWizard
+                  projectId={projectId ?? ""}
+                  busy={false}
+                  seedPrompt={seedPrompt}
+                  seedMode={seedMode}
+                  seedModel={seedModel}
+                  seedAsset={seedAsset}
+                  onSeedConsumed={() => setSeedAsset(null)}
+                  onSubmit={(args) => void handleStartFromCreate(args)}
+                />
+              </div>
+            </div>
+          ) : selected ? (
             <AppRunner
               skill={selected}
               projectId={projectId}
