@@ -108,6 +108,13 @@ export const directGenerateStart = createServerFn({ method: "POST" })
       body = { text: data.prompt, voice: "Rachel" };
     }
 
+    // Merge in per-model overrides (aspect_ratio, duration, voice, count, ...).
+    if (data.params) {
+      for (const [k, v] of Object.entries(data.params)) {
+        if (v !== undefined && v !== null && v !== "") body[k] = v;
+      }
+    }
+
     try {
       const submitRes = await fetch(`https://queue.fal.run/${data.model}`, {
         method: "POST",
