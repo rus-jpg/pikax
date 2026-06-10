@@ -9,7 +9,7 @@ import {
   Play,
   Plus,
   Redo2,
-  
+  Scissors,
   Trash2,
   Undo2,
   Volume2,
