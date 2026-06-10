@@ -41,7 +41,10 @@ export function HomeComposer() {
     });
   };
 
-  const models = SKILLS_BY_KIND(mode);
+  const MODEL_CATEGORIES = new Set(["Image", "Video", "Music", "Speech"]);
+  const models = SKILLS_BY_KIND(mode).filter((s) =>
+    MODEL_CATEGORIES.has(s.category),
+  );
 
   return (
     <div className="rounded-3xl border border-border bg-card p-3 shadow-elegant">
