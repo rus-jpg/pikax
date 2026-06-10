@@ -438,6 +438,20 @@ export function ProjectTimelinePanel({
             </div>
           </div>
 
+          {/* Hidden audio elements for timeline preview playback */}
+          {audioAssets.map((a) => (
+            <audio
+              key={a.id}
+              src={a.url}
+              ref={(el) => {
+                if (el) audioRefs.current.set(a.id, el);
+                else audioRefs.current.delete(a.id);
+              }}
+              preload="auto"
+              className="hidden"
+            />
+          ))}
+
           {/* Transport */}
           <div className="flex items-center gap-4">
             <button
