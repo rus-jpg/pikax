@@ -363,6 +363,76 @@ export function ProjectTimelinePanel({
   const [zoom, setZoom] = useState(1); // 0.5 - 2.5
   const clipPx = Math.round(80 * zoom);
   const clipGapPx = 6;
+  void historyTick;
+
+  // ---- Duplicate selected clip ----
+  const duplicateSelected = () => {
+    if (!selectedEntry) return;
+    const idx = effectiveOrder.indexOf(selectedEntry.ref);
+    if (idx < 0) return;
+    const next = effectiveOrder.slice();
+    const newRef = makeTimelineRef(selectedEntry.asset.id);
+    next.splice(idx + 1, 0, newRef);
+    commit(next);
+    setSelectedId(newRef);
+  };
+
+  // ---- Keyboard shortcuts ----
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (e.key === " ") {
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        e.preventDefault();
+        handleDelete(selectedId);
+        return;
+      }
+      if (e.key === "ArrowRight" && visualEntries.length) {
+        e.preventDefault();
+        const i = visualEntries.findIndex((v) => v.ref === selectedId);
+        const next = visualEntries[Math.min(i + 1, visualEntries.length - 1)];
+        if (next) {
+          setSelectedId(next.ref);
+          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+        }
+        return;
+      }
+      if (e.key === "ArrowLeft" && visualEntries.length) {
+        e.preventDefault();
+        const i = visualEntries.findIndex((v) => v.ref === selectedId);
+        const next = visualEntries[Math.max(i - 1, 0)];
+        if (next) {
+          setSelectedId(next.ref);
+          seekTo(visualEntries.indexOf(next) * CLIP_SECONDS);
+        }
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        duplicateSelected();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, visualEntries, effectiveOrder]);
 
 
   const [dragId, setDragId] = useState<string | null>(null);
