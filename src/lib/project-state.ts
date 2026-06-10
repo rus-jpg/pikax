@@ -298,5 +298,16 @@ export function applyPatch(
     };
   }
 
+  if (patch.timeline && typeof patch.timeline === "object") {
+    const base = next.timeline ?? { order: [], hidden: [] };
+    next = {
+      ...next,
+      timeline: {
+        order: Array.isArray(patch.timeline.order) ? patch.timeline.order : base.order,
+        hidden: Array.isArray(patch.timeline.hidden) ? patch.timeline.hidden : base.hidden,
+      },
+    };
+  }
+
   return next;
 }
