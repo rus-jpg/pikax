@@ -122,6 +122,7 @@ export function AppsWorkspace({
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<TimelineIntent | null>(null);
+  const { favorites, toggle: toggleFav, isFavorite } = useAppFavorites();
 
 
   const handleUseInApp = ({
