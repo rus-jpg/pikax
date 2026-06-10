@@ -299,60 +299,73 @@ function RunCard({
 }) {
   const Icon = run.skill.icon;
   const isError = run.phase === "error";
+  const swatch = getAppSwatch(run.skill.id);
+  const bgImage = run.refImageUrls?.[0];
+  const statusLabel = isError
+    ? "failed"
+    : run.phase === "starting"
+      ? "submitting"
+      : "generating";
+
   return (
-    <div
-      className={
-        "mb-4 overflow-hidden rounded-3xl border bg-card shadow-elegant " +
-        (isError ? "border-destructive/40" : "border-primary/30")
-      }
-    >
-      <div className="relative grid place-items-center bg-brand-gradient/10 p-10">
+    <div className="mb-4 overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="relative grid h-56 place-items-center overflow-hidden bg-muted/30">
+        {bgImage ? (
+          <>
+            <img
+              src={bgImage}
+              alt=""
+              className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
+            />
+            <div className="absolute inset-0 bg-background/40" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0 scale-110 blur-3xl opacity-70"
+            style={{ backgroundColor: swatch.bg }}
+          />
+        )}
+
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-background/80 text-muted-foreground hover:text-foreground"
+          className="absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-full bg-background/80 text-muted-foreground backdrop-blur hover:text-foreground"
           aria-label="Dismiss"
         >
           <X className="h-3.5 w-3.5" />
         </button>
-        <div className="relative">
-          {!isError && (
-            <div className="absolute inset-0 animate-pulse rounded-3xl bg-brand-gradient opacity-30 blur-2xl" />
-          )}
-          <div
-            className={
-              "relative grid h-20 w-20 place-items-center rounded-3xl text-primary-foreground shadow-elegant " +
-              (isError ? "bg-destructive" : "bg-brand-gradient")
-            }
-          >
-            <Sparkles className="h-8 w-8" />
-          </div>
+
+        <div
+          className="relative grid h-20 w-20 place-items-center rounded-[28%]"
+          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+        >
+          <Icon className="h-8 w-8" />
         </div>
       </div>
-      <div className="flex items-center gap-3 border-t border-border/50 px-4 py-3">
+
+      <div className="flex items-center gap-2.5 border-t border-border/50 px-4 py-3">
         {isError ? (
-          <X className="h-4 w-4 text-destructive" />
+          <X className="h-4 w-4 shrink-0 text-destructive" />
         ) : (
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
         )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            <Icon className="h-3 w-3" />
-            {run.skill.label} ·{" "}
-            {isError
-              ? "failed"
-              : run.phase === "starting"
-                ? "submitting"
-                : "generating"}
-          </div>
-          <p
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
+          <span className="shrink-0 font-medium text-foreground">
+            {run.skill.label}
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span className="shrink-0 text-[11px] uppercase tracking-wider text-muted-foreground">
+            {statusLabel}
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span
             className={
-              "line-clamp-2 text-xs " +
+              "truncate " +
               (isError ? "text-destructive" : "text-muted-foreground")
             }
           >
             {isError ? run.error ?? "Generation failed" : run.prompt}
-          </p>
+          </span>
         </div>
       </div>
     </div>
