@@ -139,6 +139,32 @@ export function ProjectTimelinePanel({
 
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
+  // Seed timeline with all existing project assets the first time it's
+  // opened. After this, only outputs from apps invoked from the timeline
+  // (via the popovers) are added automatically.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!projectId) return;
+    if (!projectQ.data) return;
+    if (timeline?.seeded) {
+      seededRef.current = true;
+      return;
+    }
+    if (serverAssets.length === 0) return;
+    seededRef.current = true;
+    const initial = serverAssets.map((a) => a.id);
+    setLocalOrder(initial);
+    void updateState({
+      data: {
+        id: projectId,
+        patch: { timeline: { order: initial, seeded: true } },
+      },
+    })
+      .then(() => qc.invalidateQueries({ queryKey: ["v2-project", projectId] }))
+      .catch((e) => console.error("[timeline] seed failed", e));
+  }, [projectId, projectQ.data, timeline?.seeded, serverAssets, updateState, qc]);
+
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
 
   // Allowlist semantics: only assets whose ids appear in `order` are shown.
