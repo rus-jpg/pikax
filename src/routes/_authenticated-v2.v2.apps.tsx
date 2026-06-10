@@ -6,6 +6,9 @@ import { AppsWorkspace } from "@/components/v2/apps/apps-workspace";
 const searchSchema = z.object({
   app: z.string().optional(),
   projectId: z.string().uuid().optional(),
+  seedPrompt: z.string().max(2000).optional(),
+  seedMode: z.enum(["image", "video", "audio", "speech"]).optional(),
+  seedModel: z.string().max(255).optional(),
 });
 
 export const Route = createFileRoute("/_authenticated-v2/v2/apps")({
@@ -14,13 +17,24 @@ export const Route = createFileRoute("/_authenticated-v2/v2/apps")({
 });
 
 function AppsV2() {
-  const { app: appId, projectId } = Route.useSearch();
+  const { app: appId, projectId, seedPrompt, seedMode, seedModel } =
+    Route.useSearch();
   const navigate = useNavigate();
 
   return (
     <AppsWorkspace
       appId={appId}
       projectId={projectId}
+      seedPrompt={seedPrompt}
+      seedMode={seedMode}
+      seedModel={seedModel}
+      onSeedConsumed={() =>
+        void navigate({
+          to: "/v2/apps",
+          search: { app: appId, projectId },
+          replace: true,
+        })
+      }
       onSelectApp={(id) =>
         void navigate({
           to: "/v2/apps",

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
     }
     const { data } = await supabase.auth.getUser();
     if (data?.user) {
-      throw redirect({ to: "/v2/projects" });
+      throw redirect({ to: "/v2/home" });
     }
     throw redirect({ to: "/login" });
   },
