@@ -701,6 +701,7 @@ export function ProjectTimelinePanel({
                             <video
                               src={a.url}
                               muted
+                              draggable={false}
                               className="h-full w-full object-cover"
                             />
                           )}
