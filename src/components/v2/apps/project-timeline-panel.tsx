@@ -1232,10 +1232,10 @@ export function ProjectTimelinePanel({
                 </div>
               </div>
 
-              {/* Audio tracks */}
+              {/* Audio tracks — absolute positioning by time, one row each */}
               <div
                 className={cn(
-                  "mt-3 space-y-1.5 rounded-lg p-1 -m-1 transition",
+                  "mt-3 space-y-1.5 rounded-lg transition",
                   dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -1245,56 +1245,84 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
-                {audioEntries.map(({ ref, asset: a }) => {
+                {audioEntries.map(({ ref, asset: a }, idx) => {
                   const wave = fakeWave(a.id, 96);
+                  const dur = getDur(ref);
+                  const widthPx = Math.max(40, dur * pxPerSec);
+                  const leftPx = audioStarts[idx] * pxPerSec;
                   return (
-                    <Popover
-                      key={ref}
-                      open={editAudioFor === ref}
-                      onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          draggable
-                          data-timeline-kind="audio"
-                          data-timeline-ref={ref}
-                          onDragStart={(e) => {
-                            setDragId(ref);
-                            e.dataTransfer.setData("application/x-v2-timeline-ref", ref);
-                            e.dataTransfer.setData("application/x-v2-asset-id", a.id);
-                            e.dataTransfer.setData("application/x-v2-asset-mime", a.mime);
-                            e.dataTransfer.effectAllowed = "copyMove";
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDropOnItem(ref, e, "audio")}
-                          className="flex h-10 w-full items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40"
-                        >
-                          <span className="shrink-0 text-[10px] font-medium text-secondary-foreground">
-                            {a.label ?? a.name ?? "Audio"}
-                          </span>
-                          <div className="flex h-full flex-1 items-center gap-[2px]">
-                            {wave.map((v, i) => (
-                              <div
-                                key={i}
-                                className="w-[2px] rounded-full bg-secondary-foreground/60"
-                                style={{ height: `${Math.round(v * 70)}%` }}
-                              />
-                            ))}
+                    <div key={ref} className="relative h-10">
+                      <Popover
+                        open={editAudioFor === ref}
+                        onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <div
+                            data-timeline-kind="audio"
+                            data-timeline-ref={ref}
+                            onPointerDown={(e) => {
+                              const t = e.target as HTMLElement;
+                              if (t.closest && t.closest("[data-trim-handle]")) return;
+                              beginMove(ref, e, "audio");
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => handleDropOnItem(ref, e, "audio")}
+                            onClick={() => setEditAudioFor(ref)}
+                            style={{ left: `${leftPx}px`, width: widthPx }}
+                            className="group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing"
+                          >
+                            <span className="shrink-0 truncate text-[10px] font-medium text-secondary-foreground">
+                              {a.label ?? a.name ?? "Audio"}
+                            </span>
+                            <div className="flex h-full flex-1 items-center gap-[2px]">
+                              {wave.map((v, i) => (
+                                <div
+                                  key={i}
+                                  className="w-[2px] rounded-full bg-secondary-foreground/60"
+                                  style={{ height: `${Math.round(v * 70)}%` }}
+                                />
+                              ))}
+                            </div>
+                            {/* Trim handles */}
+                            <div
+                              data-trim-handle="start"
+                              onPointerDown={(e) => beginTrim(ref, "start", e)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              title="Trim start"
+                            />
+                            <div
+                              data-trim-handle="end"
+                              onPointerDown={(e) => beginTrim(ref, "end", e)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              title="Trim end"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(ref);
+                              }}
+                              className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
+                              aria-label="Delete audio"
+                            >
+                              <Trash2 className="h-2.5 w-2.5" />
+                            </button>
                           </div>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" align="start" className="w-72 p-2">
-                        <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                          <Wand2 className="h-3 w-3" />
-                          Edit audio with app
-                        </div>
-                        <AppPickerList
-                          apps={appsAcceptingKind("audio")}
-                          onPick={(s) => pickEditAudio(s, a, ref)}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="start" className="w-72 p-2">
+                          <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            <Wand2 className="h-3 w-3" />
+                            Edit audio with app
+                          </div>
+                          <AppPickerList
+                            apps={appsAcceptingKind("audio")}
+                            onPick={(s) => pickEditAudio(s, a, ref)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   );
                 })}
 
