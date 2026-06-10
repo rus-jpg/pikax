@@ -37,6 +37,7 @@ export type ActiveRunView = {
   prompt: string;
   phase: "starting" | "polling" | "error";
   error?: string;
+  refImageUrls?: string[];
 };
 
 function appsAcceptingMime(mime: string): Skill[] {
