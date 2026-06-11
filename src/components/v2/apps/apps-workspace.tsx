@@ -555,6 +555,7 @@ export function AppsWorkspace({
                     Direct prompt → media
                   </div>
                 </div>
+                <HowItWorksButton skill={SKILL_BY_ID["app-create"]} />
               </div>
               <div className="flex-1 overflow-hidden">
                 <CreateAppWizard
