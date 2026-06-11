@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, Code2, FolderOpen, LayoutGrid, LibraryBig, Plus } from "lucide-react";
+import { Activity, Code2, FolderOpen, LayoutGrid, LibraryBig } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,7 +9,6 @@ import { listLibrary } from "@/lib/library.functions";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { to: "/v2/home", label: "Create", icon: Plus },
   { to: "/v2/apps", label: "Apps", icon: LayoutGrid },
   { to: "/v2/projects", label: "Projects", icon: FolderOpen },
   { to: "/v2/library", label: "Library", icon: LibraryBig },
