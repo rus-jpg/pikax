@@ -625,8 +625,7 @@ export function AppsWorkspace({
         maxSize={45}
         collapsible
         collapsedSize={0}
-        onCollapse={() => setLeftCollapsed(true)}
-        onExpand={() => setLeftCollapsed(false)}
+        onResize={(size) => setLeftCollapsed(Number(size) <= 0.5)}
       >
         <div className="relative flex h-full flex-col border-r border-border/50 bg-card/30">
           {selected?.id === "app-create" ? (
