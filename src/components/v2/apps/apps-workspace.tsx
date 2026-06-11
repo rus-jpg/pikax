@@ -136,6 +136,7 @@ export function AppsWorkspace({
   const runPoll = useServerFn(directGeneratePoll);
   const updateState = useServerFn(updateProjectState);
   const createProj = useServerFn(createProject);
+  const autoTitle = useServerFn(autoTitleProject);
 
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
