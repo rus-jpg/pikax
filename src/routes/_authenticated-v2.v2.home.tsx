@@ -257,14 +257,7 @@ function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }
       search={{ app: skill.id }}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 hover:shadow-elegant"
     >
-      <div
-        className="relative aspect-video w-full overflow-hidden"
-        style={{ backgroundColor: swatch.bg }}
-      >
-        <div className="absolute inset-0 grid place-items-center opacity-30">
-          <Icon className="h-24 w-24" style={{ color: swatch.fg }} />
-        </div>
-      </div>
+      <div className="relative aspect-video w-full overflow-hidden bg-muted" />
       <div className="flex items-start gap-3 p-4">
         <div
           className="grid h-12 w-12 shrink-0 place-items-center rounded-[24%]"
