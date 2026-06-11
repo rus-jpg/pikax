@@ -13,7 +13,6 @@ const searchSchema = z.object({
     .enum([
       "Favorites",
       "Featured",
-      "Custom",
       "Models",
       "Photo",
       "Video",
@@ -24,6 +23,7 @@ const searchSchema = z.object({
     ])
     .optional(),
 });
+
 
 export const Route = createFileRoute("/_authenticated-v2/v2/apps")({
   validateSearch: searchSchema,
