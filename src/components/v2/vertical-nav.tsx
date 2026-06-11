@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, Code2, FolderOpen, LibraryBig } from "lucide-react";
+import { Activity, Code2, FlaskConical, FolderOpen, LibraryBig } from "lucide-react";
 
 function CreateIcon({ className }: { className?: string }) {
   return (
@@ -90,6 +90,18 @@ export function VerticalNavV2() {
       </nav>
 
       <div className="flex w-full flex-col items-stretch gap-2 px-2 pt-2">
+        <Link
+          to="/v2/labs"
+          className={cn(
+            "group flex w-full flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[9px] font-medium uppercase tracking-wider transition",
+            pathname.startsWith("/v2/labs")
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground/70 hover:bg-muted hover:text-foreground",
+          )}
+        >
+          <FlaskConical className="h-4 w-4" />
+          <span>Labs</span>
+        </Link>
         <a
           href="/pika-api"
           target="_blank"
