@@ -104,16 +104,14 @@ function HomePage() {
   return (
     <main className="h-full overflow-y-auto bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-14 px-8 py-16">
-        <section className="flex flex-col items-center gap-8 pt-8 text-center">
+        <section className="flex flex-col items-center gap-4 pt-8 text-center">
           <h1 className="font-display text-5xl font-black uppercase tracking-tight md:text-6xl">
             What will you create
             <br />
             with Pika today?
           </h1>
-          <div className="w-full max-w-3xl">
-            <HomeComposer />
-          </div>
         </section>
+
 
         <section>
           <div className="mb-4 flex items-end justify-between">
