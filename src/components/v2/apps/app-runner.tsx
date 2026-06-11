@@ -102,12 +102,14 @@ export function AppRunner({
   const handleSubmit = async ({
     prompt,
     assets,
+    params,
   }: {
     prompt: string;
     assets: ProjectAsset[];
+    params?: Record<string, string | number | boolean>;
   }) => {
     const projectId = await ensureProject();
-    onStartRun({ skill, projectId, prompt, assets });
+    onStartRun({ skill, projectId, prompt, assets, params });
   };
 
   const Icon = skill.icon;
