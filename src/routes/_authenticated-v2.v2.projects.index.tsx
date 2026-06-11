@@ -78,8 +78,8 @@ function ProjectsV2() {
                 className="group relative overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 hover:shadow-elegant"
               >
                 <Link
-                  to="/v2/projects/$projectId"
-                  params={{ projectId: p.id }}
+                  to="/v2/apps"
+                  search={{ projectId: p.id }}
                   className="block"
                 >
                   {p.thumbnailUrl ? (
