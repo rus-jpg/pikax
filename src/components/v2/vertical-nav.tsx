@@ -33,7 +33,7 @@ import { listLibrary } from "@/lib/library.functions";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { to: "/v2/apps", label: "Apps", icon: LayoutGrid },
+  { to: "/v2/apps", label: "Create", icon: CreateIcon },
   { to: "/v2/projects", label: "Projects", icon: FolderOpen },
   { to: "/v2/library", label: "Library", icon: LibraryBig },
   { to: "/v2/jobs", label: "Jobs", icon: Activity },
