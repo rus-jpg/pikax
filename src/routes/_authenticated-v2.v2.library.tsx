@@ -132,12 +132,13 @@ function LibraryV2() {
                   <button
                     onClick={() =>
                       navigate({
-                        to: "/v2/projects/$projectId",
-                        params: { projectId: group.projectId },
+                        to: "/v2/apps",
+                        search: { projectId: group.projectId },
                       })
                     }
                     className="group flex items-baseline gap-2 text-left"
                   >
+
                     <h2 className="font-display text-lg font-semibold tracking-tight group-hover:underline">
                       {group.projectTitle}
                     </h2>
