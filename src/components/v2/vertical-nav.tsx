@@ -1,5 +1,29 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, Code2, FolderOpen, LayoutGrid, LibraryBig } from "lucide-react";
+import { Activity, Code2, FolderOpen, LibraryBig } from "lucide-react";
+
+function CreateIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {/* top-left: circle */}
+      <circle cx="6.5" cy="6.5" r="3" />
+      {/* top-right: square */}
+      <rect x="14" y="3.5" width="6" height="6" rx="0.5" />
+      {/* bottom-left: triangle */}
+      <path d="M6.5 14 L10 20.5 L3 20.5 Z" />
+      {/* bottom-right: plus */}
+      <path d="M17 14.5 V20.5 M14 17.5 H20" />
+    </svg>
+  );
+}
 
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
