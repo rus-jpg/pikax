@@ -1,14 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Film, Loader2, Plus, Trash2 } from "lucide-react";
+import { Film, Loader2, Trash2 } from "lucide-react";
 
 import {
   listProjects,
-  createProject,
   deleteProject,
 } from "@/lib/projects.functions";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated-v2/v2/projects/")({
   component: ProjectsV2,
@@ -18,7 +16,6 @@ function ProjectsV2() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fetchList = useServerFn(listProjects);
-  const createProj = useServerFn(createProject);
   const deleteProj = useServerFn(deleteProject);
 
   const q = useQuery({
@@ -27,21 +24,11 @@ function ProjectsV2() {
   });
   const projects = q.data?.projects ?? [];
 
-  const createMut = useMutation({
-    mutationFn: () => createProj({ data: { title: "Untitled project" } }),
-    onSuccess: ({ id }) => {
-      void qc.invalidateQueries({ queryKey: ["v2-projects"] });
-      void navigate({
-        to: "/v2/projects/$projectId",
-        params: { projectId: id },
-      });
-    },
-  });
-
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteProj({ data: { id } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["v2-projects"] }),
   });
+
 
   return (
     <main className="min-h-screen w-full bg-background px-8 py-12 text-foreground">
