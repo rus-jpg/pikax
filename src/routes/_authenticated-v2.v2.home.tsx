@@ -203,6 +203,76 @@ function HomePage() {
   );
 }
 
+function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
+  const Icon = skill.icon;
+  const swatch = getAppSwatch(skill.id);
+  return (
+    <section>
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Featured app
+          </div>
+          <h2 className="font-display text-2xl font-semibold">{skill.label}</h2>
+        </div>
+        <Link
+          to="/v2/apps"
+          search={{ app: skill.id }}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition hover:opacity-90"
+        >
+          Try {skill.label} <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+      <div className="overflow-hidden rounded-3xl border border-border bg-card">
+        <div className="grid gap-4 p-5 md:grid-cols-[1fr_1.4fr]">
+          <div className="flex flex-col justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-[28%]"
+                style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+              >
+                <Icon className="h-7 w-7" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold">{skill.label}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {skill.category}
+                </div>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {tagline}
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              Example outputs from {skill.label}
+            </p>
+            <Link
+              to="/v2/apps"
+              search={{ app: skill.id }}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold transition hover:border-foreground/40"
+            >
+              Use this app <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-square w-full overflow-hidden rounded-xl"
+                style={{ backgroundColor: swatch.bg }}
+              >
+                <div className="grid h-full w-full place-items-center opacity-20">
+                  <Icon className="h-8 w-8" style={{ color: swatch.fg }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }) {
   const Icon = skill.icon;
   const swatch = getAppSwatch(skill.id);
