@@ -34,6 +34,7 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
   { appId: "app-pika-lipsync", tagline: "Sync any face to any voice — drop in a portrait and an audio clip, get a perfectly lipsynced talking video." },
   { appId: "app-animate-photo", tagline: "Turn any still into a living frame with subtle motion and atmosphere." },
   { appId: "app-headshot-studio", tagline: "From casual selfie to polished, photoreal portrait in seconds." },
+  { appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." },
 ];
 
 const APP_GROUPS: AppGroup[] = [
