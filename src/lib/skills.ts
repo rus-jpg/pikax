@@ -43,17 +43,7 @@ export type Skill = {
 };
 
 export const SKILLS: Skill[] = [
-  // ── Custom (free-form direct-prompt app) ──────────────────────────
-  {
-    id: "app-create",
-    label: "Custom",
-    description:
-      "Direct prompt to media. Pick a mode and model, tune parameters, generate. The blank canvas.",
-    category: "Custom",
-    kind: "image",
-    model: "fal-ai/nano-banana",
-    icon: SparklesIcon,
-  },
+
   {
     id: "app-pika-lipsync",
     label: "Pika Lipsync",
