@@ -38,17 +38,17 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
 
 const APP_GROUPS: AppGroup[] = [
   {
-    title: "Image apps",
-    description: "Generate, edit, and re-style stills.",
-    tab: "Photo",
-    moreLabel: "More image apps",
+    title: "Animate photos",
+    description: "Bring stills to life with subtle, cinematic motion.",
+    tab: "Video",
+    moreLabel: "More animation apps",
     appIds: [
-      "app-character-swap",
-      "app-background-swap",
-      "app-outfit-try-on",
-      "app-room-redesign",
-      "app-glow-up",
-      "app-object-remove",
+      "app-animate-photo",
+      "app-product-demo-loop",
+      "app-cinematic-broll",
+      "app-music-video-clip",
+      "video-kling-i2v",
+      "video-luma",
     ],
   },
   {
