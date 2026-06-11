@@ -9,6 +9,7 @@ import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND, type SkillKind 
 import { AppRunner } from "@/components/v2/apps/app-runner";
 import { CreateAppWizard, type CreateSubmit } from "@/components/v2/apps/create-app-wizard";
 import { HowItWorksV2 } from "@/components/v2/apps/how-it-works";
+import { HowItWorksButton } from "@/components/v2/apps/how-it-works-button";
 import {
   ProjectOutputsPanel,
   type OutputMeta,
