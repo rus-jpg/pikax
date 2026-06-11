@@ -28,6 +28,7 @@ import {
   createProject,
   updateProjectState,
 } from "@/lib/projects.functions";
+import { autoTitleProject } from "@/lib/project-title.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { cn } from "@/lib/utils";
 import { getAppSwatch } from "@/lib/app-swatch";
