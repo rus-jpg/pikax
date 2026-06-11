@@ -139,6 +139,7 @@ export function AppsWorkspace({
   const autoTitle = useServerFn(autoTitleProject);
 
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
+  const [search, setSearch] = useState("");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
