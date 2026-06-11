@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -131,6 +131,14 @@ export function AppsWorkspace({
   onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
+  const router = useRouter();
+  const goBackOrApps = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      onSelectApp(undefined);
+    }
+  };
   const qc = useQueryClient();
   const runStart = useServerFn(directGenerateStart);
   const runPoll = useServerFn(directGeneratePoll);
@@ -597,7 +605,7 @@ export function AppsWorkspace({
             <div className="flex h-full flex-col">
               <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
                 <button
-                  onClick={() => onSelectApp(undefined)}
+                  onClick={goBackOrApps}
                   className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
                   aria-label="Back to apps"
                 >
@@ -631,7 +639,7 @@ export function AppsWorkspace({
               busy={false}
               seedAsset={seedAsset}
               onSeedConsumed={() => setSeedAsset(null)}
-              onBack={() => onSelectApp(undefined)}
+              onBack={goBackOrApps}
               onStartRun={(args) => void handleStartFromWizard(args)}
             />
           ) : (
