@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ArrowLeft } from "lucide-react";
 import type { Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
+import { HowItWorksButton } from "@/components/v2/apps/how-it-works-button";
 import { AppWizardV2 } from "@/components/v2/apps/app-wizard-v2";
 import { createProject } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
