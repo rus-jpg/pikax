@@ -38,6 +38,7 @@ const TABS = [
   "Favorites",
   "Featured",
   "Custom",
+  "Models",
   "Photo",
   "Video",
   "Image",
@@ -51,6 +52,7 @@ function tabMatches(skill: Skill, tab: Tab, favorites: string[]): boolean {
   if (tab === "Favorites") return favorites.includes(skill.id);
   if (tab === "Featured") return skill.id.startsWith("app-");
   if (tab === "Custom") return skill.category === "Custom";
+  if (tab === "Models") return !skill.id.startsWith("app-") && skill.category !== "Custom";
   if (tab === "Photo") return skill.category === "Photo Apps";
   if (tab === "Video")
     return skill.category === "Video Apps" || skill.category === "Video";
