@@ -162,7 +162,17 @@ export function AppsWorkspace({
     onSelectApp(skill.id);
   };
 
-  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab, favorites)), [tab, favorites]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const base = q
+      ? SKILLS
+      : SKILLS.filter((s) => tabMatches(s, tab, favorites));
+    if (!q) return base;
+    return SKILLS.filter((s) => {
+      const hay = `${s.label} ${s.description ?? ""} ${s.category ?? ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [tab, favorites, search]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const activeRuns = useMemo(() => Object.values(runs), [runs]);
 
