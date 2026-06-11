@@ -124,7 +124,9 @@ export function AppRunner({
             {skill.category}
           </div>
         </div>
+        <HowItWorksButton skill={skill} />
       </div>
+
 
       <div className="flex-1 overflow-y-auto p-5">
         {!draftProjectId ? (
