@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Sparkles, Search, X } from "lucide-react";
 import { useAppFavorites } from "@/hooks/use-app-favorites";
 
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND, type SkillKind } from "@/lib/skills";
@@ -139,6 +139,7 @@ export function AppsWorkspace({
   const autoTitle = useServerFn(autoTitleProject);
 
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
+  const [search, setSearch] = useState("");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
@@ -161,7 +162,17 @@ export function AppsWorkspace({
     onSelectApp(skill.id);
   };
 
-  const filtered = useMemo(() => SKILLS.filter((s) => tabMatches(s, tab, favorites)), [tab, favorites]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const base = q
+      ? SKILLS
+      : SKILLS.filter((s) => tabMatches(s, tab, favorites));
+    if (!q) return base;
+    return SKILLS.filter((s) => {
+      const hay = `${s.label} ${s.description ?? ""} ${s.category ?? ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [tab, favorites, search]);
   const selected: Skill | null = appId ? SKILL_BY_ID[appId] ?? null : null;
   const activeRuns = useMemo(() => Object.values(runs), [runs]);
 
@@ -432,14 +443,37 @@ export function AppsWorkspace({
             Adding to current project · pick an app to add more media.
           </p>
         )}
-        <div className="mt-4 flex gap-1 overflow-x-auto pb-1">
+        <div className="mt-4 relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search apps…"
+            className="h-9 w-full rounded-full border border-border bg-background pl-9 pr-9 text-xs outline-none transition focus:border-foreground/40"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
           {TABS.map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => {
+                setSearch("");
+                setTab(t);
+              }}
               className={cn(
                 "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition",
-                tab === t
+                tab === t && !search
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
