@@ -111,6 +111,8 @@ export type AppsWorkspaceProps = {
   seedPrompt?: string;
   seedMode?: SkillKind;
   seedModel?: string;
+  /** Optional initial tab for the apps browser. */
+  initialTab?: Tab;
   /** Called after the seed is consumed so the parent can clear the URL. */
   onSeedConsumed?: () => void;
 };
