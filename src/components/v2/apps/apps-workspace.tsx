@@ -605,7 +605,7 @@ export function AppsWorkspace({
             <div className="flex h-full flex-col">
               <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
                 <button
-                  onClick={() => onSelectApp(undefined)}
+                  onClick={goBackOrApps}
                   className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
                   aria-label="Back to apps"
                 >
