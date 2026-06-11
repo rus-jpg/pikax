@@ -334,11 +334,13 @@ export function AppsWorkspace({
     projectId: pidFromRunner,
     prompt,
     assets,
+    params,
   }: {
     skill: Skill;
     projectId: string;
     prompt: string;
     assets: ProjectAsset[];
+    params?: Record<string, string | number | boolean>;
   }) => {
     let pid = projectId ?? pidFromRunner;
     if (!pid) {
@@ -352,7 +354,7 @@ export function AppsWorkspace({
       });
       pid = out.id;
     }
-    await startRun({ skill, projectId: pid, prompt, assets });
+    await startRun({ skill, projectId: pid, prompt, assets, params });
   };
 
   const handleStartFromCreate = async (args: CreateSubmit) => {

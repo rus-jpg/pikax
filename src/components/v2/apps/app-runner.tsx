@@ -5,9 +5,17 @@ import type { Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { HowItWorksButton } from "@/components/v2/apps/how-it-works-button";
 import { AppWizardV2 } from "@/components/v2/apps/app-wizard-v2";
+import { ModelAppPanel } from "@/components/v2/apps/model-app-panel";
 import { createProject } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { getAppSwatch } from "@/lib/app-swatch";
+
+// Raw model apps (one app per fal model) use the model-shaped panel
+// instead of the guided recipe wizard.
+const MODEL_APP_PREFIXES = ["image-", "video-", "audio-", "speech-"];
+function isModelApp(skillId: string): boolean {
+  return MODEL_APP_PREFIXES.some((p) => skillId.startsWith(p));
+}
 
 export type AppRunResult = {
   assetId: string;
@@ -44,9 +52,11 @@ export function AppRunner({
     projectId: string;
     prompt: string;
     assets: ProjectAsset[];
+    params?: Record<string, string | number | boolean>;
   }) => void;
 }) {
   const recipe = getRecipeForSkill(skill);
+  const modelApp = isModelApp(skill.id);
   const createProj = useServerFn(createProject);
 
   const [draftProjectId, setDraftProjectId] = useState<string | null>(
@@ -92,12 +102,14 @@ export function AppRunner({
   const handleSubmit = async ({
     prompt,
     assets,
+    params,
   }: {
     prompt: string;
     assets: ProjectAsset[];
+    params?: Record<string, string | number | boolean>;
   }) => {
     const projectId = await ensureProject();
-    onStartRun({ skill, projectId, prompt, assets });
+    onStartRun({ skill, projectId, prompt, assets, params });
   };
 
   const Icon = skill.icon;
@@ -134,6 +146,15 @@ export function AppRunner({
             <Loader2 className="mb-3 h-6 w-6 animate-spin" />
             Preparing workspace…
           </div>
+        ) : modelApp ? (
+          <ModelAppPanel
+            skill={skill}
+            projectId={draftProjectId}
+            busy={busy}
+            seedAsset={seedAsset ?? null}
+            onSeedConsumed={onSeedConsumed}
+            onSubmit={handleSubmit}
+          />
         ) : (
           <AppWizardV2
             recipe={recipe}
