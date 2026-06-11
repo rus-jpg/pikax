@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -107,25 +107,35 @@ export function ProjectOutputsPanel({
   const assets = projectQ.data?.assets ?? [];
   const outputs = useMemo(
     () =>
-      assets
-        .filter((a) =>
-          [
-            "keyframe",
-            "image",
-            "reference",
-            "video",
-            "audio",
-            "music",
-            "voiceover",
-            "final",
-          ].includes(a.kind),
-        )
-        .slice()
-        .reverse(),
+      assets.filter((a) =>
+        [
+          "keyframe",
+          "image",
+          "reference",
+          "video",
+          "audio",
+          "music",
+          "voiceover",
+          "final",
+        ].includes(a.kind),
+      ),
     [assets],
   );
 
   const hasRunsHere = runsForThisProject.length > 0;
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const lastCountRef = useRef(0);
+  useEffect(() => {
+    const total = outputs.length + runsForThisProject.length;
+    if (total > lastCountRef.current && scrollRef.current) {
+      const el = scrollRef.current;
+      requestAnimationFrame(() => {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      });
+    }
+    lastCountRef.current = total;
+  }, [outputs.length, runsForThisProject.length]);
 
 
   const selectProject = (id: string) => {
@@ -201,11 +211,7 @@ export function ProjectOutputsPanel({
 
 
       {/* Outputs scrollable list */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        {runsForThisProject.map((r) => (
-          <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
-        ))}
-
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-5">
         {outputs.length === 0 && !hasRunsHere ? (
           <div className="grid h-full place-items-center rounded-3xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
             <div className="max-w-sm">
@@ -292,6 +298,14 @@ export function ProjectOutputsPanel({
               );
             })}
           </ul>
+        )}
+
+        {runsForThisProject.length > 0 && (
+          <div className={outputs.length > 0 ? "mt-4" : ""}>
+            {runsForThisProject.map((r) => (
+              <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
+            ))}
+          </div>
         )}
       </div>
     </div>
