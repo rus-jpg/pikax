@@ -206,13 +206,8 @@ function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
   const swatch = getAppSwatch(skill.id);
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Featured app
-          </div>
-          <h2 className="font-display text-2xl font-semibold">{skill.label}</h2>
-        </div>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h2 className="font-display text-2xl font-semibold">{skill.label}</h2>
         <Link
           to="/v2/apps"
           search={{ app: skill.id }}
@@ -222,37 +217,22 @@ function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
         </Link>
       </div>
       <div className="overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="grid gap-4 p-5 md:grid-cols-[1fr_1.4fr]">
-          <div className="flex flex-col justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-[28%]"
-                style={{ backgroundColor: swatch.bg, color: swatch.fg }}
-              >
-                <Icon className="h-7 w-7" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{skill.label}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {skill.category}
-                </div>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {tagline}
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Example outputs from {skill.label}
-            </p>
-            <Link
-              to="/v2/apps"
-              search={{ app: skill.id }}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold transition hover:border-foreground/40"
+        <div className="flex flex-col gap-5 p-5">
+          <div className="flex items-start gap-3">
+            <div
+              className="grid h-14 w-14 shrink-0 place-items-center rounded-[28%]"
+              style={{ backgroundColor: swatch.bg, color: swatch.fg }}
             >
-              Use this app <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+              <Icon className="h-7 w-7" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold">{skill.label}</div>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {tagline}
+              </p>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
@@ -270,6 +250,7 @@ function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
     </section>
   );
 }
+
 
 function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }) {
   const Icon = skill.icon;
