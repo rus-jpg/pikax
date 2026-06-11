@@ -618,8 +618,17 @@ export function AppsWorkspace({
       className="h-screen overflow-hidden"
     >
       {/* Left column — apps / runner */}
-      <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
-        <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
+      <ResizablePanel
+        panelRef={leftPanelRef}
+        defaultSize={28}
+        minSize={20}
+        maxSize={45}
+        collapsible
+        collapsedSize={0}
+        onCollapse={() => setLeftCollapsed(true)}
+        onExpand={() => setLeftCollapsed(false)}
+      >
+        <div className="relative flex h-full flex-col border-r border-border/50 bg-card/30">
           {selected?.id === "app-create" ? (
             <div className="flex h-full flex-col">
               <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
@@ -665,14 +674,43 @@ export function AppsWorkspace({
             appsBrowser
           )}
 
+          <button
+            type="button"
+            onClick={toggleLeft}
+            className="absolute right-1.5 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+            aria-label="Collapse left column"
+            title="Collapse"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
         </div>
       </ResizablePanel>
+
+      {leftCollapsed && (
+        <button
+          type="button"
+          onClick={toggleLeft}
+          className="grid h-full w-7 shrink-0 place-items-center border-r border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Expand left column"
+          title="Expand"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      )}
 
       <ResizableHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel defaultSize={showTimeline ? "25%" : "72%"} minSize="20%">
-        <div className="h-full overflow-hidden bg-background">
+      <ResizablePanel
+        panelRef={middlePanelRef}
+        defaultSize={showTimeline ? 25 : 72}
+        minSize={20}
+        collapsible
+        collapsedSize={0}
+        onCollapse={() => setMiddleCollapsed(true)}
+        onExpand={() => setMiddleCollapsed(false)}
+      >
+        <div className="relative h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
             <ProjectOutputsPanel
               projectId={projectId ?? activeRuns[0]?.projectId}
@@ -692,14 +730,36 @@ export function AppsWorkspace({
           ) : (
             <EmptyPickAnApp />
           )}
+
+          <button
+            type="button"
+            onClick={toggleMiddle}
+            className="absolute right-2 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+            aria-label="Collapse middle column"
+            title="Collapse"
+          >
+            <PanelRightClose className="h-4 w-4" />
+          </button>
         </div>
       </ResizablePanel>
+
+      {middleCollapsed && (
+        <button
+          type="button"
+          onClick={toggleMiddle}
+          className="grid h-full w-7 shrink-0 place-items-center border-l border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Expand middle column"
+          title="Expand"
+        >
+          <PanelRightOpen className="h-4 w-4" />
+        </button>
+      )}
 
       {showTimeline && (
         <>
           <ResizableHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize="65%" minSize="25%" maxSize="80%">
+          <ResizablePanel defaultSize={65} minSize={25} maxSize={80}>
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
@@ -712,6 +772,7 @@ export function AppsWorkspace({
     </ResizablePanelGroup>
   );
 }
+
 
 
 
