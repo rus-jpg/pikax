@@ -5,9 +5,17 @@ import type { Skill } from "@/lib/skills";
 import { getRecipeForSkill } from "@/lib/app-recipes";
 import { HowItWorksButton } from "@/components/v2/apps/how-it-works-button";
 import { AppWizardV2 } from "@/components/v2/apps/app-wizard-v2";
+import { ModelAppPanel } from "@/components/v2/apps/model-app-panel";
 import { createProject } from "@/lib/projects.functions";
 import type { ProjectAsset } from "@/lib/project-state";
 import { getAppSwatch } from "@/lib/app-swatch";
+
+// Raw model apps (one app per fal model) use the model-shaped panel
+// instead of the guided recipe wizard.
+const MODEL_APP_PREFIXES = ["image-", "video-", "audio-", "speech-"];
+function isModelApp(skillId: string): boolean {
+  return MODEL_APP_PREFIXES.some((p) => skillId.startsWith(p));
+}
 
 export type AppRunResult = {
   assetId: string;
