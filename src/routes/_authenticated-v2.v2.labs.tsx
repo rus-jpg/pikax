@@ -15,54 +15,54 @@ type Toy = {
 
 const TOYS: Toy[] = [
   {
-    name: "Pika Riff",
-    tagline: "Remix any clip into a 6-second loop",
+    name: "Pika Director Suite",
+    tagline: "An AI co-director for long-form scenes",
     description:
-      "An experimental playground where any uploaded video becomes a snappy, shareable loop. We're exploring how short-form motion can be authored entirely through prompt-driven edits — no timeline, no trimming, just intent.",
+      "A multi-shot planning canvas where you describe a scene and Pika storyboards it, suggests camera moves, and renders coverage you can re-cut on the fly. Built to explore how generative video scales past the single clip.",
     accent: "bg-[#1ec487]",
     textOnAccent: "text-black",
   },
   {
-    name: "Trivia Live",
-    tagline: "A nightly AI-hosted game show",
+    name: "Pika Voice Stage",
+    tagline: "Real-time voice performances for any character",
     description:
-      "What happens when the host, the questions, and the prize pool are all generated on the fly? Trivia Live is our take on real-time interactive video — a live show that adapts to whoever shows up to play.",
+      "Speak into your mic and hear it come back as any character, accent, or emotional read — synced to a generated face. We're using it to prototype interactive dubbing and live AI puppeteering.",
     accent: "bg-[#ffd84d]",
     textOnAccent: "text-black",
   },
   {
-    name: "Literally Something",
-    tagline: "Prompt-to-app, but for tiny tools",
+    name: "Pika Generative UI",
+    tagline: "Interfaces that draw themselves around your intent",
     description:
-      "A scratchpad for one-off utilities: type a sentence, get a working mini-app. We use it internally to ship throwaway dashboards, calculators, and review tools in under a minute.",
+      "An experiment in UI that assembles itself from a prompt: controls, panels, and layouts generated on demand for whatever you're trying to do. A glimpse at what creative tools look like when the chrome is fluid.",
     accent: "bg-[#7c5cff]",
     textOnAccent: "text-white",
   },
   {
-    name: "Autoblogger",
-    tagline: "AI-curated content hubs",
+    name: "Pika Loops",
+    tagline: "Endless, seamless video loops from a single prompt",
     description:
-      "An automated editorial system that watches trends, drafts posts, and routes them through a human reviewer. Born from an internal experiment, now powering a handful of niche publications.",
+      "A tiny tool for generating perfectly looping clips — ambient backdrops, reactive wallpapers, stream overlays. Born from a Friday hack, now quietly used across our marketing site.",
     accent: "bg-[#ff6b3d]",
     textOnAccent: "text-white",
   },
   {
-    name: "Fame Loop",
-    tagline: "Be internet-famous for 24 hours",
+    name: "Pika Remix",
+    tagline: "Turn any clip into a chain of variations",
     description:
-      "A social experiment that picks a random participant each day and amplifies them across our network. A study in attention, follower psychology, and the surprisingly fragile mechanics of virality.",
+      "Drop in a video and Pika riffs on it — alternate styles, swapped subjects, new endings. A study in how generative editing can feel more like jamming than prompting.",
     accent: "bg-[#ff4d8d]",
     textOnAccent: "text-white",
     cta: { label: "Read the case study", href: "#" },
   },
   {
-    name: "Emoji Canvas",
-    tagline: "Paint with 🎨 your favorite 😍 emojis 🤪",
+    name: "Pika Sticker Lab",
+    tagline: "Generative stickers, GIFs, and reactions",
     description:
-      "A tiny drawing tool where every brush is an emoji. Originally a Friday hack, now quietly used by thousands of people who just want to make weird little artworks on their phones.",
+      "A playful surface for making animated stickers and reaction GIFs from a sentence. The first Pika experiment we shipped to consumer messaging apps — and a sandbox for tiny, expressive motion.",
     accent: "bg-[#3da9ff]",
     textOnAccent: "text-white",
-    cta: { label: "Open Emoji Canvas", href: "#" },
+    cta: { label: "Open Sticker Lab", href: "#" },
   },
 ];
 
