@@ -126,6 +126,7 @@ export function AppsWorkspace({
   seedPrompt,
   seedMode,
   seedModel,
+  initialTab,
   onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ export function AppsWorkspace({
   const updateState = useServerFn(updateProjectState);
   const createProj = useServerFn(createProject);
 
-  const [tab, setTab] = useState<Tab>("Featured");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
