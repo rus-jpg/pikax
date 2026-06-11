@@ -25,6 +25,7 @@ import { Route as ApiPublicRenderTickRouteImport } from './routes/api/public/ren
 import { Route as ApiAssetIdRouteImport } from './routes/api/asset.$id'
 import { Route as AuthenticatedStudioProjectIdRouteImport } from './routes/_authenticated/studio.$projectId'
 import { Route as AuthenticatedV2V2LibraryRouteImport } from './routes/_authenticated-v2.v2.library'
+import { Route as AuthenticatedV2V2LabsRouteImport } from './routes/_authenticated-v2.v2.labs'
 import { Route as AuthenticatedV2V2JobsRouteImport } from './routes/_authenticated-v2.v2.jobs'
 import { Route as AuthenticatedV2V2HomeRouteImport } from './routes/_authenticated-v2.v2.home'
 import { Route as AuthenticatedV2V2AppsRouteImport } from './routes/_authenticated-v2.v2.apps'
@@ -114,6 +115,11 @@ const AuthenticatedV2V2LibraryRoute =
     path: '/v2/library',
     getParentRoute: () => AuthenticatedV2Route,
   } as any)
+const AuthenticatedV2V2LabsRoute = AuthenticatedV2V2LabsRouteImport.update({
+  id: '/v2/labs',
+  path: '/v2/labs',
+  getParentRoute: () => AuthenticatedV2Route,
+} as any)
 const AuthenticatedV2V2JobsRoute = AuthenticatedV2V2JobsRouteImport.update({
   id: '/v2/jobs',
   path: '/v2/jobs',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/home': typeof AuthenticatedV2V2HomeRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
+  '/v2/labs': typeof AuthenticatedV2V2LabsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/v2/home': typeof AuthenticatedV2V2HomeRoute
   '/v2/jobs': typeof AuthenticatedV2V2JobsRoute
+  '/v2/labs': typeof AuthenticatedV2V2LabsRoute
   '/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated-v2/v2/apps': typeof AuthenticatedV2V2AppsRoute
   '/_authenticated-v2/v2/home': typeof AuthenticatedV2V2HomeRoute
   '/_authenticated-v2/v2/jobs': typeof AuthenticatedV2V2JobsRoute
+  '/_authenticated-v2/v2/labs': typeof AuthenticatedV2V2LabsRoute
   '/_authenticated-v2/v2/library': typeof AuthenticatedV2V2LibraryRoute
   '/_authenticated/studio/$projectId': typeof AuthenticatedStudioProjectIdRoute
   '/api/asset/$id': typeof ApiAssetIdRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/v2/apps'
     | '/v2/home'
     | '/v2/jobs'
+    | '/v2/labs'
     | '/v2/library'
     | '/studio/$projectId'
     | '/api/asset/$id'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/v2/apps'
     | '/v2/home'
     | '/v2/jobs'
+    | '/v2/labs'
     | '/v2/library'
     | '/studio/$projectId'
     | '/api/asset/$id'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated-v2/v2/apps'
     | '/_authenticated-v2/v2/home'
     | '/_authenticated-v2/v2/jobs'
+    | '/_authenticated-v2/v2/labs'
     | '/_authenticated-v2/v2/library'
     | '/_authenticated/studio/$projectId'
     | '/api/asset/$id'
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedV2V2LibraryRouteImport
       parentRoute: typeof AuthenticatedV2Route
     }
+    '/_authenticated-v2/v2/labs': {
+      id: '/_authenticated-v2/v2/labs'
+      path: '/v2/labs'
+      fullPath: '/v2/labs'
+      preLoaderRoute: typeof AuthenticatedV2V2LabsRouteImport
+      parentRoute: typeof AuthenticatedV2Route
+    }
     '/_authenticated-v2/v2/jobs': {
       id: '/_authenticated-v2/v2/jobs'
       path: '/v2/jobs'
@@ -499,6 +518,7 @@ interface AuthenticatedV2RouteChildren {
   AuthenticatedV2V2AppsRoute: typeof AuthenticatedV2V2AppsRoute
   AuthenticatedV2V2HomeRoute: typeof AuthenticatedV2V2HomeRoute
   AuthenticatedV2V2JobsRoute: typeof AuthenticatedV2V2JobsRoute
+  AuthenticatedV2V2LabsRoute: typeof AuthenticatedV2V2LabsRoute
   AuthenticatedV2V2LibraryRoute: typeof AuthenticatedV2V2LibraryRoute
   AuthenticatedV2V2ProjectsProjectIdRoute: typeof AuthenticatedV2V2ProjectsProjectIdRoute
   AuthenticatedV2V2StudioProjectIdRoute: typeof AuthenticatedV2V2StudioProjectIdRoute
@@ -510,6 +530,7 @@ const AuthenticatedV2RouteChildren: AuthenticatedV2RouteChildren = {
   AuthenticatedV2V2AppsRoute: AuthenticatedV2V2AppsRoute,
   AuthenticatedV2V2HomeRoute: AuthenticatedV2V2HomeRoute,
   AuthenticatedV2V2JobsRoute: AuthenticatedV2V2JobsRoute,
+  AuthenticatedV2V2LabsRoute: AuthenticatedV2V2LabsRoute,
   AuthenticatedV2V2LibraryRoute: AuthenticatedV2V2LibraryRoute,
   AuthenticatedV2V2ProjectsProjectIdRoute:
     AuthenticatedV2V2ProjectsProjectIdRoute,
