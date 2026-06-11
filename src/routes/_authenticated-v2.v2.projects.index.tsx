@@ -31,7 +31,7 @@ function ProjectsV2() {
 
 
   return (
-    <main className="min-h-screen w-full bg-background px-8 py-12 text-foreground">
+    <main className="h-full w-full overflow-y-auto bg-background px-8 py-12 text-foreground">
       <div className="mx-auto max-w-6xl">
         <header className="mb-10 flex items-end justify-between">
           <div>
