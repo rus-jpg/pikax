@@ -147,6 +147,24 @@ export function AppsWorkspace({
   const createProj = useServerFn(createProject);
   const autoTitle = useServerFn(autoTitleProject);
 
+  const leftPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const middlePanelRef = useRef<PanelImperativeHandle | null>(null);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [middleCollapsed, setMiddleCollapsed] = useState(false);
+  const toggleLeft = () => {
+    const p = leftPanelRef.current;
+    if (!p) return;
+    if (p.isCollapsed()) p.expand();
+    else p.collapse();
+  };
+  const toggleMiddle = () => {
+    const p = middlePanelRef.current;
+    if (!p) return;
+    if (p.isCollapsed()) p.expand();
+    else p.collapse();
+  };
+
+
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [search, setSearch] = useState("");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
