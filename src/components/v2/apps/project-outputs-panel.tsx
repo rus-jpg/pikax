@@ -124,6 +124,19 @@ export function ProjectOutputsPanel({
 
   const hasRunsHere = runsForThisProject.length > 0;
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const lastCountRef = useRef(0);
+  useEffect(() => {
+    const total = outputs.length + runsForThisProject.length;
+    if (total > lastCountRef.current && scrollRef.current) {
+      const el = scrollRef.current;
+      requestAnimationFrame(() => {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      });
+    }
+    lastCountRef.current = total;
+  }, [outputs.length, runsForThisProject.length]);
+
 
   const selectProject = (id: string) => {
     void navigate({
