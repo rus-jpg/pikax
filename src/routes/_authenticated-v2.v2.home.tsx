@@ -171,6 +171,16 @@ function HomePage() {
           ) : null;
         })()}
 
+        {(() => {
+          const hero = SKILL_BY_ID["app-ad-creative"];
+          return hero ? (
+            <FeaturedHero
+              skill={hero}
+              tagline="Spin up a short, scroll-stopping ad — bold headline, sharp visual, ready to post."
+            />
+          ) : null;
+        })()}
+
         <section>
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-display text-lg font-semibold">Featured apps</h2>
