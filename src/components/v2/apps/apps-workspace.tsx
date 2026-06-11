@@ -131,6 +131,14 @@ export function AppsWorkspace({
   onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
+  const router = useRouter();
+  const goBackOrApps = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      onSelectApp(undefined);
+    }
+  };
   const qc = useQueryClient();
   const runStart = useServerFn(directGenerateStart);
   const runPoll = useServerFn(directGeneratePoll);
