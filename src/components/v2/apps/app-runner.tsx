@@ -146,6 +146,15 @@ export function AppRunner({
             <Loader2 className="mb-3 h-6 w-6 animate-spin" />
             Preparing workspace…
           </div>
+        ) : modelApp ? (
+          <ModelAppPanel
+            skill={skill}
+            projectId={draftProjectId}
+            busy={busy}
+            seedAsset={seedAsset ?? null}
+            onSeedConsumed={onSeedConsumed}
+            onSubmit={handleSubmit}
+          />
         ) : (
           <AppWizardV2
             recipe={recipe}
