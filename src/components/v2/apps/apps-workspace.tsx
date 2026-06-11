@@ -2,7 +2,8 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, Sparkles, Search, X } from "lucide-react";
+import { Heart, Sparkles, Search, X, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
 import { useAppFavorites } from "@/hooks/use-app-favorites";
 
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND, type SkillKind } from "@/lib/skills";
@@ -145,6 +146,24 @@ export function AppsWorkspace({
   const updateState = useServerFn(updateProjectState);
   const createProj = useServerFn(createProject);
   const autoTitle = useServerFn(autoTitleProject);
+
+  const leftPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const middlePanelRef = useRef<PanelImperativeHandle | null>(null);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [middleCollapsed, setMiddleCollapsed] = useState(false);
+  const toggleLeft = () => {
+    const p = leftPanelRef.current;
+    if (!p) return;
+    if (p.isCollapsed()) p.expand();
+    else p.collapse();
+  };
+  const toggleMiddle = () => {
+    const p = middlePanelRef.current;
+    if (!p) return;
+    if (p.isCollapsed()) p.expand();
+    else p.collapse();
+  };
+
 
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [search, setSearch] = useState("");
@@ -599,8 +618,16 @@ export function AppsWorkspace({
       className="h-screen overflow-hidden"
     >
       {/* Left column — apps / runner */}
-      <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
-        <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
+      <ResizablePanel
+        panelRef={leftPanelRef}
+        defaultSize={28}
+        minSize={20}
+        maxSize={45}
+        collapsible
+        collapsedSize={0}
+        onResize={(size) => setLeftCollapsed(Number(size) <= 0.5)}
+      >
+        <div className="relative flex h-full flex-col border-r border-border/50 bg-card/30">
           {selected?.id === "app-create" ? (
             <div className="flex h-full flex-col">
               <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
@@ -646,14 +673,42 @@ export function AppsWorkspace({
             appsBrowser
           )}
 
+          <button
+            type="button"
+            onClick={toggleLeft}
+            className="absolute right-1.5 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+            aria-label="Collapse left column"
+            title="Collapse"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
         </div>
       </ResizablePanel>
+
+      {leftCollapsed && (
+        <button
+          type="button"
+          onClick={toggleLeft}
+          className="grid h-full w-7 shrink-0 place-items-center border-r border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Expand left column"
+          title="Expand"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      )}
 
       <ResizableHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel defaultSize={showTimeline ? "25%" : "72%"} minSize="20%">
-        <div className="h-full overflow-hidden bg-background">
+      <ResizablePanel
+        panelRef={middlePanelRef}
+        defaultSize={showTimeline ? 25 : 72}
+        minSize={20}
+        collapsible
+        collapsedSize={0}
+        onResize={(size) => setMiddleCollapsed(Number(size) <= 0.5)}
+      >
+        <div className="relative h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
             <ProjectOutputsPanel
               projectId={projectId ?? activeRuns[0]?.projectId}
@@ -673,14 +728,36 @@ export function AppsWorkspace({
           ) : (
             <EmptyPickAnApp />
           )}
+
+          <button
+            type="button"
+            onClick={toggleMiddle}
+            className="absolute right-2 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+            aria-label="Collapse middle column"
+            title="Collapse"
+          >
+            <PanelRightClose className="h-4 w-4" />
+          </button>
         </div>
       </ResizablePanel>
+
+      {middleCollapsed && (
+        <button
+          type="button"
+          onClick={toggleMiddle}
+          className="grid h-full w-7 shrink-0 place-items-center border-l border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Expand middle column"
+          title="Expand"
+        >
+          <PanelRightOpen className="h-4 w-4" />
+        </button>
+      )}
 
       {showTimeline && (
         <>
           <ResizableHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize="65%" minSize="25%" maxSize="80%">
+          <ResizablePanel defaultSize={65} minSize={25} maxSize={80}>
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
@@ -693,6 +770,7 @@ export function AppsWorkspace({
     </ResizablePanelGroup>
   );
 }
+
 
 
 
