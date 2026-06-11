@@ -624,78 +624,80 @@ export function AppsWorkspace({
         minSize={20}
         maxSize={45}
         collapsible
-        collapsedSize={0}
-        onResize={(size) => setLeftCollapsed(Number(size) <= 0.5)}
+        collapsedSize={3}
+        onResize={(size) => setLeftCollapsed(Number(size) <= 4)}
       >
         <div className="relative flex h-full flex-col border-r border-border/50 bg-card/30">
-          {selected?.id === "app-create" ? (
-            <div className="flex h-full flex-col">
-              <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
-                <button
-                  onClick={goBackOrApps}
-                  className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
-                  aria-label="Back to apps"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </button>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">Custom</div>
-                  <div className="truncate text-[11px] text-muted-foreground">
-                    Direct prompt → media
+          {leftCollapsed ? (
+            <button
+              type="button"
+              onClick={toggleLeft}
+              className="grid h-full w-full place-items-center text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Expand left column"
+              title="Expand"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+          ) : (
+            <>
+              {selected?.id === "app-create" ? (
+                <div className="flex h-full flex-col">
+                  <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
+                    <button
+                      onClick={goBackOrApps}
+                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
+                      aria-label="Back to apps"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">Custom</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        Direct prompt → media
+                      </div>
+                    </div>
+                    <HowItWorksButton skill={SKILL_BY_ID["app-create"]} />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <CreateAppWizard
+                      projectId={projectId ?? ""}
+                      busy={false}
+                      seedPrompt={seedPrompt}
+                      seedMode={seedMode}
+                      seedModel={seedModel}
+                      seedAsset={seedAsset}
+                      onSeedConsumed={() => setSeedAsset(null)}
+                      onSubmit={(args) => void handleStartFromCreate(args)}
+                    />
                   </div>
                 </div>
-                <HowItWorksButton skill={SKILL_BY_ID["app-create"]} />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <CreateAppWizard
-                  projectId={projectId ?? ""}
+              ) : selected ? (
+                <AppRunner
+                  skill={selected}
+                  projectId={projectId}
                   busy={false}
-                  seedPrompt={seedPrompt}
-                  seedMode={seedMode}
-                  seedModel={seedModel}
                   seedAsset={seedAsset}
                   onSeedConsumed={() => setSeedAsset(null)}
-                  onSubmit={(args) => void handleStartFromCreate(args)}
+                  onBack={goBackOrApps}
+                  onStartRun={(args) => void handleStartFromWizard(args)}
                 />
-              </div>
-            </div>
-          ) : selected ? (
-            <AppRunner
-              skill={selected}
-              projectId={projectId}
-              busy={false}
-              seedAsset={seedAsset}
-              onSeedConsumed={() => setSeedAsset(null)}
-              onBack={goBackOrApps}
-              onStartRun={(args) => void handleStartFromWizard(args)}
-            />
-          ) : (
-            appsBrowser
-          )}
+              ) : (
+                appsBrowser
+              )}
 
-          <button
-            type="button"
-            onClick={toggleLeft}
-            className="absolute right-1.5 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
-            aria-label="Collapse left column"
-            title="Collapse"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                onClick={toggleLeft}
+                className="absolute right-1.5 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+                aria-label="Collapse left column"
+                title="Collapse"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       </ResizablePanel>
-
-      {leftCollapsed && (
-        <button
-          type="button"
-          onClick={toggleLeft}
-          className="grid h-full w-7 shrink-0 place-items-center border-r border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Expand left column"
-          title="Expand"
-        >
-          <PanelLeftOpen className="h-4 w-4" />
-        </button>
-      )}
 
       <ResizableHandle />
 
@@ -705,53 +707,56 @@ export function AppsWorkspace({
         defaultSize={showTimeline ? 25 : 72}
         minSize={20}
         collapsible
-        collapsedSize={0}
-        onResize={(size) => setMiddleCollapsed(Number(size) <= 0.5)}
+        collapsedSize={3}
+        onResize={(size) => setMiddleCollapsed(Number(size) <= 4)}
       >
         <div className="relative h-full overflow-hidden bg-background">
-          {hasOutputsContext ? (
-            <ProjectOutputsPanel
-              projectId={projectId ?? activeRuns[0]?.projectId}
-              activeRuns={activeRuns}
-              outputMeta={outputMeta}
-              onRegenerate={(args) => void handleRegenerate(args)}
-              onUseInApp={handleUseInApp}
-              onNewProject={handleNewProject}
-              onDismissRun={dismissRun}
-              timelineOpen={showTimeline}
-              onToggleTimeline={() => setTimelineOpen((v) => !v)}
-            />
-          ) : selected ? (
-            <div className="grid h-full place-items-center overflow-y-auto p-6">
-              <HowItWorksV2 skill={selected} />
-            </div>
+          {middleCollapsed ? (
+            <button
+              type="button"
+              onClick={toggleMiddle}
+              className="grid h-full w-full place-items-center text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Expand middle column"
+              title="Expand"
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </button>
           ) : (
-            <EmptyPickAnApp />
-          )}
+            <>
+              {hasOutputsContext ? (
+                <ProjectOutputsPanel
+                  projectId={projectId ?? activeRuns[0]?.projectId}
+                  activeRuns={activeRuns}
+                  outputMeta={outputMeta}
+                  onRegenerate={(args) => void handleRegenerate(args)}
+                  onUseInApp={handleUseInApp}
+                  onNewProject={handleNewProject}
+                  onDismissRun={dismissRun}
+                  timelineOpen={showTimeline}
+                  onToggleTimeline={() => setTimelineOpen((v) => !v)}
+                />
+              ) : selected ? (
+                <div className="grid h-full place-items-center overflow-y-auto p-6">
+                  <HowItWorksV2 skill={selected} />
+                </div>
+              ) : (
+                <EmptyPickAnApp />
+              )}
 
-          <button
-            type="button"
-            onClick={toggleMiddle}
-            className="absolute right-2 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
-            aria-label="Collapse middle column"
-            title="Collapse"
-          >
-            <PanelRightClose className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                onClick={toggleMiddle}
+                className="absolute right-2 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
+                aria-label="Collapse middle column"
+                title="Collapse"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       </ResizablePanel>
 
-      {middleCollapsed && (
-        <button
-          type="button"
-          onClick={toggleMiddle}
-          className="grid h-full w-7 shrink-0 place-items-center border-l border-border/50 bg-card/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Expand middle column"
-          title="Expand"
-        >
-          <PanelRightOpen className="h-4 w-4" />
-        </button>
-      )}
 
       {showTimeline && (
         <>
