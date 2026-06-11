@@ -165,18 +165,26 @@ function HomePage() {
           )}
         </section>
 
+        {(() => {
+          const hero = SKILL_BY_ID[FEATURED_MODULES[0].appId];
+          return hero ? (
+            <FeaturedHero skill={hero} tagline={FEATURED_MODULES[0].tagline} />
+          ) : null;
+        })()}
+
         <section>
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-display text-lg font-semibold">Featured apps</h2>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {FEATURED_MODULES.map((m) => {
+            {FEATURED_MODULES.slice(1).map((m) => {
               const skill = SKILL_BY_ID[m.appId];
               if (!skill) return null;
               return <FeaturedAppModule key={m.appId} skill={skill} tagline={m.tagline} />;
             })}
           </div>
         </section>
+
 
         {APP_GROUPS.map((group) => (
           <AppGroupSection key={group.title} group={group} />
