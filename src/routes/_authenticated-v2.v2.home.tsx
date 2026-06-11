@@ -1,14 +1,97 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Film } from "lucide-react";
+import { ArrowRight, Film } from "lucide-react";
 
 import { HomeComposer } from "@/components/v2/home/home-composer";
 import { listProjects } from "@/lib/projects.functions";
+import { SKILL_BY_ID, type Skill } from "@/lib/skills";
+import { getAppSwatch } from "@/lib/app-swatch";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated-v2/v2/home")({
   component: HomePage,
 });
+
+type AppsTab =
+  | "Featured"
+  | "Photo"
+  | "Video"
+  | "Image"
+  | "Marketing"
+  | "Audio"
+  | "Voice";
+
+type AppGroup = {
+  title: string;
+  description: string;
+  tab: AppsTab;
+  moreLabel: string;
+  appIds: string[];
+};
+
+const FEATURED_MODULES: { appId: string; tagline: string }[] = [
+  { appId: "app-character-swap", tagline: "Drop a new character into any scene — pose, lighting, and composition stay locked." },
+  { appId: "app-animate-photo", tagline: "Turn any still into a living frame with subtle motion and atmosphere." },
+  { appId: "app-headshot-studio", tagline: "From casual selfie to polished, photoreal portrait in seconds." },
+];
+
+const APP_GROUPS: AppGroup[] = [
+  {
+    title: "Image apps",
+    description: "Generate, edit, and re-style stills.",
+    tab: "Photo",
+    moreLabel: "More image apps",
+    appIds: [
+      "app-character-swap",
+      "app-background-swap",
+      "app-outfit-try-on",
+      "app-room-redesign",
+      "app-glow-up",
+      "app-object-remove",
+    ],
+  },
+  {
+    title: "Video apps",
+    description: "Bring scenes to life — animate, b-roll, trailers.",
+    tab: "Video",
+    moreLabel: "More video apps",
+    appIds: [
+      "app-animate-photo",
+      "app-cinematic-broll",
+      "app-music-video-clip",
+      "app-product-demo-loop",
+      "app-trailer-snippet",
+    ],
+  },
+  {
+    title: "Influencers",
+    description: "Portraits, try-ons, and creator-ready looks.",
+    tab: "Photo",
+    moreLabel: "More creator apps",
+    appIds: [
+      "app-headshot-studio",
+      "app-outfit-try-on",
+      "app-glow-up",
+      "app-pet-portrait",
+      "app-character-swap",
+    ],
+  },
+  {
+    title: "Marketing apps",
+    description: "Posters, ads, product shots, and pitch-ready mockups.",
+    tab: "Marketing",
+    moreLabel: "More marketing apps",
+    appIds: [
+      "app-poster-maker",
+      "app-product-shot",
+      "app-logo-mockup",
+      "app-ad-creative",
+      "app-album-cover",
+      "app-storyboard-frames",
+    ],
+  },
+];
 
 function HomePage() {
   const fetchList = useServerFn(listProjects);
@@ -20,7 +103,7 @@ function HomePage() {
 
   return (
     <main className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto flex max-w-5xl flex-col gap-12 px-8 py-16">
+      <div className="mx-auto flex max-w-6xl flex-col gap-14 px-8 py-16">
         <section className="flex flex-col items-center gap-8 pt-8 text-center">
           <h1 className="font-display text-5xl font-black uppercase tracking-tight md:text-6xl">
             What will you create
@@ -82,28 +165,142 @@ function HomePage() {
           )}
         </section>
 
-        <PlaceholderShelf title="From the community" />
-        <PlaceholderShelf title="Trending" />
+        <section>
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="font-display text-lg font-semibold">Featured apps</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {FEATURED_MODULES.map((m) => {
+              const skill = SKILL_BY_ID[m.appId];
+              if (!skill) return null;
+              return <FeaturedAppModule key={m.appId} skill={skill} tagline={m.tagline} />;
+            })}
+          </div>
+        </section>
+
+        {APP_GROUPS.map((group) => (
+          <AppGroupSection key={group.title} group={group} />
+        ))}
+
+        <section className="flex justify-center pb-8">
+          <Link
+            to="/v2/apps"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold transition hover:border-foreground/40 hover:shadow-elegant"
+          >
+            See all apps <ArrowRight className="h-4 w-4" />
+          </Link>
+        </section>
       </div>
     </main>
   );
 }
 
-function PlaceholderShelf({ title }: { title: string }) {
+function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }) {
+  const Icon = skill.icon;
+  const swatch = getAppSwatch(skill.id);
+  return (
+    <Link
+      to="/v2/apps"
+      search={{ app: skill.id }}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 hover:shadow-elegant"
+    >
+      <div
+        className="relative aspect-video w-full overflow-hidden"
+        style={{ backgroundColor: swatch.bg }}
+      >
+        <div className="absolute inset-0 grid place-items-center opacity-30">
+          <Icon className="h-24 w-24" style={{ color: swatch.fg }} />
+        </div>
+      </div>
+      <div className="flex items-start gap-3 p-4">
+        <div
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-[24%]"
+          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-base font-semibold leading-tight">
+            {skill.label}
+          </div>
+          <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+            {tagline}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
+        <span className="text-xs text-muted-foreground">Featured app</span>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground">
+          Try it <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function AppGroupSection({ group }: { group: AppGroup }) {
+  const skills = group.appIds
+    .map((id) => SKILL_BY_ID[id])
+    .filter(Boolean) as Skill[];
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between">
-        <h2 className="font-display text-lg font-semibold">{title}</h2>
-        <span className="text-xs text-muted-foreground">Coming soon</span>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-lg font-semibold">{group.title}</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{group.description}</p>
+        </div>
+        <Link
+          to="/v2/apps"
+          search={{ tab: group.tab }}
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          {group.moreLabel} <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="aspect-video rounded-2xl border border-dashed border-border bg-muted/30"
-          />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {skills.slice(0, 4).map((s) => (
+          <AppCard key={s.id} skill={s} />
         ))}
       </div>
     </section>
+  );
+}
+
+function AppCard({ skill }: { skill: Skill }) {
+  const Icon = skill.icon;
+  const swatch = getAppSwatch(skill.id);
+  return (
+    <Link
+      to="/v2/apps"
+      search={{ app: skill.id }}
+      className={cn(
+        "group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 transition hover:border-foreground/40 hover:shadow-elegant",
+      )}
+    >
+      <div
+        className="aspect-video w-full overflow-hidden rounded-xl"
+        style={{ backgroundColor: swatch.bg }}
+      >
+        <div className="grid h-full w-full place-items-center opacity-30">
+          <Icon className="h-10 w-10" style={{ color: swatch.fg }} />
+        </div>
+      </div>
+      <div className="flex items-start gap-2 px-1 pb-1">
+        <div
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-[24%]"
+          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold leading-tight">
+            {skill.label}
+          </div>
+          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+            {skill.description}
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }

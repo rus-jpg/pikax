@@ -111,6 +111,8 @@ export type AppsWorkspaceProps = {
   seedPrompt?: string;
   seedMode?: SkillKind;
   seedModel?: string;
+  /** Optional initial tab for the apps browser. */
+  initialTab?: Tab;
   /** Called after the seed is consumed so the parent can clear the URL. */
   onSeedConsumed?: () => void;
 };
@@ -124,6 +126,7 @@ export function AppsWorkspace({
   seedPrompt,
   seedMode,
   seedModel,
+  initialTab,
   onSeedConsumed,
 }: AppsWorkspaceProps) {
   const navigate = useNavigate();
@@ -133,7 +136,7 @@ export function AppsWorkspace({
   const updateState = useServerFn(updateProjectState);
   const createProj = useServerFn(createProject);
 
-  const [tab, setTab] = useState<Tab>("Featured");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [runs, setRuns] = useState<Record<string, ActiveRun>>({});
   const [outputMeta, setOutputMeta] = useState<Record<string, OutputMeta>>({});
   const [seedAsset, setSeedAsset] = useState<ProjectAsset | null>(null);
