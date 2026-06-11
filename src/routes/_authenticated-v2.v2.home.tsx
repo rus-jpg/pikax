@@ -237,13 +237,8 @@ function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-square w-full overflow-hidden rounded-xl"
-                style={{ backgroundColor: swatch.bg }}
-              >
-                <div className="grid h-full w-full place-items-center opacity-20">
-                  <Icon className="h-8 w-8" style={{ color: swatch.fg }} />
-                </div>
-              </div>
+                className="aspect-square w-full overflow-hidden rounded-xl bg-muted"
+              />
             ))}
           </div>
         </div>
