@@ -706,8 +706,7 @@ export function AppsWorkspace({
         minSize={20}
         collapsible
         collapsedSize={0}
-        onCollapse={() => setMiddleCollapsed(true)}
-        onExpand={() => setMiddleCollapsed(false)}
+        onResize={(size) => setMiddleCollapsed(Number(size) <= 0.5)}
       >
         <div className="relative h-full overflow-hidden bg-background">
           {hasOutputsContext ? (
