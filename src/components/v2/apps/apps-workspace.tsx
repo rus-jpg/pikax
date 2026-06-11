@@ -639,7 +639,7 @@ export function AppsWorkspace({
               busy={false}
               seedAsset={seedAsset}
               onSeedConsumed={() => setSeedAsset(null)}
-              onBack={() => onSelectApp(undefined)}
+              onBack={goBackOrApps}
               onStartRun={(args) => void handleStartFromWizard(args)}
             />
           ) : (
