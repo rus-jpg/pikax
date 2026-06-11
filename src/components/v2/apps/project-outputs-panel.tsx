@@ -211,11 +211,7 @@ export function ProjectOutputsPanel({
 
 
       {/* Outputs scrollable list */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        {runsForThisProject.map((r) => (
-          <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
-        ))}
-
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-5">
         {outputs.length === 0 && !hasRunsHere ? (
           <div className="grid h-full place-items-center rounded-3xl border border-dashed border-border/60 bg-muted/20 px-6 py-16 text-center">
             <div className="max-w-sm">
@@ -302,6 +298,14 @@ export function ProjectOutputsPanel({
               );
             })}
           </ul>
+        )}
+
+        {runsForThisProject.length > 0 && (
+          <div className={outputs.length > 0 ? "mt-4" : ""}>
+            {runsForThisProject.map((r) => (
+              <RunCard key={r.id} run={r} onDismiss={() => onDismissRun(r.id)} />
+            ))}
+          </div>
         )}
       </div>
     </div>
