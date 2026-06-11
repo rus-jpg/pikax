@@ -1,20 +1,11 @@
-## Changes
+## Changes to `src/routes/_authenticated-v2.v2.home.tsx`
 
-### 1. Rename "Apps" → "Create" in the vertical nav
-File: `src/components/v2/vertical-nav.tsx`
-- Change the label `"Apps"` → `"Create"` for the `/v2/apps` nav item.
-- Replace the `LayoutGrid` icon with a custom inline SVG component built as a 2×2 grid of shapes (uses `currentColor`, `strokeWidth=2`, sized to match the other 20px lucide icons):
-  - top-left: circle
-  - top-right: square
-  - bottom-left: triangle
-  - bottom-right: plus
+1. **Add a 4th featured app** so the "Featured apps" grid (which renders `FEATURED_MODULES.slice(1)`) shows 3 cards. Append one entry to `FEATURED_MODULES` — proposed: `{ appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." }` (swap if you'd prefer a different app).
 
-### 2. Clicking a Project opens it in Create
-File: `src/routes/_authenticated-v2.v2.projects.index.tsx`
-- Change the project card `<Link>` from `to="/v2/projects/$projectId"` to `to="/v2/apps"` with `search={{ projectId: p.id }}`.
-- `AppsWorkspace` already accepts `projectId` via search params and loads that project's state (current app, assets, outputs), so no workspace changes are needed — the existing camera/draft behavior just gets reused.
+2. **Neutralize example output thumbnails** — replace the colored swatch + icon previews with plain light rectangles:
+   - `FeaturedHero`: the 6 square tiles become `bg-muted` (no icon, no swatch color).
+   - `FeaturedAppModule`: the `aspect-video` preview becomes `bg-muted` (no icon, no swatch color).
+   - The small app-identity tile next to the title (the rounded square with the icon) stays as-is in both — only the "example output" rectangles change.
+   - `AppCard` (used in the lower group sections) is unchanged unless you want it included too.
 
-The `/v2/projects/$projectId` route file stays in place so existing deep links keep working; we just stop linking into it from the index grid.
-
-### Out of scope
-No changes to the Projects tab itself, no auto-save status UI, no route consolidation — keeping this strictly to the two requests above.
+Out of scope: any other home sections, AppCard styling, swatch system itself.

@@ -34,6 +34,7 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
   { appId: "app-pika-lipsync", tagline: "Sync any face to any voice — drop in a portrait and an audio clip, get a perfectly lipsynced talking video." },
   { appId: "app-animate-photo", tagline: "Turn any still into a living frame with subtle motion and atmosphere." },
   { appId: "app-headshot-studio", tagline: "From casual selfie to polished, photoreal portrait in seconds." },
+  { appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." },
 ];
 
 const APP_GROUPS: AppGroup[] = [
@@ -236,13 +237,8 @@ function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-square w-full overflow-hidden rounded-xl"
-                style={{ backgroundColor: swatch.bg }}
-              >
-                <div className="grid h-full w-full place-items-center opacity-20">
-                  <Icon className="h-8 w-8" style={{ color: swatch.fg }} />
-                </div>
-              </div>
+                className="aspect-square w-full overflow-hidden rounded-xl bg-muted"
+              />
             ))}
           </div>
         </div>
@@ -261,14 +257,7 @@ function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }
       search={{ app: skill.id }}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 hover:shadow-elegant"
     >
-      <div
-        className="relative aspect-video w-full overflow-hidden"
-        style={{ backgroundColor: swatch.bg }}
-      >
-        <div className="absolute inset-0 grid place-items-center opacity-30">
-          <Icon className="h-24 w-24" style={{ color: swatch.fg }} />
-        </div>
-      </div>
+      <div className="relative aspect-video w-full overflow-hidden bg-muted" />
       <div className="flex items-start gap-3 p-4">
         <div
           className="grid h-12 w-12 shrink-0 place-items-center rounded-[24%]"
