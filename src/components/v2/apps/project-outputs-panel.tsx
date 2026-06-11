@@ -107,21 +107,18 @@ export function ProjectOutputsPanel({
   const assets = projectQ.data?.assets ?? [];
   const outputs = useMemo(
     () =>
-      assets
-        .filter((a) =>
-          [
-            "keyframe",
-            "image",
-            "reference",
-            "video",
-            "audio",
-            "music",
-            "voiceover",
-            "final",
-          ].includes(a.kind),
-        )
-        .slice()
-        .reverse(),
+      assets.filter((a) =>
+        [
+          "keyframe",
+          "image",
+          "reference",
+          "video",
+          "audio",
+          "music",
+          "voiceover",
+          "final",
+        ].includes(a.kind),
+      ),
     [assets],
   );
 
