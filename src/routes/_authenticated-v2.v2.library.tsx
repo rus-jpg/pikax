@@ -153,10 +153,11 @@ function LibraryV2() {
                       key={item.id}
                       onClick={() =>
                         navigate({
-                          to: "/v2/projects/$projectId",
-                          params: { projectId: item.projectId },
+                          to: "/v2/apps",
+                          search: { projectId: item.projectId },
                         })
                       }
+
                       className="group overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition hover:border-foreground/40 hover:shadow-elegant"
                     >
                       <div className="aspect-square w-full bg-muted/40">
