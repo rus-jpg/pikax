@@ -54,6 +54,16 @@ export const SKILLS: Skill[] = [
     model: "fal-ai/nano-banana",
     icon: SparklesIcon,
   },
+  {
+    id: "app-pika-lipsync",
+    label: "Pika Lipsync",
+    description:
+      "Sync any face to any voice — drop in a portrait and an audio clip, get a perfectly lipsynced talking video.",
+    category: "Video Apps",
+    kind: "video",
+    model: "fal-ai/kling-video/v2.1/standard/image-to-video",
+    icon: MicIcon,
+  },
 
   // ── Photo Apps (creative image use-cases) ─────────────────────────
   {
