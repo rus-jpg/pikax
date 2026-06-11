@@ -52,9 +52,11 @@ export function AppRunner({
     projectId: string;
     prompt: string;
     assets: ProjectAsset[];
+    params?: Record<string, string | number | boolean>;
   }) => void;
 }) {
   const recipe = getRecipeForSkill(skill);
+  const modelApp = isModelApp(skill.id);
   const createProj = useServerFn(createProject);
 
   const [draftProjectId, setDraftProjectId] = useState<string | null>(
