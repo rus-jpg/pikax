@@ -62,14 +62,6 @@ function ProjectsV2() {
               .
             </p>
           </div>
-          <Button
-            onClick={() => createMut.mutate()}
-            disabled={createMut.isPending}
-            size="lg"
-          >
-            <Plus className="mr-1.5 h-4 w-4" />
-            New project
-          </Button>
         </header>
 
         {q.isLoading ? (
