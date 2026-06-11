@@ -2,8 +2,7 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Heart, Sparkles, Search, X, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
-import type { PanelImperativeHandle } from "react-resizable-panels";
+import { Heart, Sparkles, Search, X } from "lucide-react";
 import { useAppFavorites } from "@/hooks/use-app-favorites";
 
 import { SKILLS, SKILL_BY_ID, type Skill, DEFAULT_MODEL_BY_KIND, type SkillKind } from "@/lib/skills";
@@ -146,24 +145,6 @@ export function AppsWorkspace({
   const updateState = useServerFn(updateProjectState);
   const createProj = useServerFn(createProject);
   const autoTitle = useServerFn(autoTitleProject);
-
-  const leftPanelRef = useRef<PanelImperativeHandle | null>(null);
-  const middlePanelRef = useRef<PanelImperativeHandle | null>(null);
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [middleCollapsed, setMiddleCollapsed] = useState(false);
-  const toggleLeft = () => {
-    const p = leftPanelRef.current;
-    if (!p) return;
-    if (p.isCollapsed()) p.expand();
-    else p.collapse();
-  };
-  const toggleMiddle = () => {
-    const p = middlePanelRef.current;
-    if (!p) return;
-    if (p.isCollapsed()) p.expand();
-    else p.collapse();
-  };
-
 
   const [tab, setTab] = useState<Tab>(initialTab ?? "Featured");
   const [search, setSearch] = useState("");
@@ -618,151 +599,88 @@ export function AppsWorkspace({
       className="h-screen overflow-hidden"
     >
       {/* Left column — apps / runner */}
-      <ResizablePanel
-        panelRef={leftPanelRef}
-        defaultSize={28}
-        minSize={20}
-        maxSize={45}
-        collapsible
-        collapsedSize={3}
-        onResize={(size) => setLeftCollapsed(Number(size) <= 4)}
-      >
-        <div className="relative flex h-full flex-col border-r border-border/50 bg-card/30">
-          {leftCollapsed ? (
-            <button
-              type="button"
-              onClick={toggleLeft}
-              className="grid h-full w-full place-items-center text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Expand left column"
-              title="Expand"
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </button>
-          ) : (
-            <>
-              {selected?.id === "app-create" ? (
-                <div className="flex h-full flex-col">
-                  <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
-                    <button
-                      onClick={goBackOrApps}
-                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
-                      aria-label="Back to apps"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">Custom</div>
-                      <div className="truncate text-[11px] text-muted-foreground">
-                        Direct prompt → media
-                      </div>
-                    </div>
-                    <HowItWorksButton skill={SKILL_BY_ID["app-create"]} />
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <CreateAppWizard
-                      projectId={projectId ?? ""}
-                      busy={false}
-                      seedPrompt={seedPrompt}
-                      seedMode={seedMode}
-                      seedModel={seedModel}
-                      seedAsset={seedAsset}
-                      onSeedConsumed={() => setSeedAsset(null)}
-                      onSubmit={(args) => void handleStartFromCreate(args)}
-                    />
+      <ResizablePanel defaultSize="28%" minSize="20%" maxSize="45%">
+        <div className="flex h-full flex-col border-r border-border/50 bg-card/30">
+          {selected?.id === "app-create" ? (
+            <div className="flex h-full flex-col">
+              <div className="flex items-center gap-3 border-b border-border/50 px-5 py-3">
+                <button
+                  onClick={goBackOrApps}
+                  className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted"
+                  aria-label="Back to apps"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">Custom</div>
+                  <div className="truncate text-[11px] text-muted-foreground">
+                    Direct prompt → media
                   </div>
                 </div>
-              ) : selected ? (
-                <AppRunner
-                  skill={selected}
-                  projectId={projectId}
+                <HowItWorksButton skill={SKILL_BY_ID["app-create"]} />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <CreateAppWizard
+                  projectId={projectId ?? ""}
                   busy={false}
+                  seedPrompt={seedPrompt}
+                  seedMode={seedMode}
+                  seedModel={seedModel}
                   seedAsset={seedAsset}
                   onSeedConsumed={() => setSeedAsset(null)}
-                  onBack={goBackOrApps}
-                  onStartRun={(args) => void handleStartFromWizard(args)}
+                  onSubmit={(args) => void handleStartFromCreate(args)}
                 />
-              ) : (
-                appsBrowser
-              )}
-
-              <button
-                type="button"
-                onClick={toggleLeft}
-                className="absolute right-1.5 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
-                aria-label="Collapse left column"
-                title="Collapse"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </button>
-            </>
+              </div>
+            </div>
+          ) : selected ? (
+            <AppRunner
+              skill={selected}
+              projectId={projectId}
+              busy={false}
+              seedAsset={seedAsset}
+              onSeedConsumed={() => setSeedAsset(null)}
+              onBack={goBackOrApps}
+              onStartRun={(args) => void handleStartFromWizard(args)}
+            />
+          ) : (
+            appsBrowser
           )}
+
         </div>
       </ResizablePanel>
 
       <ResizableHandle />
 
       {/* Middle column — outputs */}
-      <ResizablePanel
-        panelRef={middlePanelRef}
-        defaultSize={showTimeline ? 25 : 72}
-        minSize={20}
-        collapsible
-        collapsedSize={3}
-        onResize={(size) => setMiddleCollapsed(Number(size) <= 4)}
-      >
-        <div className="relative h-full overflow-hidden bg-background">
-          {middleCollapsed ? (
-            <button
-              type="button"
-              onClick={toggleMiddle}
-              className="grid h-full w-full place-items-center text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Expand middle column"
-              title="Expand"
-            >
-              <PanelRightOpen className="h-4 w-4" />
-            </button>
+      <ResizablePanel defaultSize={showTimeline ? "25%" : "72%"} minSize="20%">
+        <div className="h-full overflow-hidden bg-background">
+          {hasOutputsContext ? (
+            <ProjectOutputsPanel
+              projectId={projectId ?? activeRuns[0]?.projectId}
+              activeRuns={activeRuns}
+              outputMeta={outputMeta}
+              onRegenerate={(args) => void handleRegenerate(args)}
+              onUseInApp={handleUseInApp}
+              onNewProject={handleNewProject}
+              onDismissRun={dismissRun}
+              timelineOpen={showTimeline}
+              onToggleTimeline={() => setTimelineOpen((v) => !v)}
+            />
+          ) : selected ? (
+            <div className="grid h-full place-items-center overflow-y-auto p-6">
+              <HowItWorksV2 skill={selected} />
+            </div>
           ) : (
-            <>
-              {hasOutputsContext ? (
-                <ProjectOutputsPanel
-                  projectId={projectId ?? activeRuns[0]?.projectId}
-                  activeRuns={activeRuns}
-                  outputMeta={outputMeta}
-                  onRegenerate={(args) => void handleRegenerate(args)}
-                  onUseInApp={handleUseInApp}
-                  onNewProject={handleNewProject}
-                  onDismissRun={dismissRun}
-                  timelineOpen={showTimeline}
-                  onToggleTimeline={() => setTimelineOpen((v) => !v)}
-                />
-              ) : selected ? (
-                <div className="grid h-full place-items-center overflow-y-auto p-6">
-                  <HowItWorksV2 skill={selected} />
-                </div>
-              ) : (
-                <EmptyPickAnApp />
-              )}
-
-              <button
-                type="button"
-                onClick={toggleMiddle}
-                className="absolute right-2 top-2 z-20 grid h-7 w-7 place-items-center rounded-md bg-card/80 text-muted-foreground shadow-sm backdrop-blur hover:bg-muted hover:text-foreground"
-                aria-label="Collapse middle column"
-                title="Collapse"
-              >
-                <PanelRightClose className="h-4 w-4" />
-              </button>
-            </>
+            <EmptyPickAnApp />
           )}
         </div>
       </ResizablePanel>
-
 
       {showTimeline && (
         <>
           <ResizableHandle />
           {/* Right column — timeline */}
-          <ResizablePanel defaultSize={65} minSize={25} maxSize={80}>
+          <ResizablePanel defaultSize="65%" minSize="25%" maxSize="80%">
             <ProjectTimelinePanel
               projectId={projectId}
               onClose={() => setTimelineOpen(false)}
@@ -775,7 +693,6 @@ export function AppsWorkspace({
     </ResizablePanelGroup>
   );
 }
-
 
 
 
