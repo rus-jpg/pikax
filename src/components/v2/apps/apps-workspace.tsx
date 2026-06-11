@@ -314,6 +314,19 @@ export function AppsWorkspace({
       void qc.invalidateQueries({ queryKey: ["v2-projects"] });
       void qc.invalidateQueries({ queryKey: ["v2-project", pid] });
       void qc.invalidateQueries({ queryKey: ["v2-jobs"] });
+
+      // Rename the project from the prompt (only if title is still placeholder).
+      void (async () => {
+        try {
+          await autoTitle({
+            data: { id: pid, prompt, appLabel: skill.label },
+          });
+          void qc.invalidateQueries({ queryKey: ["v2-projects"] });
+          void qc.invalidateQueries({ queryKey: ["v2-project", pid] });
+        } catch (err) {
+          console.warn("[v2] auto-title failed", err);
+        }
+      })();
     } catch (e) {
       updatePhase("error", e instanceof Error ? e.message : String(e));
     }
