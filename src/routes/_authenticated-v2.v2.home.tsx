@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, Film } from "lucide-react";
 
-import { HomeComposer } from "@/components/v2/home/home-composer";
+
 import { listProjects } from "@/lib/projects.functions";
 import { SKILL_BY_ID, type Skill } from "@/lib/skills";
 import { getAppSwatch } from "@/lib/app-swatch";
