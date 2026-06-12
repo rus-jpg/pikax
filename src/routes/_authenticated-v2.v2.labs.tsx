@@ -114,9 +114,6 @@ function LabsPage() {
                     {toy.name}
                   </span>
                 </div>
-                <div className="absolute bottom-4 right-4 text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
-                  Pika Labs · Toy
-                </div>
               </div>
             </article>
           ))}
