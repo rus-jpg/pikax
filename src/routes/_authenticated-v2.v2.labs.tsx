@@ -21,7 +21,7 @@ const TOYS: Toy[] = [
     name: "Pika Generative UI",
     tagline: "You talk, your agent designs",
     description:
-      "Visuals and voice combined. Your agent reflows the interface in real time as you talk.",
+      "Visuals and voice, combined. Your agent reflows the interface in real time as you talk — buttons appear, panels rearrange, layouts adapt to what you're trying to do. A first look at interfaces that build themselves around the conversation.",
     accent: "bg-[#7c5cff]",
     textOnAccent: "text-white",
     cta: { label: "Start on GitHub", href: "https://github.com/Pika-Labs/Pika-Experiments" },
@@ -29,35 +29,40 @@ const TOYS: Toy[] = [
   {
     name: "Pika Director Suite",
     tagline: "An AI co-director for long-form scenes",
-    description: "Storyboard, shoot, and re-cut coverage on the fly.",
+    description:
+      "Storyboard, shoot, and re-cut coverage on the fly. Block out a scene, generate alternate angles, and stitch a sequence together without leaving the canvas. Built for the messy middle of filmmaking, where ideas change faster than the edit timeline.",
     accent: "bg-[#1ec487]",
     textOnAccent: "text-black",
   },
   {
     name: "Pika Voice Stage",
     tagline: "Real-time voice performances",
-    description: "Speak in, hear any character back — synced to a generated face.",
+    description:
+      "Speak in, hear any character back — synced to a generated face that performs every line. Swap voices mid-sentence, push the delivery, or hand the mic to a co-star. A playground for live dubbing, character work, and interactive storytelling.",
     accent: "bg-[#ffd84d]",
     textOnAccent: "text-black",
   },
   {
     name: "Pika Loops",
     tagline: "Seamless video loops from a prompt",
-    description: "Ambient backdrops, reactive wallpapers, stream overlays.",
+    description:
+      "Ambient backdrops, reactive wallpapers, and stream overlays generated from a single line of text. Every loop is built to tile forever — no visible seams, no jump cuts. Drop one behind a livestream, a product page, or just your second monitor.",
     accent: "bg-[#ff6b3d]",
     textOnAccent: "text-white",
   },
   {
     name: "Pika Remix",
     tagline: "Any clip into a chain of variations",
-    description: "Alternate styles, swapped subjects, new endings.",
+    description:
+      "Feed in a clip and walk away with a tree of alternates — different styles, swapped subjects, new endings, alt timelines. Branch as far as you want, then pick the take that actually works. Treats every video as a starting point, not a finished file.",
     accent: "bg-[#ff4d8d]",
     textOnAccent: "text-white",
   },
   {
     name: "Pika Sticker Lab",
     tagline: "Generative stickers, GIFs, and reactions",
-    description: "Tiny, expressive motion from a single sentence.",
+    description:
+      "Tiny, expressive motion from a single sentence. Generate a reaction, a loop, or a whole pack of stickers tuned to a character or vibe. Drop them straight into chats, comments, and group threads — small format, lots of personality.",
     accent: "bg-[#3da9ff]",
     textOnAccent: "text-white",
   },
@@ -74,20 +79,12 @@ function LabsPage() {
               Pika Experiments
             </h1>
           </div>
-          <div className="space-y-4 text-base leading-relaxed text-foreground/80">
+          <div className="text-base leading-relaxed text-foreground/80">
             <p>
-              A public workshop of rough prototypes from Pika Labs. Take them
-              apart, build on them, break some sh*t.
-            </p>
-            <p>
-              Experiments are how we figure out what's next — half-built ideas,
-              weird interfaces, models pushed past where they're comfortable.
-              Some of these will graduate into real products. Most won't. All of
-              them are here for you to poke at.
-            </p>
-            <p className="text-muted-foreground">
-              New drops land most Fridays. Tell us what to keep, what to kill,
-              and what to build next.
+              A public workshop of rough prototypes from Pika Labs — half-built
+              ideas and weird interfaces we're testing in the open. Some will
+              graduate into real products. Most won't. All of them are here for
+              you to poke at.
             </p>
           </div>
         </section>
