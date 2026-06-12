@@ -74,20 +74,12 @@ function LabsPage() {
               Pika Experiments
             </h1>
           </div>
-          <div className="space-y-4 text-base leading-relaxed text-foreground/80">
+          <div className="text-base leading-relaxed text-foreground/80">
             <p>
-              A public workshop of rough prototypes from Pika Labs. Take them
-              apart, build on them, break some sh*t.
-            </p>
-            <p>
-              Experiments are how we figure out what's next — half-built ideas,
-              weird interfaces, models pushed past where they're comfortable.
-              Some of these will graduate into real products. Most won't. All of
-              them are here for you to poke at.
-            </p>
-            <p className="text-muted-foreground">
-              New drops land most Fridays. Tell us what to keep, what to kill,
-              and what to build next.
+              A public workshop of rough prototypes from Pika Labs — half-built
+              ideas and weird interfaces we're testing in the open. Some will
+              graduate into real products. Most won't. All of them are here for
+              you to poke at.
             </p>
           </div>
         </section>
