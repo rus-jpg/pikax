@@ -1,0 +1,1 @@
+DELETE FROM public.projects WHERE id IN ('fd0cc9d2-4987-4b05-8dd3-7effee2b94b1','e294b456-c14e-47e6-9c0b-507c248f5cf1');
