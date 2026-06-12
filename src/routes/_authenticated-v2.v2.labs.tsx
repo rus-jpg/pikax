@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated-v2/v2/labs")({
   component: LabsPage,
+  head: () => ({
+    meta: [{ title: "Pika Experiments" }],
+  }),
 });
 
 type Toy = {
