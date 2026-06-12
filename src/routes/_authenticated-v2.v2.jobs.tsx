@@ -1,13 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, Loader2, CheckCircle2, FolderOpen } from "lucide-react";
+import { Activity, Loader2, CheckCircle2, FolderOpen, Music2 } from "lucide-react";
 import { listLibrary } from "@/lib/library.functions";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated-v2/v2/jobs")({
   component: JobsScreen,
 });
+
+type RecentItem = {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  mime: string;
+  url: string;
+  createdAt: string;
+};
 
 function JobsScreen() {
   const fetchLib = useServerFn(listLibrary);
@@ -18,7 +27,7 @@ function JobsScreen() {
   });
 
   const queue = q.data?.queue ?? [];
-  const recent = (q.data?.generations ?? []).slice(0, 30);
+  const recent = (q.data?.generations ?? []).slice(0, 20) as RecentItem[];
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -83,7 +92,7 @@ function JobsScreen() {
         </section>
 
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Recently finished
           </h2>
@@ -92,49 +101,54 @@ function JobsScreen() {
               No completed generations yet.
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="flex flex-col divide-y divide-border/40 overflow-hidden rounded-2xl border border-border/60 bg-card">
               {recent.map((g) => (
-                <li
-                  key={g.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-2"
-                >
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                    {g.mime.startsWith("image/") ? (
-                      <img
-                        src={g.url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : g.mime.startsWith("video/") ? (
-                      <video
-                        src={g.url}
-                        className="h-full w-full object-cover"
-                        muted
-                      />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-lg text-muted-foreground">
-                        ♪
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      to="/v2/projects/$projectId"
-                      params={{ projectId: g.projectId }}
-                      className="block truncate text-sm font-medium hover:underline"
-                    >
-                      {g.projectTitle}
-                    </Link>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {new Date(g.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                </li>
+                <RecentRow key={g.id} g={g} />
               ))}
             </ul>
           )}
         </section>
       </div>
     </div>
+  );
+}
+
+function RecentRow({ g }: { g: RecentItem }) {
+  const isImage = g.mime.startsWith("image/");
+  const isVideo = g.mime.startsWith("video/");
+  return (
+    <li className="flex items-center gap-4 px-4 py-3">
+      <Link
+        to="/v2/projects/$projectId"
+        params={{ projectId: g.projectId }}
+        className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/40"
+      >
+        {isImage ? (
+          <img src={g.url} alt="" className="max-h-full max-w-full object-contain" />
+        ) : isVideo ? (
+          <video src={g.url} className="max-h-full max-w-full object-contain" muted />
+        ) : (
+          <Music2 className="h-6 w-6 text-muted-foreground" />
+        )}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link
+          to="/v2/projects/$projectId"
+          params={{ projectId: g.projectId }}
+          className="block truncate text-sm font-medium hover:underline"
+        >
+          {g.projectTitle}
+        </Link>
+        <div className="text-xs text-muted-foreground">
+          {new Date(g.createdAt).toLocaleString()}
+        </div>
+      </div>
+      <Button asChild size="sm" variant="ghost">
+        <Link to="/v2/projects/$projectId" params={{ projectId: g.projectId }}>
+          <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+          Open
+        </Link>
+      </Button>
+    </li>
   );
 }
