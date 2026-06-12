@@ -143,17 +143,18 @@ function LabsPage() {
         {/* Footer CTA */}
         <section className="mt-24 rounded-3xl border border-border/60 bg-card p-10 text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight">
-            Got a hunch worth prototyping?
+            Feedback welcome
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-            We're always looking for the next Toy. Pitch us an experiment and
-            we'll help bring it to life.
+            This is all very new and we're still figuring out the nuances. Tell
+            us what's working, what's broken, and what you want to see next.
+            Join the community and weigh in.
           </p>
           <a
-            href="mailto:labs@pika.art"
+            href="https://discord.com/invite/t9BWbKzjn"
             className="mt-5 inline-flex rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background hover:opacity-90"
           >
-            Contact Labs
+            Join the Discord
           </a>
         </section>
       </div>
