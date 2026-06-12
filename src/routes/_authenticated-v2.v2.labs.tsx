@@ -70,11 +70,8 @@ function LabsPage() {
         {/* Hero */}
         <section className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
           <div>
-            <div className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Pika Experiments
-            </div>
             <h1 className="font-display text-5xl font-semibold leading-[0.95] tracking-tight md:text-6xl">
-              Every breakthrough starts with an experiment
+              Pika Experiments
             </h1>
           </div>
           <p className="text-base leading-relaxed text-foreground/80">
