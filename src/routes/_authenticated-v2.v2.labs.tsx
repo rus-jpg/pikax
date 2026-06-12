@@ -15,10 +15,19 @@ type Toy = {
 
 const TOYS: Toy[] = [
   {
+    name: "Pika Generative UI",
+    tagline: "You talk, your agent designs",
+    description:
+      "Our first public experiment. Generative UI is where visuals and voice combine, breaking out of the basic chat. Your agent presents and adjusts visual interfaces in real time as you talk — ask about your workday and get a calendar focused on what matters; ask about a product launch and watch a brand positioning slide assemble itself. Give feedback and the layout reflows live. Built for large horizontal viewports, inspired more by editorial design and moodboards than conventional web UI.",
+    accent: "bg-[#7c5cff]",
+    textOnAccent: "text-white",
+    cta: { label: "Start experimenting on GitHub", href: "https://github.com/Pika-Labs/Pika-Experiments" },
+  },
+  {
     name: "Pika Director Suite",
     tagline: "An AI co-director for long-form scenes",
     description:
-      "A multi-shot planning canvas where you describe a scene and Pika storyboards it, suggests camera moves, and renders coverage you can re-cut on the fly. Built to explore how generative video scales past the single clip.",
+      "A multi-shot planning canvas where you describe a scene and Pika storyboards it, suggests camera moves, and renders coverage you can re-cut on the fly. An early look at what generative video feels like past the single clip.",
     accent: "bg-[#1ec487]",
     textOnAccent: "text-black",
   },
@@ -26,17 +35,9 @@ const TOYS: Toy[] = [
     name: "Pika Voice Stage",
     tagline: "Real-time voice performances for any character",
     description:
-      "Speak into your mic and hear it come back as any character, accent, or emotional read — synced to a generated face. We're using it to prototype interactive dubbing and live AI puppeteering.",
+      "Speak into your mic and hear it come back as any character, accent, or emotional read — synced to a generated face. A sandbox for interactive dubbing and live AI puppeteering.",
     accent: "bg-[#ffd84d]",
     textOnAccent: "text-black",
-  },
-  {
-    name: "Pika Generative UI",
-    tagline: "Interfaces that draw themselves around your intent",
-    description:
-      "An experiment in UI that assembles itself from a prompt: controls, panels, and layouts generated on demand for whatever you're trying to do. A glimpse at what creative tools look like when the chrome is fluid.",
-    accent: "bg-[#7c5cff]",
-    textOnAccent: "text-white",
   },
   {
     name: "Pika Loops",
@@ -53,16 +54,14 @@ const TOYS: Toy[] = [
       "Drop in a video and Pika riffs on it — alternate styles, swapped subjects, new endings. A study in how generative editing can feel more like jamming than prompting.",
     accent: "bg-[#ff4d8d]",
     textOnAccent: "text-white",
-    cta: { label: "Read the case study", href: "#" },
   },
   {
     name: "Pika Sticker Lab",
     tagline: "Generative stickers, GIFs, and reactions",
     description:
-      "A playful surface for making animated stickers and reaction GIFs from a sentence. The first Pika experiment we shipped to consumer messaging apps — and a sandbox for tiny, expressive motion.",
+      "A playful surface for making animated stickers and reaction GIFs from a sentence. A sandbox for tiny, expressive motion — and the first Pika experiment we shipped to consumer messaging apps.",
     accent: "bg-[#3da9ff]",
     textOnAccent: "text-white",
-    cta: { label: "Open Sticker Lab", href: "#" },
   },
 ];
 
