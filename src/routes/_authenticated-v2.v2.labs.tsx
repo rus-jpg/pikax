@@ -72,19 +72,31 @@ function LabsPage() {
       <div className="mx-auto max-w-6xl px-10 pb-24 pt-16">
         {/* Hero */}
         <section className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16">
-          <h1 className="font-display text-6xl font-semibold leading-[0.95] tracking-tight md:text-7xl">
-            Labs
-          </h1>
-          <p className="text-base leading-relaxed text-foreground/80">
-            Pika has a storied history of in-house experimentation. This playful,
-            dynamic nature of building new products and technologies is so
-            ingrained in our ethos, it's become its own branch of the company.
-            Pika Labs is where we turn market opportunities, hunches about the
-            future, and inside jokes into something real. We call these
-            experiments "Toys." Not all of them become cultural sensations,
-            receive awards, or get acquired, but some do. Check out the products
-            born out of Pika Labs below.
-          </p>
+          <div>
+            <div className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Pika Experiments
+            </div>
+            <h1 className="font-display text-5xl font-semibold leading-[0.95] tracking-tight md:text-6xl">
+              Every breakthrough starts with an experiment
+            </h1>
+          </div>
+          <div className="space-y-4 text-base leading-relaxed text-foreground/80">
+            <p>
+              Big announcement: we're opening up the Pika workshop. We've been
+              hard at work building some exciting breakthroughs in agentic AI,
+              and we're deciding not to be precious about it. Starting today,
+              we're sharing the rough ideas we've been experimenting with so
+              you can poke at early explorations and make them your own. This
+              is Pika Experiments. Let's break some sh*t together.
+            </p>
+            <p>
+              We believe things can be useful, inspiring, and fun long before
+              they're finished. So periodically, we'll drop new experiments:
+              prototypes, rough interfaces, and tools still taking shape. Our
+              code stays out in the open — take it apart, build on it, run with
+              it. There will be bugs and quirks. That's the point.
+            </p>
+          </div>
         </section>
 
         {/* Toys */}
