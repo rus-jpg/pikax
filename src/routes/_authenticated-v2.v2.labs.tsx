@@ -74,23 +74,10 @@ function LabsPage() {
               Every breakthrough starts with an experiment
             </h1>
           </div>
-          <div className="space-y-4 text-base leading-relaxed text-foreground/80">
-            <p>
-              Big announcement: we're opening up the Pika workshop. We've been
-              hard at work building some exciting breakthroughs in agentic AI,
-              and we're deciding not to be precious about it. Starting today,
-              we're sharing the rough ideas we've been experimenting with so
-              you can poke at early explorations and make them your own. This
-              is Pika Experiments. Let's break some sh*t together.
-            </p>
-            <p>
-              We believe things can be useful, inspiring, and fun long before
-              they're finished. So periodically, we'll drop new experiments:
-              prototypes, rough interfaces, and tools still taking shape. Our
-              code stays out in the open — take it apart, build on it, run with
-              it. There will be bugs and quirks. That's the point.
-            </p>
-          </div>
+          <p className="text-base leading-relaxed text-foreground/80">
+            A public workshop of rough prototypes from Pika Labs. Take them
+            apart, build on them, break some sh*t.
+          </p>
         </section>
 
         {/* Toys */}
@@ -141,9 +128,7 @@ function LabsPage() {
             Feedback welcome
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-            This is all very new and we're still figuring out the nuances. Tell
-            us what's working, what's broken, and what you want to see next.
-            Join the community and weigh in.
+            Tell us what to build next.
           </p>
           <a
             href="https://discord.com/invite/t9BWbKzjn"
