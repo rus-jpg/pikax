@@ -361,6 +361,16 @@ export function ProjectTimelinePanel({
   const visualTotal = Math.max(visualEnd, audioEnd);
   const totalSeconds = Math.max(visualTotal, CLIP_SECONDS);
 
+  // Active visual under the playhead — null when in a gap or past the end.
+  const activeVisualEntry = (() => {
+    for (let i = 0; i < visualEntries.length; i++) {
+      const s = cumStarts[i];
+      const d = getDur(visualEntries[i].ref);
+      if (currentTime >= s && currentTime < s + d) return visualEntries[i];
+    }
+    return null;
+  })();
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
     visualEntries.find((entry) => entry.ref === selectedId) ??
