@@ -572,6 +572,9 @@ export function ProjectTimelinePanel({
     return Math.max(0, best);
   };
 
+  // Dragging a clip body REORDERS within its track and lets the timeline
+  // reflow sequentially. Any explicit `offset` on the moved clip is cleared
+  // so it no longer floats independently of its neighbours.
   const beginMove = (
     ref: string,
     e: React.PointerEvent,
@@ -580,32 +583,59 @@ export function ProjectTimelinePanel({
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
-    const baseTrim = getTrim(ref);
-    const starts = kind === "visual" ? cumStarts : audioStarts;
     const entries = kind === "visual" ? visualEntries : audioEntries;
-    const idx = entries.findIndex((x) => x.ref === ref);
-    const baseStart = starts[idx] ?? 0;
-    const dur = getDur(ref);
-    const baseTrims = { ...effectiveTrims };
-    const targets = collectSnapTargets(ref);
-    let latest = { ...baseTrim, offset: baseStart };
+    const startIdx = entries.findIndex((x) => x.ref === ref);
+    if (startIdx < 0) return;
+    const durs = entries.map((en) => getDur(en.ref));
+    const seqStart = durs.slice(0, startIdx).reduce((a, b) => a + b, 0);
+    const movingDur = durs[startIdx];
+    const kindRefs = new Set(entries.map((x) => x.ref));
+    const baseOrder = effectiveOrder.slice();
     let moved = false;
+    let latestOrder = baseOrder.slice();
+
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
-      if (!moved && Math.abs(dx) < 3) return;
+      if (!moved && Math.abs(dx) < 4) return;
       moved = true;
-      const dSec = dx / Math.max(1, pxPerSec);
-      const desired = Math.max(0, baseStart + dSec);
-      const snapped = snapTime(desired, dur, targets);
-      latest = { ...baseTrim, offset: snapped };
-      setLocalTrims({ ...baseTrims, [ref]: latest });
+      const desiredCenter =
+        seqStart + movingDur / 2 + dx / Math.max(1, pxPerSec);
+      const others = entries.filter((_, i) => i !== startIdx);
+      const otherDurs = others.map((en) => getDur(en.ref));
+      let acc = 0;
+      let newIdx = others.length;
+      for (let i = 0; i < others.length; i++) {
+        const mid = acc + otherDurs[i] / 2;
+        if (desiredCenter < mid) {
+          newIdx = i;
+          break;
+        }
+        acc += otherDurs[i];
+      }
+      const newKindOrder = [
+        ...others.slice(0, newIdx).map((x) => x.ref),
+        ref,
+        ...others.slice(newIdx).map((x) => x.ref),
+      ];
+      let k = 0;
+      latestOrder = baseOrder.map((r) =>
+        kindRefs.has(r) ? newKindOrder[k++] : r,
+      );
+      setLocalOrder(latestOrder);
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       if (!moved) return; // treat as click
-      const nextTrims = { ...baseTrims, [ref]: latest };
-      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+      // Clear any explicit offset so the moved clip flows sequentially.
+      const nextTrims = { ...effectiveTrims };
+      const existing = nextTrims[ref];
+      if (existing && typeof existing.offset === "number") {
+        const { offset: _drop, ...rest } = existing;
+        void _drop;
+        nextTrims[ref] = rest;
+      }
+      commitSnap({ order: latestOrder, trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
