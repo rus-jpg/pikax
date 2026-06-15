@@ -602,32 +602,103 @@ export function ProjectTimelinePanel({
     const baseTrims = { ...effectiveTrims };
     const asset = assetsById.get(assetIdFromTimelineRef(ref));
     const isImage = asset?.mime.startsWith("image/") ?? false;
-    // Images can be held indefinitely; video/audio are capped at the source
-    // asset's natural length when we know it.
+    const probed = asset ? probedDurations[asset.id] : 0;
     const naturalDur =
       typeof asset?.duration === "number" && asset.duration > 0
         ? asset.duration
-        : null;
+        : probed && probed > 0
+          ? probed
+          : null;
     const maxEnd = isImage ? 600 : naturalDur ?? CLIP_SECONDS;
+
+    // Locate this clip on its track to compute its anchored timeline-left.
+    const visIdx = visualEntries.findIndex((x) => x.ref === ref);
+    const audIdx = audioEntries.findIndex((x) => x.ref === ref);
+    const isVisualTrack = visIdx >= 0;
+    const clipStartTime = isVisualTrack ? cumStarts[visIdx] ?? 0 : audioStarts[audIdx] ?? 0;
+    const nextEntry = isVisualTrack ? visualEntries[visIdx + 1] : audioEntries[audIdx + 1];
+    const nextEntryStart = isVisualTrack
+      ? cumStarts[visIdx + 1]
+      : audioStarts[audIdx + 1];
+    const snapTargets = collectSnapTargets(ref).concat([currentTime]);
+    const snapSec = SNAP_PX / Math.max(1, pxPerSec);
+
     let latest = baseTrim;
+    let altPin = false;
     const onMove = (ev: PointerEvent) => {
+      altPin = ev.altKey;
       const dx = ev.clientX - startX;
       const dSec = dx / Math.max(1, pxPerSec);
       let nextStart = baseTrim.start;
       let nextEnd = baseTrim.end;
-      if (edge === "start") {
-        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
-      } else {
+      if (edge === "end") {
         nextEnd = Math.max(Math.min(maxEnd, baseTrim.end + dSec), baseTrim.start + 0.2);
+        // Snap the timeline right-edge to playhead / neighbor edges.
+        const proposedRight = clipStartTime + (nextEnd - baseTrim.start);
+        let best = proposedRight;
+        let bestDist = snapSec;
+        for (const t of snapTargets) {
+          const d = Math.abs(proposedRight - t);
+          if (d < bestDist) {
+            bestDist = d;
+            best = t;
+          }
+        }
+        if (best !== proposedRight) {
+          const snapped = baseTrim.start + (best - clipStartTime);
+          nextEnd = Math.max(Math.min(maxEnd, snapped), baseTrim.start + 0.2);
+        }
+      } else {
+        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
+        // Trim-start changes clip duration; the timeline-left stays anchored
+        // at clipStartTime (sequential), so the moving edge is the right edge:
+        // length = end - nextStart. Snap that right edge to neighbors.
+        const proposedRight = clipStartTime + (baseTrim.end - nextStart);
+        let best = proposedRight;
+        let bestDist = snapSec;
+        for (const t of snapTargets) {
+          const d = Math.abs(proposedRight - t);
+          if (d < bestDist) {
+            bestDist = d;
+            best = t;
+          }
+        }
+        if (best !== proposedRight) {
+          const snappedStart = baseTrim.end - (best - clipStartTime);
+          nextStart = Math.min(Math.max(0, snappedStart), baseTrim.end - 0.2);
+        }
       }
       latest = { ...baseTrim, start: nextStart, end: nextEnd };
-      setLocalTrims({ ...baseTrims, [ref]: latest });
+      const nextTrims: Record<string, TimelineTrim> = { ...baseTrims, [ref]: latest };
+      // Alt = "trim in place": pin the next clip so following clips don't
+      // ripple along with this trim.
+      if (altPin && nextEntry && typeof nextEntryStart === "number") {
+        nextTrims[nextEntry.ref] = {
+          ...getTrim(nextEntry.ref),
+          offset: nextEntryStart,
+        };
+      }
+      setLocalTrims(nextTrims);
+      setTrimHud({
+        durSec: latest.end - latest.start,
+        leftPx: clipStartTime * pxPerSec,
+        widthPx: (latest.end - latest.start) * pxPerSec,
+        kind: isVisualTrack ? "visual" : "audio",
+        altPin,
+      });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      const nextTrims = { ...baseTrims, [ref]: latest };
-      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+      const finalTrims: Record<string, TimelineTrim> = { ...baseTrims, [ref]: latest };
+      if (altPin && nextEntry && typeof nextEntryStart === "number") {
+        finalTrims[nextEntry.ref] = {
+          ...getTrim(nextEntry.ref),
+          offset: nextEntryStart,
+        };
+      }
+      setTrimHud(null);
+      commitSnap({ order: effectiveOrder.slice(), trims: finalTrims });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
