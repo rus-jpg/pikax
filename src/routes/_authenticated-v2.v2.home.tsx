@@ -43,13 +43,6 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
   { appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." },
 ];
 
-const TOP_TABS: { label: string; tab?: AppsTab }[] = [
-  { label: "Explore", tab: "Featured" },
-  { label: "Video", tab: "Video" },
-  { label: "Image", tab: "Image" },
-  { label: "Audio", tab: "Audio" },
-  { label: "Favorites", tab: "Featured" },
-];
 
 const QUICK_TILES: { appId: string; title: string; copy: string }[] = [
   { appId: "app-create", title: "Create with Nano Banana", copy: "Text-to-image with the latest model." },
