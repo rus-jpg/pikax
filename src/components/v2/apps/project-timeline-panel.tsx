@@ -864,14 +864,70 @@ export function ProjectTimelinePanel({
   };
 
   const handleDelete = (ref: string) => {
+    // Preserve the deleted clip's footprint as a gap by pinning the next
+    // clip in the same track to its current start time. The user can click
+    // the gap later to collapse it.
+    const visualIdx = visualEntries.findIndex((e) => e.ref === ref);
+    const audioIdx = audioEntries.findIndex((e) => e.ref === ref);
+    const isVisual = visualIdx >= 0;
+    const entries = isVisual ? visualEntries : audioEntries;
+    const starts = isVisual ? cumStarts : audioStarts;
+    const idx = isVisual ? visualIdx : audioIdx;
+    const nextTrims = { ...effectiveTrims };
+    if (idx >= 0) {
+      const nextEntry = entries[idx + 1];
+      if (nextEntry) {
+        const existing = nextTrims[nextEntry.ref];
+        if (!existing || typeof existing.offset !== "number") {
+          const nextStart = starts[idx + 1];
+          nextTrims[nextEntry.ref] = {
+            ...getTrim(nextEntry.ref),
+            offset: nextStart,
+          };
+        }
+      }
+    }
+    delete nextTrims[ref];
     const next = effectiveOrder.filter((x) => x !== ref);
-    setLocalOrder(next);
     if (selectedId === ref) {
       const remaining = visualEntries.filter((entry) => entry.ref !== ref);
       setSelectedId(remaining[0]?.ref ?? null);
     }
-    persist(next);
+    commitSnap({ order: next, trims: nextTrims });
   };
+
+  // Collapse a gap on a track: clear the explicit offset on the clip that
+  // follows the gap so it (and everything after) flows leftward.
+  const collapseGap = (_kind: "visual" | "audio", nextRef: string) => {
+    const nextTrims = { ...effectiveTrims };
+    const existing = nextTrims[nextRef];
+    if (existing && typeof existing.offset === "number") {
+      const { offset: _o, ...rest } = existing;
+      void _o;
+      nextTrims[nextRef] = rest;
+    }
+    commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+  };
+
+  // Gap segments per track derived from current layout.
+  const visualGaps: { start: number; end: number; nextRef: string }[] = [];
+  {
+    let cursor = 0;
+    visualEntries.forEach((e, i) => {
+      const s = cumStarts[i];
+      if (s > cursor + 0.01) visualGaps.push({ start: cursor, end: s, nextRef: e.ref });
+      cursor = s + getDur(e.ref);
+    });
+  }
+  const audioGaps: { start: number; end: number; nextRef: string }[] = [];
+  {
+    let cursor = 0;
+    audioEntries.forEach((e, i) => {
+      const s = audioStarts[i];
+      if (s > cursor + 0.01) audioGaps.push({ start: cursor, end: s, nextRef: e.ref });
+      cursor = s + getDur(e.ref);
+    });
+  }
 
   const seekTo = (t: number) => {
     const clamped = Math.max(0, Math.min(totalSeconds, t));
