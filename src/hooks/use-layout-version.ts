@@ -24,7 +24,13 @@ export function getMirrorPath(pathname: string, target: LayoutVersion): string {
   // target v1
   if (!isV2) return pathname;
   const stripped = pathname.replace(/^\/v2/, "");
-  return stripped === "" ? "/projects" : stripped;
+  if (stripped === "" || stripped === "/" || stripped === "/home") return "/projects";
+  // v1 has no /projects/$projectId route — open the project in the studio instead.
+  const projectMatch = stripped.match(/^\/projects\/([^/]+)$/);
+  if (projectMatch) return `/studio/${projectMatch[1]}`;
+  // v1 has no /jobs, /library list page maps fine, /labs, /apps exists.
+  if (stripped === "/jobs" || stripped === "/labs") return "/projects";
+  return stripped;
 }
 
 export function useLayoutVersion() {
