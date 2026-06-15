@@ -792,18 +792,27 @@ export function ProjectTimelinePanel({
       others.push({ ref: en.ref, start: starts[i], end: starts[i] + getDur(en.ref) });
     });
 
-    const computeInsert = (clipLeftPx: number) => {
-      const clipCenterSec = (clipLeftPx + widthPx / 2) / Math.max(1, pxPerSec);
-      for (let i = 0; i < others.length; i++) {
-        const o = others[i];
-        const mid = (o.start + o.end) / 2;
-        if (clipCenterSec < mid) {
-          return { insertIdx: i, insertX: o.start * pxPerSec };
+    // iMovie-style insertion: find the gap edge nearest to the cursor X.
+    // Edges are the boundaries between sibling clips on the same track,
+    // including the track start (0) and the end of the last sibling.
+    const movedDur = getDur(ref);
+    const snapTargets = collectSnapTargets(ref);
+    const computeInsert = (cursorXPx: number) => {
+      const cursorSec = cursorXPx / Math.max(1, pxPerSec);
+      const edges: { x: number; idx: number }[] = [{ x: 0, idx: 0 }];
+      others.forEach((o, i) => {
+        edges.push({ x: o.end, idx: i + 1 });
+      });
+      let best = edges[0];
+      let bestDist = Infinity;
+      for (const e of edges) {
+        const d = Math.abs(cursorSec - e.x);
+        if (d < bestDist) {
+          bestDist = d;
+          best = e;
         }
       }
-      const last = others[others.length - 1];
-      const insertX = (last ? last.end : 0) * pxPerSec;
-      return { insertIdx: others.length, insertX };
+      return { insertIdx: best.idx, insertX: best.x * pxPerSec };
     };
 
     let moved = false;
@@ -824,12 +833,20 @@ export function ProjectTimelinePanel({
       const dy = ev.clientY - (trackRect.top + startClipTop + grabOffsetY);
       if (!moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       moved = true;
-      const ghostLeftPx = Math.max(
+      let ghostLeftPx = Math.max(
         -widthPx / 2,
         ev.clientX - trackRect.left - grabOffsetX,
       );
+      // Snap ghost start to neighbor edges / playhead.
+      const snappedSec = snapTime(
+        ghostLeftPx / Math.max(1, pxPerSec),
+        movedDur,
+        snapTargets.concat([currentTime]),
+      );
+      ghostLeftPx = snappedSec * pxPerSec;
       const ghostTopPx = ev.clientY - trackRect.top - grabOffsetY;
-      const { insertIdx, insertX } = computeInsert(ghostLeftPx);
+      const cursorXPx = ev.clientX - trackRect.left;
+      const { insertIdx, insertX } = computeInsert(cursorXPx);
       latest = { ...latest, ghostLeftPx, ghostTopPx, insertIdx, insertX };
       setDragState(latest);
     };
