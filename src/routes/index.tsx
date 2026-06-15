@@ -451,9 +451,9 @@ function LandingFooter() {
               The creative video platform.
             </p>
             <div className="mt-6 flex gap-3">
-              {[Instagram, Twitter, Youtube, Github].map((Icon, i) => (
-                <a key={i} href="#" className="rounded-full border border-background/15 p-2 hover:bg-background/10">
-                  <Icon className="h-4 w-4" />
+              {["IG", "X", "YT", "GH"].map((label) => (
+                <a key={label} href="#" className="rounded-full border border-background/15 px-3 py-2 text-xs font-medium hover:bg-background/10">
+                  {label}
                 </a>
               ))}
             </div>
