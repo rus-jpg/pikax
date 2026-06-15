@@ -861,26 +861,25 @@ export function ProjectTimelinePanel({
       window.removeEventListener("pointerup", onUp);
       setDragState(null);
       if (!moved) return; // treat as click
+      // Free placement: dropped clip gets an explicit offset at the snapped
+      // ghost position. Order is re-derived by time so siblings stay in their
+      // current spots and the moved clip slots in by start time.
+      const droppedSec = Math.max(0, latest.ghostLeftPx / Math.max(1, pxPerSec));
+      const nextTrims = { ...effectiveTrims };
+      nextTrims[ref] = { ...getTrim(ref), offset: droppedSec };
       const kindRefs = new Set(entries.map((x) => x.ref));
-      const otherRefs = others.map((o) => o.ref);
-      const newKindOrder = [
-        ...otherRefs.slice(0, latest.insertIdx),
-        ref,
-        ...otherRefs.slice(latest.insertIdx),
-      ];
+      const resolved = entries
+        .map((en, i) =>
+          en.ref === ref
+            ? { ref, start: droppedSec }
+            : { ref: en.ref, start: starts[i] },
+        )
+        .sort((a, b) => a.start - b.start);
+      const newKindOrder = resolved.map((r) => r.ref);
       let k = 0;
       const newOrder = effectiveOrder.map((r) =>
         kindRefs.has(r) ? newKindOrder[k++] : r,
       );
-      // Clear any explicit offset on the moved clip so it flows in its
-      // new sequential slot.
-      const nextTrims = { ...effectiveTrims };
-      const existing = nextTrims[ref];
-      if (existing && typeof existing.offset === "number") {
-        const { offset: _o, ...rest } = existing;
-        void _o;
-        nextTrims[ref] = rest;
-      }
       commitSnap({ order: newOrder, trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
