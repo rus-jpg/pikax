@@ -1264,12 +1264,25 @@ export function ProjectTimelinePanel({
                             seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: widthPx, left: `${leftPx}px` }}
+                          style={
+                            dragState?.ref === ref
+                              ? {
+                                  width: widthPx,
+                                  left: `${dragState.ghostLeftPx}px`,
+                                  top: `${dragState.ghostTopPx}px`,
+                                  zIndex: 40,
+                                  pointerEvents: "none",
+                                  opacity: 0.85,
+                                  boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+                                }
+                              : { width: widthPx, left: `${leftPx}px` }
+                          }
                           className={cn(
                             "group absolute top-0 h-14 cursor-grab overflow-hidden rounded-lg bg-muted transition active:cursor-grabbing",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
+                            dragState && dragState.ref !== ref && "opacity-60",
                           )}
                         >
                           {a.mime.startsWith("image/") ? (
