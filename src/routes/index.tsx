@@ -137,20 +137,16 @@ function Hero() {
 
 /* ───────── Workflows bento ───────── */
 const workflowTabs = [
-  { id: "create", label: "Create" },
-  { id: "edit", label: "Edit" },
-  { id: "remix", label: "Remix" },
-  { id: "ship", label: "Ship" },
+  { id: "marketing", label: "Marketing", lead: "Market", img: s1 },
+  { id: "social", label: "Social Media", lead: "Post", img: s2 },
+  { id: "founder", label: "Founder", lead: "Pitch", img: s3 },
+  { id: "influencer", label: "Influencer", lead: "Engage", img: s4 },
+  { id: "shortform", label: "Short-form", lead: "Hook", img: heroBg },
 ] as const;
 
 function WorkflowsBento() {
-  const [tab, setTab] = useState<(typeof workflowTabs)[number]["id"]>("create");
-  const content = {
-    create: { lead: "Generate", img: s1, alt: "Generate" },
-    edit:   { lead: "Refine",   img: s2, alt: "Refine" },
-    remix:  { lead: "Reimagine",img: s3, alt: "Remix" },
-    ship:   { lead: "Publish",  img: s4, alt: "Publish" },
-  }[tab];
+  const [tab, setTab] = useState<(typeof workflowTabs)[number]["id"]>("marketing");
+  const content = workflowTabs.find((t) => t.id === tab)!;
 
   return (
     <section id="workflows" className="px-6 py-24">
