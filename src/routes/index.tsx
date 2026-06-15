@@ -6,6 +6,8 @@ import s1 from "@/assets/sample-1.jpg";
 import s2 from "@/assets/sample-2.jpg";
 import s3 from "@/assets/sample-3.jpg";
 import s4 from "@/assets/sample-4.jpg";
+import modelsStrip from "@/assets/models-strip.png.asset.json";
+import { BrandMark } from "@/components/pika-mark";
 import {
   Play, Sparkles, Wand2, Film,
   Mic, Music, Cpu, Code2, ArrowRight, X,
@@ -64,7 +66,10 @@ function LandingNav() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="font-display text-xl tracking-tight">pika</Link>
+        <Link to="/" className="flex items-center gap-2">
+          <BrandMark className="h-6 w-auto" />
+          <span className="font-display text-xl tracking-tight">Pika</span>
+        </Link>
         <nav className="hidden items-center gap-8 text-sm md:flex">
           <a href="#workflows" className="text-muted-foreground hover:text-foreground">Product</a>
           <a href="#research" className="text-muted-foreground hover:text-foreground">Research</a>
@@ -84,13 +89,12 @@ function LandingNav() {
 
 /* ───────── Hero ───────── */
 function Hero() {
-  const chips = ["Text to video", "Image to video", "Lip sync", "Inpaint", "Sound FX", "Upscale"];
   return (
     <section className="relative px-6 pt-32 pb-20">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-surface)" }} />
       <div className="mx-auto max-w-5xl text-center">
         <h1 className="font-display text-5xl leading-[1.05] tracking-tight md:text-7xl">
-          Video apps <span className="text-gradient">for everything</span>
+          Welcome to the <span className="text-gradient">Pika Universe</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
           Pika is the creative video platform — generate, edit, and remix with AI
@@ -119,15 +123,12 @@ function Hero() {
             <Play className="h-6 w-6 fill-foreground" />
           </button>
         </div>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-          {chips.map((c) => (
-            <span
-              key={c}
-              className="rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted-foreground"
-            >
-              {c}
-            </span>
-          ))}
+        <div className="mt-10">
+          <img
+            src={modelsStrip.url}
+            alt="Powered by the best models in the biz — Pika 2.5, Gemini Omni, Seedance 2.0"
+            className="mx-auto w-full max-w-5xl"
+          />
         </div>
       </div>
     </section>
@@ -136,20 +137,16 @@ function Hero() {
 
 /* ───────── Workflows bento ───────── */
 const workflowTabs = [
-  { id: "create", label: "Create" },
-  { id: "edit", label: "Edit" },
-  { id: "remix", label: "Remix" },
-  { id: "ship", label: "Ship" },
+  { id: "marketing", label: "Marketing", lead: "Market", img: s1 },
+  { id: "social", label: "Social Media", lead: "Post", img: s2 },
+  { id: "founder", label: "Founder", lead: "Pitch", img: s3 },
+  { id: "influencer", label: "Influencer", lead: "Engage", img: s4 },
+  { id: "shortform", label: "Short-form", lead: "Hook", img: heroBg },
 ] as const;
 
 function WorkflowsBento() {
-  const [tab, setTab] = useState<(typeof workflowTabs)[number]["id"]>("create");
-  const content = {
-    create: { lead: "Generate", img: s1, alt: "Generate" },
-    edit:   { lead: "Refine",   img: s2, alt: "Refine" },
-    remix:  { lead: "Reimagine",img: s3, alt: "Remix" },
-    ship:   { lead: "Publish",  img: s4, alt: "Publish" },
-  }[tab];
+  const [tab, setTab] = useState<(typeof workflowTabs)[number]["id"]>("marketing");
+  const content = workflowTabs.find((t) => t.id === tab)!;
 
   return (
     <section id="workflows" className="px-6 py-24">
