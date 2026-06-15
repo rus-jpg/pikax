@@ -415,6 +415,9 @@ export const uploadProjectAsset = createServerFn({ method: "POST" })
       bytes,
       label: data.label,
       name: data.name,
+      width: data.width,
+      height: data.height,
+      duration: data.duration,
     });
 
     return {
