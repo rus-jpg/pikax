@@ -533,34 +533,56 @@ export function ProjectTimelinePanel({
     setSelectedId(newRef);
   };
 
-  // ---- Split at playhead ----
+  // ---- Split at playhead (works across visual + audio) ----
   const splitAtPlayhead = () => {
-    if (!visualEntries.length) return;
-    // Find clip under playhead.
-    let idx = -1;
-    let localOffset = 0;
-    for (let i = 0; i < visualEntries.length; i++) {
-      const start = cumStarts[i];
-      const end = start + getDur(visualEntries[i].ref);
-      if (currentTime >= start && currentTime < end) {
-        idx = i;
-        localOffset = currentTime - start;
-        break;
+    type Track = { kind: "visual" | "audio"; entries: typeof visualEntries; starts: number[] };
+    const tracks: Track[] = [
+      { kind: "visual", entries: visualEntries, starts: cumStarts },
+      { kind: "audio", entries: audioEntries, starts: audioStarts },
+    ];
+    let target: { ref: string; assetId: string; local: number } | null = null;
+    for (const t of tracks) {
+      for (let i = 0; i < t.entries.length; i++) {
+        const start = t.starts[i];
+        const end = start + getDur(t.entries[i].ref);
+        if (currentTime >= start && currentTime < end) {
+          target = {
+            ref: t.entries[i].ref,
+            assetId: t.entries[i].asset.id,
+            local: currentTime - start,
+          };
+          break;
+        }
       }
+      if (target) break;
     }
-    if (idx < 0) return;
-    const entry = visualEntries[idx];
-    const trim = getTrim(entry.ref);
+    if (!target) return;
+    performSplit(target.ref, target.assetId, target.local);
+  };
+
+  // Split a specific clip at an absolute timeline time.
+  const splitAtTime = (ref: string, timelineTime: number) => {
+    const inVisual = visualEntries.findIndex((e) => e.ref === ref);
+    const inAudio = audioEntries.findIndex((e) => e.ref === ref);
+    let start: number | null = null;
+    if (inVisual >= 0) start = cumStarts[inVisual];
+    else if (inAudio >= 0) start = audioStarts[inAudio];
+    if (start == null) return;
+    const assetId = assetIdFromTimelineRef(ref);
+    performSplit(ref, assetId, timelineTime - start);
+  };
+
+  const performSplit = (ref: string, assetId: string, localOffset: number) => {
+    const trim = getTrim(ref);
     const cutAt = trim.start + localOffset;
-    // Need at least 0.2s on each side.
     if (cutAt - trim.start < 0.2 || trim.end - cutAt < 0.2) return;
-    const newRef = makeTimelineRef(entry.asset.id);
+    const newRef = makeTimelineRef(assetId);
     const next = effectiveOrder.slice();
-    const orderIdx = next.indexOf(entry.ref);
+    const orderIdx = next.indexOf(ref);
     next.splice(orderIdx + 1, 0, newRef);
     const nextTrims = {
       ...effectiveTrims,
-      [entry.ref]: { start: trim.start, end: cutAt },
+      [ref]: { ...effectiveTrims[ref], start: trim.start, end: cutAt },
       [newRef]: { start: cutAt, end: trim.end },
     };
     commit(next, nextTrims);
