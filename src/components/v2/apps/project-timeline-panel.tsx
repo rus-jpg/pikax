@@ -572,9 +572,23 @@ export function ProjectTimelinePanel({
     return Math.max(0, best);
   };
 
-  // Dragging a clip body REORDERS within its track and lets the timeline
-  // reflow sequentially. Any explicit `offset` on the moved clip is cleared
-  // so it no longer floats independently of its neighbours.
+  // ---- Drag-to-reorder (iMovie-style) ----
+  // While dragging, the clip follows the cursor and a vertical indicator
+  // line shows where it will land. On release, the clip snaps into that
+  // slot and the timeline reflows.
+  type DragState = {
+    ref: string;
+    kind: "visual" | "audio";
+    rowIndex: number; // for audio rows
+    ghostLeftPx: number; // left of ghost relative to track
+    ghostTopPx: number; // top of ghost relative to track row
+    widthPx: number;
+    heightPx: number;
+    insertIdx: number; // insertion index among the OTHER refs of this kind
+    insertX: number; // px where the indicator line should render
+  };
+  const [dragState, setDragState] = useState<DragState | null>(null);
+
   const beginMove = (
     ref: string,
     e: React.PointerEvent,
@@ -582,60 +596,93 @@ export function ProjectTimelinePanel({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    const startX = e.clientX;
+    const clipEl = e.currentTarget as HTMLElement;
+    const trackEl = clipEl.closest<HTMLElement>(`[data-track-kind="${kind}"]`);
+    if (!trackEl) return;
+    const clipRect = clipEl.getBoundingClientRect();
+    const trackRect = trackEl.getBoundingClientRect();
+    const startClipLeft = clipRect.left - trackRect.left;
+    const startClipTop = clipRect.top - trackRect.top;
+    const grabOffsetX = e.clientX - clipRect.left;
+    const grabOffsetY = e.clientY - clipRect.top;
+    const widthPx = clipRect.width;
+    const heightPx = clipRect.height;
+
     const entries = kind === "visual" ? visualEntries : audioEntries;
-    const startIdx = entries.findIndex((x) => x.ref === ref);
-    if (startIdx < 0) return;
-    const durs = entries.map((en) => getDur(en.ref));
-    const seqStart = durs.slice(0, startIdx).reduce((a, b) => a + b, 0);
-    const movingDur = durs[startIdx];
-    const kindRefs = new Set(entries.map((x) => x.ref));
-    const baseOrder = effectiveOrder.slice();
+    const starts = kind === "visual" ? cumStarts : audioStarts;
+    const others: { ref: string; start: number; end: number }[] = [];
+    entries.forEach((en, i) => {
+      if (en.ref === ref) return;
+      others.push({ ref: en.ref, start: starts[i], end: starts[i] + getDur(en.ref) });
+    });
+
+    const computeInsert = (clipLeftPx: number) => {
+      const clipCenterSec = (clipLeftPx + widthPx / 2) / Math.max(1, pxPerSec);
+      for (let i = 0; i < others.length; i++) {
+        const o = others[i];
+        const mid = (o.start + o.end) / 2;
+        if (clipCenterSec < mid) {
+          return { insertIdx: i, insertX: o.start * pxPerSec };
+        }
+      }
+      const last = others[others.length - 1];
+      const insertX = (last ? last.end : 0) * pxPerSec;
+      return { insertIdx: others.length, insertX };
+    };
+
     let moved = false;
-    let latestOrder = baseOrder.slice();
+    let latest: DragState = {
+      ref,
+      kind,
+      rowIndex: kind === "audio" ? audioEntries.findIndex((x) => x.ref === ref) : 0,
+      ghostLeftPx: startClipLeft,
+      ghostTopPx: startClipTop,
+      widthPx,
+      heightPx,
+      insertIdx: -1,
+      insertX: 0,
+    };
 
     const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - startX;
-      if (!moved && Math.abs(dx) < 4) return;
+      const dx = ev.clientX - (trackRect.left + startClipLeft + grabOffsetX);
+      const dy = ev.clientY - (trackRect.top + startClipTop + grabOffsetY);
+      if (!moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       moved = true;
-      const desiredCenter =
-        seqStart + movingDur / 2 + dx / Math.max(1, pxPerSec);
-      const others = entries.filter((_, i) => i !== startIdx);
-      const otherDurs = others.map((en) => getDur(en.ref));
-      let acc = 0;
-      let newIdx = others.length;
-      for (let i = 0; i < others.length; i++) {
-        const mid = acc + otherDurs[i] / 2;
-        if (desiredCenter < mid) {
-          newIdx = i;
-          break;
-        }
-        acc += otherDurs[i];
-      }
-      const newKindOrder = [
-        ...others.slice(0, newIdx).map((x) => x.ref),
-        ref,
-        ...others.slice(newIdx).map((x) => x.ref),
-      ];
-      let k = 0;
-      latestOrder = baseOrder.map((r) =>
-        kindRefs.has(r) ? newKindOrder[k++] : r,
+      const ghostLeftPx = Math.max(
+        -widthPx / 2,
+        ev.clientX - trackRect.left - grabOffsetX,
       );
-      setLocalOrder(latestOrder);
+      const ghostTopPx = ev.clientY - trackRect.top - grabOffsetY;
+      const { insertIdx, insertX } = computeInsert(ghostLeftPx);
+      latest = { ...latest, ghostLeftPx, ghostTopPx, insertIdx, insertX };
+      setDragState(latest);
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      setDragState(null);
       if (!moved) return; // treat as click
-      // Clear any explicit offset so the moved clip flows sequentially.
+      const kindRefs = new Set(entries.map((x) => x.ref));
+      const otherRefs = others.map((o) => o.ref);
+      const newKindOrder = [
+        ...otherRefs.slice(0, latest.insertIdx),
+        ref,
+        ...otherRefs.slice(latest.insertIdx),
+      ];
+      let k = 0;
+      const newOrder = effectiveOrder.map((r) =>
+        kindRefs.has(r) ? newKindOrder[k++] : r,
+      );
+      // Clear any explicit offset on the moved clip so it flows in its
+      // new sequential slot.
       const nextTrims = { ...effectiveTrims };
       const existing = nextTrims[ref];
       if (existing && typeof existing.offset === "number") {
-        const { offset: _drop, ...rest } = existing;
-        void _drop;
+        const { offset: _o, ...rest } = existing;
+        void _o;
         nextTrims[ref] = rest;
       }
-      commitSnap({ order: latestOrder, trims: nextTrims });
+      commitSnap({ order: newOrder, trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
