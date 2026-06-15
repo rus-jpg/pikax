@@ -95,7 +95,7 @@ function Hero() {
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-surface)" }} />
       <div className="mx-auto max-w-5xl text-center">
         <h1 className="font-display text-5xl leading-[1.05] tracking-tight md:text-7xl">
-          Video apps <span className="text-gradient">for everything</span>
+          Welcome to the <span className="text-gradient">Pika Universe</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
           Pika is the creative video platform — generate, edit, and remix with AI
