@@ -1,76 +1,41 @@
+# Logged-out Homepage Build Plan
 
-## Goal
+Build a new logged-out homepage at the public landing route with 9 sections, light & editorial tone, using existing design tokens in `src/styles.css`.
 
-Rework `src/routes/_authenticated-v2.v2.home.tsx` so the layout matches the attached Figma mockup. Pure presentational change — no data model, server function, or routing changes.
+## Sections
 
-## New page structure (top to bottom)
+1. **Top Nav** — Transparent bar, Pika wordmark left, nav links center (Product, Research, API, Pricing), "Login" pill right. Sticky with blur on scroll.
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│ [Explore][Video][Image][Audio][Favorites]      [Search] │  ← Tab bar row
-├──────────────────────────────────┬──────────────────────┤
-│                                  │  ▢ Create w/ Nano…   │
-│   FEATURED HERO (big image)      ├──────────┬───────────┤
-│   {Featured App title}           │ ▢ Animate│ ▢ Create  │
-│   short copy   [Try Now →]       │   image  │   video…  │
-└──────────────────────────────────┴──────────┴───────────┘
-  Your Projects ›
-  [thumb][thumb][thumb][thumb][thumb][thumb][thumb] →
+2. **Hero** — Centered display headline, subhead, primary CTA pill, 16:9 hero media frame (placeholder video/image), row of small feature chips below.
 
-  Featured Apps                                    ‹  ›
-  ┌─────────────────────────┬─────────────────────────┐
-  │ {App Title}      ▢ prev │ {App Title}      ▢ prev │
-  │ copy  [Try Now →]       │ copy  [Try Now →]       │
-  └─────────────────────────┴─────────────────────────┘
+3. **Built for all creative workflows** — Bento grid: one tall tile left, two stacked middle, one tall right. Pill tabs above the grid swap the bento content (client-side state, no route change).
 
-  Animate Photos                          More Animate Apps ›
-  [card][card][card][card]
+4. **Video apps for everything** — Row of 5 square app icon tiles, below a 2-up carousel with dots pager.
 
-  Video apps                              More Video Apps ›
-  [card][card][card][card]
+5. **Made with Pika** — Auto-scrolling marquee of 5 portrait video tiles; click opens a full-screen lightbox.
 
-  Influencers                             More Influencer Apps ›
-  [card][card][card][card]
+6. **Powered by Pika Research** — Two-column editorial: heading + copy left, paper-like card grid of research items right.
 
-  Marketing apps                          More Marketing Apps ›
-  [card][card][card][card]
-```
+7. **Pika API** — Two-column editorial: copy left, code snippet card on right.
 
-## Section-by-section changes
+8. **Final CTA** — Large centered display headline + single CTA pill on a soft gradient band.
 
-1. **Remove** the big "What will you create with Pika today?" centered heading.
+9. **Footer** — Dark band: large Pika watermark, socials, 3-4 link columns, copyright.
 
-2. **Top tab bar** (new): pill tabs `Explore | Video | Image | Audio | Favorites` left-aligned, with a `Search…` pill on the right. Tabs link into `/v2/apps?tab=…` (reusing existing tab values where they match: Video, Image, Audio; Explore → Featured; Favorites → new pass-through). Visual only — no client-side filtering of the home page itself.
+## Technical
 
-3. **Hero split row** (new): two-column grid.
-   - Left (≈⅔ width): one large featured card — full-bleed image background, title + 2-line copy + "Try Now" pill bottom-left, pagination dots bottom-center. Sourced from `FEATURED_MODULES[0]`.
-   - Right (≈⅓ width): 1 tall tile on top spanning full width ("Create with {model}"), then 2 square tiles below ("Animate an image", "Create video using text"). All three are app shortcuts using small swatch dot + title + 1-line copy. Maps to existing skills: `app-create` (Nano Banana / current default text-to-something), `app-animate-photo`, `app-create` with video seed.
-
-4. **Your Projects ›** (rework existing "Recent projects"):
-   - Rename label to `Your Projects ›` (link to `/v2/projects`).
-   - Compact horizontal scroll of small square thumbnails (≈80px) with project title underneath, plus a trailing `＋` tile that links to `/v2/apps`.
-   - Drop the wider card with "Jump back in" subtitle.
-
-5. **Featured Apps carousel** (rework existing "Featured apps" grid):
-   - Horizontal scroll of wide cards (2 visible at a time on desktop). Each card: left side = title + tagline + `Try Now →` pill; right side = large rounded preview rectangle (`bg-muted`, no icon). Sourced from `FEATURED_MODULES.slice(1)`.
-   - Add ‹ › arrow buttons in the section header (scroll the container; no extra deps).
-   - Remove the current `FeaturedHero` block (the one with the 6 small squares) and the second ad-creative `FeaturedHero`.
-
-6. **Category grids** (Animate Photos / Video apps / Influencers / Marketing apps): keep as-is structurally. Minor: ensure section title casing matches mockup ("Animate Photos", "Video apps", "Influencers", "Marketing apps") and right-side link text matches ("More Animation Apps ›", etc. — already close).
-
-7. **Remove** the bottom centered "See all apps" pill button (the mockup ends after Marketing).
-
-## Files touched
-
-- `src/routes/_authenticated-v2.v2.home.tsx` — only file edited. Restructure JSX, add small inline components (`TopTabBar`, `HeroSplit`, `QuickTile`, `ProjectsStrip`, `FeaturedCarousel`, `FeaturedWideCard`). Reuse existing `AppGroupSection` / `AppCard` unchanged. Delete `FeaturedHero` and `FeaturedAppModule`.
+- New route: `src/routes/index.tsx` (or update existing public landing). Use TanStack Start `createFileRoute` with full `head()` metadata (title, description, og:title, og:description, og:image).
+- Componentize each section under `src/components/v2/landing/`:
+  - `LandingNav.tsx`, `Hero.tsx`, `WorkflowsBento.tsx`, `VideoApps.tsx`, `MadeWithPika.tsx`, `ResearchSection.tsx`, `ApiSection.tsx`, `FinalCta.tsx`, `LandingFooter.tsx`.
+- Tabs in WorkflowsBento: local `useState`, content keyed by tab.
+- Marquee: CSS `@keyframes` infinite scroll, pause on hover; duplicated track for seamless loop.
+- Lightbox: simple portal with backdrop + close on Esc/click outside.
+- All styling via semantic tokens (`bg-background`, `text-foreground`, `bg-card`, `border`, `text-muted-foreground`). Add any new tokens (e.g. `--gradient-hero`, `--shadow-soft`) to `src/styles.css`.
+- Placeholder media: use existing assets in `src/assets/` if present; otherwise generate light editorial hero + tile images.
+- Auth-aware redirect: if user is logged in, redirect to `/v2/home` from the landing route loader (client-side check via existing auth context — no protected server fn in loader).
 
 ## Out of scope
 
-- No changes to vertical nav, account popover, routing, server functions, skills data, or `AppCard` styling.
-- No real search behavior — the search pill is a visual stub linking to `/v2/apps`.
-- No tab filtering on the home page itself — tabs deep-link to `/v2/apps`.
-- No new images/assets; preview rectangles stay `bg-muted` placeholders (matches your earlier "neutralize thumbnails" direction).
-
-## Open question
-
-The mockup's hero shows a single big "Featured App" with copy + pagination dots, implying a rotating carousel of multiple featured apps. For v1 I'll render a **static** hero from `FEATURED_MODULES[0]` (dots are decorative). Say the word if you want it auto-rotating through all of `FEATURED_MODULES` instead.
+- No real backend wiring for Research/API content (static copy for now).
+- No video uploads — use looping placeholder MP4/poster images.
+- v1 routes untouched.
