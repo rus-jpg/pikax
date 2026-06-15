@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Film,
   Plus,
-  Search,
 } from "lucide-react";
 
 import { listProjects } from "@/lib/projects.functions";
