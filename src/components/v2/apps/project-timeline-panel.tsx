@@ -777,6 +777,12 @@ export function ProjectTimelinePanel({
     if (!trackEl) return;
     const clipRect = clipEl.getBoundingClientRect();
     const trackRect = trackEl.getBoundingClientRect();
+    // Shift-click = blade split at click X (no drag).
+    if (e.shiftKey) {
+      const xSec = (e.clientX - trackRect.left) / Math.max(1, pxPerSec);
+      splitAtTime(ref, xSec);
+      return;
+    }
     const startClipLeft = clipRect.left - trackRect.left;
     const startClipTop = clipRect.top - trackRect.top;
     const grabOffsetX = e.clientX - clipRect.left;
