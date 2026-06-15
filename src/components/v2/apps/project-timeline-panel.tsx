@@ -205,17 +205,44 @@ export function ProjectTimelinePanel({
   const effectiveOrder = localOrder ?? timeline?.order ?? [];
   const effectiveTrims = localTrims ?? timeline?.trims ?? {};
 
+  // Probed media durations (seconds) for audio/video assets whose DB row
+  // is missing a stored duration. Filled in by the effect below.
+  const [probedDurations, setProbedDurations] = useState<Record<string, number>>(
+    {},
+  );
+
+  const getNaturalDuration = (assetId: string): number | undefined => {
+    const a = assetsById.get(assetId);
+    if (a && typeof a.duration === "number" && a.duration > 0) return a.duration;
+    const p = probedDurations[assetId];
+    return typeof p === "number" && p > 0 ? p : undefined;
+  };
+
   const getTrim = (ref: string): TimelineTrim => {
-    if (effectiveTrims[ref]) return effectiveTrims[ref];
-    const a = serverAssets.find(
-      (x) => x.id === assetIdFromTimelineRef(ref),
-    );
+    if (effectiveTrims[ref]) {
+      const t = effectiveTrims[ref];
+      // If the stored trim still reflects the placeholder default end and
+      // we now know the real natural duration, prefer that.
+      if (
+        t.start === 0 &&
+        (t.end === CLIP_SECONDS || t.end == null) &&
+        typeof t.offset !== "number"
+      ) {
+        const nat = getNaturalDuration(assetIdFromTimelineRef(ref));
+        if (nat) return { start: 0, end: nat };
+      }
+      return t;
+    }
+    const assetId = assetIdFromTimelineRef(ref);
+    const a = assetsById.get(assetId);
+    const nat = getNaturalDuration(assetId);
     const natural =
-      a && a.mime.startsWith("audio/") && typeof a.duration === "number" && a.duration > 0
-        ? a.duration
+      a && (a.mime.startsWith("audio/") || a.mime.startsWith("video/")) && nat
+        ? nat
         : CLIP_SECONDS;
     return { start: 0, end: natural };
   };
+
   const getDur = (ref: string) => {
     const t = getTrim(ref);
     return Math.max(0.2, t.end - t.start);
