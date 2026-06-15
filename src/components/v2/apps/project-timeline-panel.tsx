@@ -1298,7 +1298,7 @@ export function ProjectTimelinePanel({
                 variant="ghost"
                 size="sm"
                 onClick={splitAtPlayhead}
-                disabled={!visualEntries.length}
+                disabled={!visualEntries.length && !audioEntries.length}
                 aria-label="Split at playhead"
                 title="Split at playhead (S)"
               >
