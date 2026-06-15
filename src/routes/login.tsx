@@ -18,11 +18,11 @@ function LoginPage() {
   useEffect(() => {
     // If already signed in on mount, forward immediately.
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) void navigate({ to: "/v2/projects" });
+      if (data.session) void navigate({ to: "/v2/home" });
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (session) void navigate({ to: "/v2/projects" });
+        if (session) void navigate({ to: "/v2/home" });
       },
     );
     return () => subscription.unsubscribe();
