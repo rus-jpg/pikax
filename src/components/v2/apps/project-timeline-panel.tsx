@@ -379,6 +379,17 @@ export function ProjectTimelinePanel({
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+
+  // Active visual under the playhead — null during a gap or past the end.
+  const activeVisualEntry = (() => {
+    for (let i = 0; i < visualEntries.length; i++) {
+      const s = cumStarts[i];
+      const d = getDur(visualEntries[i].ref);
+      if (currentTime >= s && currentTime < s + d) return visualEntries[i];
+    }
+    return null;
+  })();
+  const activeVisual = activeVisualEntry?.asset ?? null;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTickRef = useRef<number | null>(null);
 
@@ -861,26 +872,25 @@ export function ProjectTimelinePanel({
       window.removeEventListener("pointerup", onUp);
       setDragState(null);
       if (!moved) return; // treat as click
+      // Free placement: dropped clip gets an explicit offset at the snapped
+      // ghost position. Order is re-derived by time so siblings stay in their
+      // current spots and the moved clip slots in by start time.
+      const droppedSec = Math.max(0, latest.ghostLeftPx / Math.max(1, pxPerSec));
+      const nextTrims = { ...effectiveTrims };
+      nextTrims[ref] = { ...getTrim(ref), offset: droppedSec };
       const kindRefs = new Set(entries.map((x) => x.ref));
-      const otherRefs = others.map((o) => o.ref);
-      const newKindOrder = [
-        ...otherRefs.slice(0, latest.insertIdx),
-        ref,
-        ...otherRefs.slice(latest.insertIdx),
-      ];
+      const resolved = entries
+        .map((en, i) =>
+          en.ref === ref
+            ? { ref, start: droppedSec }
+            : { ref: en.ref, start: starts[i] },
+        )
+        .sort((a, b) => a.start - b.start);
+      const newKindOrder = resolved.map((r) => r.ref);
       let k = 0;
       const newOrder = effectiveOrder.map((r) =>
         kindRefs.has(r) ? newKindOrder[k++] : r,
       );
-      // Clear any explicit offset on the moved clip so it flows in its
-      // new sequential slot.
-      const nextTrims = { ...effectiveTrims };
-      const existing = nextTrims[ref];
-      if (existing && typeof existing.offset === "number") {
-        const { offset: _o, ...rest } = existing;
-        void _o;
-        nextTrims[ref] = rest;
-      }
       commitSnap({ order: newOrder, trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
@@ -911,7 +921,7 @@ export function ProjectTimelinePanel({
       }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
         e.preventDefault();
-        handleDelete(selectedId, { leaveGap: e.altKey });
+        handleDelete(selectedId, { leaveGap: !e.altKey });
         return;
       }
       if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && selectedId) {
@@ -1232,28 +1242,30 @@ export function ProjectTimelinePanel({
       <div className="flex flex-1 items-center justify-center overflow-auto p-5">
         <div className="flex w-full max-w-3xl flex-col items-center gap-4">
           {/* Preview */}
-          <div className="w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-elegant">
-            <div className="relative aspect-video w-full">
-              {selected ? (
-                selected.mime.startsWith("video/") ? (
+          <div className="w-full overflow-hidden rounded-2xl border border-border/60 bg-black shadow-elegant">
+            <div className="relative aspect-video w-full bg-black">
+              {activeVisual ? (
+                activeVisual.mime.startsWith("video/") ? (
                   <video
-                    key={selectedId}
+                    key={activeVisualEntry?.ref ?? "v"}
                     ref={videoRef}
-                    src={selected.url}
-                    className="h-full w-full object-cover"
+                    src={activeVisual.url}
+                    className="h-full w-full object-contain"
                     playsInline
                     muted={muted}
                   />
                 ) : (
                   <img
-                    key={selectedId}
-                    src={selected.url}
-                    alt={selected.label ?? selected.name}
-                    className="h-full w-full object-cover"
+                    key={activeVisualEntry?.ref ?? "v"}
+                    src={activeVisual.url}
+                    alt={activeVisual.label ?? activeVisual.name}
+                    className="h-full w-full object-contain"
                   />
                 )
+              ) : visualEntries.length > 0 || audioEntries.length > 0 ? (
+                <div className="h-full w-full bg-black" />
               ) : (
-                <div className="grid h-full w-full place-items-center px-6 text-center text-xs text-muted-foreground">
+                <div className="grid h-full w-full place-items-center bg-muted px-6 text-center text-xs text-muted-foreground">
                   No clips yet — click the <Plus className="mx-1 inline h-3 w-3" /> below to add one.
                 </div>
               )}
@@ -1359,7 +1371,7 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: e.altKey })}
+                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: !e.altKey })}
                 disabled={!selectedId}
                 aria-label="Delete clip"
                 title="Delete (⌫)"
@@ -1549,7 +1561,7 @@ export function ProjectTimelinePanel({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(ref, { leaveGap: e.altKey });
+                              handleDelete(ref, { leaveGap: !e.altKey });
                             }}
                             className="absolute right-1.5 top-0.5 z-20 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
@@ -1758,7 +1770,7 @@ export function ProjectTimelinePanel({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(ref, { leaveGap: e.altKey });
+                                handleDelete(ref, { leaveGap: !e.altKey });
                               }}
                               className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                               aria-label="Delete audio"
