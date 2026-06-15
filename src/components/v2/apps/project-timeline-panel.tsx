@@ -908,25 +908,44 @@ export function ProjectTimelinePanel({
         handleDelete(selectedId, { leaveGap: e.altKey });
         return;
       }
-      if (e.key === "ArrowRight" && visualEntries.length) {
+      if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && selectedId) {
         e.preventDefault();
-        const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const ni = Math.min(i + 1, visualEntries.length - 1);
-        const next = visualEntries[ni];
-        if (next) {
-          setSelectedId(next.ref);
-          seekTo(cumStarts[ni] ?? 0);
+        const dir = e.key === "ArrowRight" ? 1 : -1;
+        // Option/Alt = nudge the selected clip by 1 frame (1/30s) via offset.
+        if (e.altKey) {
+          const step = dir * (1 / 30);
+          const cur = getTrim(selectedId);
+          const inVisual = visualEntries.findIndex((v) => v.ref === selectedId);
+          const inAudio = audioEntries.findIndex((v) => v.ref === selectedId);
+          const baseStart =
+            inVisual >= 0
+              ? cumStarts[inVisual] ?? 0
+              : inAudio >= 0
+                ? audioStarts[inAudio] ?? 0
+                : 0;
+          const nextOffset = Math.max(0, baseStart + step);
+          const nextTrims = {
+            ...effectiveTrims,
+            [selectedId]: { ...cur, offset: nextOffset },
+          };
+          commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+          return;
         }
-        return;
-      }
-      if (e.key === "ArrowLeft" && visualEntries.length) {
-        e.preventDefault();
-        const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const ni = Math.max(i - 1, 0);
-        const next = visualEntries[ni];
+        // Plain arrow: step selection through the merged track list.
+        const merged = [
+          ...visualEntries.map((v, i) => ({ ref: v.ref, start: cumStarts[i] ?? 0 })),
+          ...audioEntries.map((v, i) => ({ ref: v.ref, start: audioStarts[i] ?? 0 })),
+        ];
+        if (merged.length === 0) return;
+        const i = merged.findIndex((m) => m.ref === selectedId);
+        const ni =
+          dir > 0
+            ? Math.min(i + 1, merged.length - 1)
+            : Math.max(i - 1, 0);
+        const next = merged[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(cumStarts[ni] ?? 0);
+          seekTo(next.start);
         }
         return;
       }
