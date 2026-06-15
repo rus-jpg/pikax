@@ -279,6 +279,49 @@ export function ProjectTimelinePanel({
     return out;
   }, [effectiveOrder, assetsById]);
 
+  // Probe natural durations for audio/video assets whose DB row doesn't
+  // include a stored `duration`, so the timeline clip width matches the
+  // real media length instead of falling back to CLIP_SECONDS.
+  useEffect(() => {
+    const toProbe = serverAssets.filter(
+      (a) =>
+        (a.mime.startsWith("audio/") || a.mime.startsWith("video/")) &&
+        !(typeof a.duration === "number" && a.duration > 0) &&
+        probedDurations[a.id] == null &&
+        !!a.url,
+    );
+    if (toProbe.length === 0) return;
+    let cancelled = false;
+    toProbe.forEach((a) => {
+      const el = document.createElement(
+        a.mime.startsWith("video/") ? "video" : "audio",
+      ) as HTMLMediaElement;
+      el.preload = "metadata";
+      el.src = a.url;
+      const done = () => {
+        const d = el.duration;
+        if (!cancelled && typeof d === "number" && isFinite(d) && d > 0) {
+          setProbedDurations((prev) =>
+            prev[a.id] ? prev : { ...prev, [a.id]: d },
+          );
+        }
+        el.src = "";
+      };
+      el.addEventListener("loadedmetadata", done, { once: true });
+      el.addEventListener("error", () => {
+        if (!cancelled) {
+          // Mark as probed with 0 so we don't retry forever.
+          setProbedDurations((prev) =>
+            prev[a.id] != null ? prev : { ...prev, [a.id]: 0 },
+          );
+        }
+      }, { once: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [serverAssets, probedDurations]);
+
   // Resolved start time (seconds) per visual entry. Uses explicit offset
   // if set; otherwise lays the clip immediately after the previous one.
   const cumStarts = useMemo(() => {
