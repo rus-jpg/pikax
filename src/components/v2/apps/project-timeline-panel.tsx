@@ -1039,10 +1039,7 @@ export function ProjectTimelinePanel({
     setDragId(null);
   };
 
-  const handleDelete = (ref: string) => {
-    // Preserve the deleted clip's footprint as a gap by pinning the next
-    // clip in the same track to its current start time. The user can click
-    // the gap later to collapse it.
+  const handleDelete = (ref: string, opts?: { leaveGap?: boolean }) => {
     const visualIdx = visualEntries.findIndex((e) => e.ref === ref);
     const audioIdx = audioEntries.findIndex((e) => e.ref === ref);
     const isVisual = visualIdx >= 0;
@@ -1050,7 +1047,7 @@ export function ProjectTimelinePanel({
     const starts = isVisual ? cumStarts : audioStarts;
     const idx = isVisual ? visualIdx : audioIdx;
     const nextTrims = { ...effectiveTrims };
-    if (idx >= 0) {
+    if (opts?.leaveGap && idx >= 0) {
       const nextEntry = entries[idx + 1];
       if (nextEntry) {
         const existing = nextTrims[nextEntry.ref];
@@ -1066,8 +1063,11 @@ export function ProjectTimelinePanel({
     delete nextTrims[ref];
     const next = effectiveOrder.filter((x) => x !== ref);
     if (selectedId === ref) {
-      const remaining = visualEntries.filter((entry) => entry.ref !== ref);
-      setSelectedId(remaining[0]?.ref ?? null);
+      const fallback =
+        (isVisual ? visualEntries : audioEntries).filter((e) => e.ref !== ref)[0] ??
+        (isVisual ? audioEntries : visualEntries)[0] ??
+        null;
+      setSelectedId(fallback?.ref ?? null);
     }
     commitSnap({ order: next, trims: nextTrims });
   };
