@@ -1464,8 +1464,23 @@ export function ProjectTimelinePanel({
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => handleDropOnItem(ref, e, "audio")}
                             onClick={() => setEditAudioFor(ref)}
-                            style={{ left: `${leftPx}px`, width: widthPx }}
-                            className="group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing"
+                            style={
+                              dragState?.ref === ref
+                                ? {
+                                    left: `${dragState.ghostLeftPx}px`,
+                                    top: `${dragState.ghostTopPx}px`,
+                                    width: widthPx,
+                                    zIndex: 40,
+                                    pointerEvents: "none",
+                                    opacity: 0.85,
+                                    boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+                                  }
+                                : { left: `${leftPx}px`, width: widthPx }
+                            }
+                            className={cn(
+                              "group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing",
+                              dragState && dragState.ref !== ref && "opacity-60",
+                            )}
                           >
                             <span className="shrink-0 truncate text-[10px] font-medium text-secondary-foreground">
                               {a.label ?? a.name ?? "Audio"}
