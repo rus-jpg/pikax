@@ -276,9 +276,17 @@ function ProjectCard({ project }: { project: ProjectCardData }) {
     <Link
       to="/v2/projects/$projectId"
       params={{ projectId: project.id }}
-      className="group relative flex min-h-[112px] flex-col gap-2 overflow-hidden rounded-2xl border border-border bg-card p-3 transition hover:border-foreground/40 hover:shadow-elegant"
+      className="group relative flex min-h-[88px] items-center gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 transition hover:border-foreground/40 hover:shadow-elegant"
     >
-      <div className="relative h-[64px] w-full">
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold leading-tight">
+          {project.title || "Untitled"}
+        </div>
+        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+          {details}
+        </div>
+      </div>
+      <div className="relative h-[64px] w-[72px] shrink-0">
         {media.length === 0 ? (
           <div className="grid h-full w-full place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
             <Film className="h-5 w-5" />
@@ -298,14 +306,6 @@ function ProjectCard({ project }: { project: ProjectCardData }) {
             />
           ))
         )}
-      </div>
-      <div className="min-w-0">
-        <div className="truncate text-sm font-semibold leading-tight">
-          {project.title || "Untitled"}
-        </div>
-        <div className="mt-0.5 truncate text-xs text-muted-foreground">
-          {details}
-        </div>
       </div>
     </Link>
   );
