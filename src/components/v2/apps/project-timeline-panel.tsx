@@ -1509,7 +1509,7 @@ export function ProjectTimelinePanel({
                             onPointerDown={(e) => beginTrim(ref, "start", e)}
                             onClick={(e) => e.stopPropagation()}
                             draggable={false}
-                            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            className="absolute inset-y-0 left-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                             title="Trim start"
                           />
                           <div
@@ -1517,7 +1517,7 @@ export function ProjectTimelinePanel({
                             onPointerDown={(e) => beginTrim(ref, "end", e)}
                             onClick={(e) => e.stopPropagation()}
                             draggable={false}
-                            className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                             title="Trim end"
                           />
                           <button
@@ -1702,14 +1702,14 @@ export function ProjectTimelinePanel({
                               data-trim-handle="start"
                               onPointerDown={(e) => beginTrim(ref, "start", e)}
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              className="absolute inset-y-0 left-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                               title="Trim start"
                             />
                             <div
                               data-trim-handle="end"
                               onPointerDown={(e) => beginTrim(ref, "end", e)}
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                               title="Trim end"
                             />
                             <button
