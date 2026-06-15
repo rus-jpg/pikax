@@ -1366,10 +1366,20 @@ export function ProjectTimelinePanel({
               {/* Ruler */}
               <div
                 className="relative mb-1 h-5 cursor-pointer select-none"
-                onClick={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  const x = e.clientX - r.left;
-                  seekTo(x / Math.max(1, pxPerSec));
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  const rulerEl = e.currentTarget;
+                  const r = rulerEl.getBoundingClientRect();
+                  const seek = (clientX: number) =>
+                    seekTo(Math.max(0, (clientX - r.left) / Math.max(1, pxPerSec)));
+                  seek(e.clientX);
+                  const onMove = (ev: PointerEvent) => seek(ev.clientX);
+                  const onUp = () => {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
                 }}
               >
                 {Array.from({
