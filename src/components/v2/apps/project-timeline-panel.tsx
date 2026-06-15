@@ -910,7 +910,7 @@ export function ProjectTimelinePanel({
       }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
         e.preventDefault();
-        handleDelete(selectedId, { leaveGap: e.altKey });
+        handleDelete(selectedId, { leaveGap: !e.altKey });
         return;
       }
       if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && selectedId) {
@@ -1358,7 +1358,7 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: e.altKey })}
+                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: !e.altKey })}
                 disabled={!selectedId}
                 aria-label="Delete clip"
                 title="Delete (⌫)"
@@ -1548,7 +1548,7 @@ export function ProjectTimelinePanel({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(ref, { leaveGap: e.altKey });
+                              handleDelete(ref, { leaveGap: !e.altKey });
                             }}
                             className="absolute right-1.5 top-0.5 z-20 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
@@ -1757,7 +1757,7 @@ export function ProjectTimelinePanel({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(ref, { leaveGap: e.altKey });
+                                handleDelete(ref, { leaveGap: !e.altKey });
                               }}
                               className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                               aria-label="Delete audio"
