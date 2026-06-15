@@ -1243,28 +1243,30 @@ export function ProjectTimelinePanel({
       <div className="flex flex-1 items-center justify-center overflow-auto p-5">
         <div className="flex w-full max-w-3xl flex-col items-center gap-4">
           {/* Preview */}
-          <div className="w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-elegant">
-            <div className="relative aspect-video w-full">
-              {selected ? (
-                selected.mime.startsWith("video/") ? (
+          <div className="w-full overflow-hidden rounded-2xl border border-border/60 bg-black shadow-elegant">
+            <div className="relative aspect-video w-full bg-black">
+              {activeVisual ? (
+                activeVisual.mime.startsWith("video/") ? (
                   <video
-                    key={selectedId}
+                    key={activeVisualEntry?.ref ?? "v"}
                     ref={videoRef}
-                    src={selected.url}
-                    className="h-full w-full object-cover"
+                    src={activeVisual.url}
+                    className="h-full w-full object-contain"
                     playsInline
                     muted={muted}
                   />
                 ) : (
                   <img
-                    key={selectedId}
-                    src={selected.url}
-                    alt={selected.label ?? selected.name}
-                    className="h-full w-full object-cover"
+                    key={activeVisualEntry?.ref ?? "v"}
+                    src={activeVisual.url}
+                    alt={activeVisual.label ?? activeVisual.name}
+                    className="h-full w-full object-contain"
                   />
                 )
+              ) : visualEntries.length > 0 || audioEntries.length > 0 ? (
+                <div className="h-full w-full bg-black" />
               ) : (
-                <div className="grid h-full w-full place-items-center px-6 text-center text-xs text-muted-foreground">
+                <div className="grid h-full w-full place-items-center bg-muted px-6 text-center text-xs text-muted-foreground">
                   No clips yet — click the <Plus className="mx-1 inline h-3 w-3" /> below to add one.
                 </div>
               )}
