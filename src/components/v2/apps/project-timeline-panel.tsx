@@ -888,7 +888,7 @@ export function ProjectTimelinePanel({
       }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
         e.preventDefault();
-        handleDelete(selectedId);
+        handleDelete(selectedId, { leaveGap: e.altKey });
         return;
       }
       if (e.key === "ArrowRight" && visualEntries.length) {
