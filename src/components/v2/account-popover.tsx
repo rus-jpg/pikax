@@ -14,6 +14,7 @@ import { useLayoutVersion, getMirrorPath } from "@/hooks/use-layout-version";
 
 export function AccountPopoverV2() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { version, setVersion } = useLayoutVersion();
   const [user, setUser] = useState<{
