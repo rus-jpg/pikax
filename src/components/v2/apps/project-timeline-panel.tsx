@@ -379,6 +379,18 @@ export function ProjectTimelinePanel({
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+
+  // Active visual under the playhead — null during a gap or past the end.
+  const activeVisualEntry = (() => {
+    for (let i = 0; i < visualEntries.length; i++) {
+      const s = cumStarts[i];
+      const d = getDur(visualEntries[i].ref);
+      if (currentTime >= s && currentTime < s + d) return visualEntries[i];
+    }
+    return null;
+  })();
+  const activeVisual = activeVisualEntry?.asset ?? null;
+  const inVisualGap = visualEntries.length > 0 && !activeVisualEntry;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTickRef = useRef<number | null>(null);
 
