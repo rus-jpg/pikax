@@ -363,11 +363,17 @@ export function ProjectTimelinePanel({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
-    visualEntries.find((entry) => entry.ref === selectedId) ?? visualEntries[0] ?? null;
+    visualEntries.find((entry) => entry.ref === selectedId) ??
+    audioEntries.find((entry) => entry.ref === selectedId) ??
+    visualEntries[0] ??
+    audioEntries[0] ??
+    null;
   const selected = selectedEntry?.asset ?? null;
   useEffect(() => {
-    if (!selectedEntry && visualEntries[0]) setSelectedId(visualEntries[0].ref);
-  }, [visualEntries, selectedEntry]);
+    if (!selectedEntry && (visualEntries[0] || audioEntries[0])) {
+      setSelectedId((visualEntries[0] ?? audioEntries[0])!.ref);
+    }
+  }, [visualEntries, audioEntries, selectedEntry]);
 
   // Transport
   const [isPlaying, setIsPlaying] = useState(false);
