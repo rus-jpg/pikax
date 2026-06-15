@@ -390,7 +390,6 @@ export function ProjectTimelinePanel({
     return null;
   })();
   const activeVisual = activeVisualEntry?.asset ?? null;
-  const inVisualGap = visualEntries.length > 0 && !activeVisualEntry;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTickRef = useRef<number | null>(null);
 
