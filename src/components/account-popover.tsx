@@ -47,8 +47,10 @@ export function AccountPopover() {
   const handleLogout = async () => {
     setBusy("logout");
     try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
       await supabase.auth.signOut();
-      void navigate({ to: "/" });
+      void navigate({ to: "/", replace: true });
     } finally {
       setBusy(null);
     }
