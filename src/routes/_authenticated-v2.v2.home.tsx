@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Film,
   Plus,
-  Search,
 } from "lucide-react";
 
 import { listProjects } from "@/lib/projects.functions";
@@ -44,13 +43,6 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
   { appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." },
 ];
 
-const TOP_TABS: { label: string; tab?: AppsTab }[] = [
-  { label: "Explore", tab: "Featured" },
-  { label: "Video", tab: "Video" },
-  { label: "Image", tab: "Image" },
-  { label: "Audio", tab: "Audio" },
-  { label: "Favorites", tab: "Featured" },
-];
 
 const QUICK_TILES: { appId: string; title: string; copy: string }[] = [
   { appId: "app-create", title: "Create with Nano Banana", copy: "Text-to-image with the latest model." },
@@ -128,8 +120,6 @@ function HomePage() {
   return (
     <main className="h-full overflow-y-auto bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-8 py-8">
-        <TopTabBar />
-
         {heroSkill && (
           <HeroSplit skill={heroSkill} tagline={FEATURED_MODULES[0].tagline} />
         )}
@@ -146,36 +136,6 @@ function HomePage() {
   );
 }
 
-function TopTabBar() {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex gap-1 rounded-full bg-muted/50 p-1">
-        {TOP_TABS.map((t, i) => (
-          <Link
-            key={t.label}
-            to="/v2/apps"
-            search={t.tab ? { tab: t.tab } : undefined}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-medium transition",
-              i === 0
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
-      <Link
-        to="/v2/apps"
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground transition hover:text-foreground"
-      >
-        <Search className="h-4 w-4" />
-        Search…
-      </Link>
-    </div>
-  );
-}
 
 function HeroSplit({ skill, tagline }: { skill: Skill; tagline: string }) {
   return (
@@ -256,11 +216,16 @@ function QuickTile({
   );
 }
 
-function ProjectsStrip({
-  projects,
-}: {
-  projects: { id: string; title: string; thumbnailUrl?: string | null }[];
-}) {
+type ProjectCardData = {
+  id: string;
+  title: string;
+  thumbnailUrl?: string | null;
+  mediaUrls?: string[];
+  sceneCount?: number;
+  updatedAt?: string;
+};
+
+function ProjectsStrip({ projects }: { projects: ProjectCardData[] }) {
   return (
     <section>
       <Link
@@ -269,38 +234,79 @@ function ProjectsStrip({
       >
         Your Projects <ChevronRight className="h-4 w-4" />
       </Link>
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        {projects.map((p) => (
-          <Link
-            key={p.id}
-            to="/v2/projects/$projectId"
-            params={{ projectId: p.id }}
-            className="group flex w-20 shrink-0 flex-col gap-1.5"
-          >
-            {p.thumbnailUrl ? (
-              <img
-                src={p.thumbnailUrl}
-                alt={p.title}
-                className="h-20 w-20 rounded-xl object-cover transition group-hover:opacity-90"
-              />
-            ) : (
-              <div className="grid h-20 w-20 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
-                <Film className="h-5 w-5" />
-              </div>
-            )}
-            <div className="truncate text-[11px] font-medium text-muted-foreground">
-              {p.title || "Untitled"}
-            </div>
-          </Link>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {projects.slice(0, 6).map((p) => (
+          <ProjectCard key={p.id} project={p} />
         ))}
         <Link
           to="/v2/apps"
-          className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border border-dashed border-border text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+          className="flex min-h-[112px] items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-sm text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" /> New project
         </Link>
       </div>
     </section>
+  );
+}
+
+function ProjectCard({ project }: { project: ProjectCardData }) {
+  const media = (
+    project.mediaUrls && project.mediaUrls.length
+      ? project.mediaUrls
+      : project.thumbnailUrl
+        ? [project.thumbnailUrl]
+        : []
+  ).slice(0, 3);
+  const details =
+    project.sceneCount && project.sceneCount > 0
+      ? `${project.sceneCount} shot${project.sceneCount === 1 ? "" : "s"}${
+          project.updatedAt
+            ? ` · updated ${new Date(project.updatedAt).toLocaleDateString()}`
+            : ""
+        }`
+      : project.updatedAt
+        ? `Updated ${new Date(project.updatedAt).toLocaleDateString()}`
+        : "Empty project";
+
+  const rotations = ["-rotate-6", "rotate-3", "-rotate-2"];
+  const offsets = ["right-16 top-3", "right-8 top-1", "right-1 top-4"];
+
+  return (
+    <Link
+      to="/v2/projects/$projectId"
+      params={{ projectId: project.id }}
+      className="group relative flex min-h-[112px] items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-card pl-5 pr-3 transition hover:border-foreground/40 hover:shadow-elegant"
+    >
+      <div className="min-w-0 flex-1 py-4">
+        <div className="truncate text-base font-semibold leading-tight">
+          {project.title || "Untitled"}
+        </div>
+        <div className="mt-1 truncate text-sm text-muted-foreground">
+          {details}
+        </div>
+      </div>
+      <div className="relative h-[88px] w-[120px] shrink-0">
+        {media.length === 0 ? (
+          <div className="grid h-full w-full place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
+            <Film className="h-5 w-5" />
+          </div>
+        ) : (
+          media.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              alt=""
+              className={cn(
+                "absolute h-[72px] w-[64px] rounded-xl border-2 border-background object-cover shadow-sm transition",
+                rotations[i] ?? "",
+                offsets[i] ?? "right-1 top-2",
+              )}
+              style={{ zIndex: i + 1 }}
+            />
+          ))
+        )}
+      </div>
+    </Link>
   );
 }
 

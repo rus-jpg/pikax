@@ -77,31 +77,51 @@ export const listProjects = createServerFn({ method: "GET" })
     // Pick one image-like asset per project to use as a circular thumbnail.
     // Prefer rendered keyframes (kind = "video" w/ poster) and reference images.
     const thumbByProject = new Map<string, string>();
+    const mediaByProject = new Map<string, string[]>();
     if (projectIds.length) {
       const { data: assetRows } = await supabaseAdmin
         .from("project_assets")
         .select("project_id, storage_path, url, mime, kind, created_at")
         .in("project_id", projectIds)
         .ilike("mime", "image/%")
-        .order("created_at", { ascending: true });
-      const firstByProject = new Map<string, { storage_path: string | null; url: string }>();
+        .order("created_at", { ascending: false });
+      const groupedByProject = new Map<
+        string,
+        { storage_path: string | null; url: string }[]
+      >();
       for (const row of assetRows ?? []) {
-        if (!firstByProject.has(row.project_id as string)) {
-          firstByProject.set(row.project_id as string, {
+        const pid = row.project_id as string;
+        const arr = groupedByProject.get(pid) ?? [];
+        if (arr.length < 3) {
+          arr.push({
             storage_path: (row.storage_path as string | null) ?? null,
             url: (row.url as string) ?? "",
           });
+          groupedByProject.set(pid, arr);
         }
       }
-      const rows = Array.from(firstByProject.entries());
-      const signed = await signAssetUrls(rows.map(([, r]) => r));
-      rows.forEach(([pid], i) => thumbByProject.set(pid, signed[i]));
+      const flat: { storage_path: string | null; url: string }[] = [];
+      const indexMap: { pid: string; start: number; count: number }[] = [];
+      for (const [pid, arr] of groupedByProject.entries()) {
+        indexMap.push({ pid, start: flat.length, count: arr.length });
+        flat.push(...arr);
+      }
+      const signed = await signAssetUrls(flat);
+      for (const { pid, start, count } of indexMap) {
+        const urls = signed.slice(start, start + count);
+        mediaByProject.set(pid, urls);
+        if (urls[0]) thumbByProject.set(pid, urls[0]);
+      }
     }
     return {
       projects: (data ?? []).map((p) => {
         const state = (p.project_state as Partial<ProjectState>) ?? {};
-        // Fall back to first non-empty scene.thumb (already a URL string).
         const sceneThumb = (state.scenes ?? []).find((s) => !!s?.thumb)?.thumb;
+        const sceneThumbs = (state.scenes ?? [])
+          .map((s) => s?.thumb)
+          .filter((u): u is string => !!u)
+          .slice(0, 3);
+        const mediaUrls = mediaByProject.get(p.id) ?? sceneThumbs;
         return {
           id: p.id,
           title: p.title,
@@ -112,6 +132,7 @@ export const listProjects = createServerFn({ method: "GET" })
           aspectRatio: state.meta?.aspectRatio ?? "",
           sceneCount: state.scenes?.length ?? 0,
           thumbnailUrl: thumbByProject.get(p.id) ?? sceneThumb ?? null,
+          mediaUrls,
         };
       }),
     };
