@@ -1,8 +1,15 @@
+import { useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Film } from "lucide-react";
-
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Film,
+  Plus,
+  Search,
+} from "lucide-react";
 
 import { listProjects } from "@/lib/projects.functions";
 import { SKILL_BY_ID, type Skill } from "@/lib/skills";
@@ -37,12 +44,26 @@ const FEATURED_MODULES: { appId: string; tagline: string }[] = [
   { appId: "app-poster-maker", tagline: "Design scroll-stopping posters and key art in seconds." },
 ];
 
+const TOP_TABS: { label: string; tab?: AppsTab }[] = [
+  { label: "Explore", tab: "Featured" },
+  { label: "Video", tab: "Video" },
+  { label: "Image", tab: "Image" },
+  { label: "Audio", tab: "Audio" },
+  { label: "Favorites", tab: "Featured" },
+];
+
+const QUICK_TILES: { appId: string; title: string; copy: string }[] = [
+  { appId: "app-create", title: "Create with Nano Banana", copy: "Text-to-image with the latest model." },
+  { appId: "app-animate-photo", title: "Animate an image", copy: "Add subtle motion to a still." },
+  { appId: "app-create", title: "Create video using text", copy: "Describe a scene, get a clip." },
+];
+
 const APP_GROUPS: AppGroup[] = [
   {
-    title: "Animate photos",
+    title: "Animate Photos",
     description: "Bring stills to life with subtle, cinematic motion.",
     tab: "Video",
-    moreLabel: "More animation apps",
+    moreLabel: "More Animation Apps",
     appIds: [
       "app-animate-photo",
       "app-product-demo-loop",
@@ -56,7 +77,7 @@ const APP_GROUPS: AppGroup[] = [
     title: "Video apps",
     description: "Bring scenes to life — animate, b-roll, trailers.",
     tab: "Video",
-    moreLabel: "More video apps",
+    moreLabel: "More Video Apps",
     appIds: [
       "app-animate-photo",
       "app-cinematic-broll",
@@ -69,7 +90,7 @@ const APP_GROUPS: AppGroup[] = [
     title: "Influencers",
     description: "Portraits, try-ons, and creator-ready looks.",
     tab: "Photo",
-    moreLabel: "More creator apps",
+    moreLabel: "More Influencer Apps",
     appIds: [
       "app-headshot-studio",
       "app-outfit-try-on",
@@ -82,7 +103,7 @@ const APP_GROUPS: AppGroup[] = [
     title: "Marketing apps",
     description: "Posters, ads, product shots, and pitch-ready mockups.",
     tab: "Marketing",
-    moreLabel: "More marketing apps",
+    moreLabel: "More Marketing Apps",
     appIds: [
       "app-poster-maker",
       "app-product-shot",
@@ -100,196 +121,269 @@ function HomePage() {
     queryKey: ["v2-projects"],
     queryFn: () => fetchList(),
   });
-  const projects = (q.data?.projects ?? []).slice(0, 8);
+  const projects = (q.data?.projects ?? []).slice(0, 10);
+
+  const heroSkill = SKILL_BY_ID[FEATURED_MODULES[0].appId];
 
   return (
     <main className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col gap-14 px-8 py-16">
-        <section className="flex flex-col items-center gap-4 pt-8 text-center">
-          <h1 className="font-display text-5xl font-black uppercase tracking-tight md:text-6xl">
-            What will you create
-            <br />
-            with Pika today?
-          </h1>
-        </section>
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-8 py-8">
+        <TopTabBar />
 
+        {heroSkill && (
+          <HeroSplit skill={heroSkill} tagline={FEATURED_MODULES[0].tagline} />
+        )}
 
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-display text-lg font-semibold">
-              Recent projects
-            </h2>
-            <Link
-              to="/v2/projects"
-              className="text-xs font-medium text-muted-foreground underline-offset-4 hover:underline"
-            >
-              See all
-            </Link>
-          </div>
-          {projects.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-              Nothing yet — type a prompt above to get started.
-            </div>
-          ) : (
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {projects.map((p) => (
-                <Link
-                  key={p.id}
-                  to="/v2/projects/$projectId"
-                  params={{ projectId: p.id }}
-                  className="group flex w-64 shrink-0 items-center gap-3 rounded-2xl border border-border bg-card p-2 transition hover:border-foreground/40 hover:shadow-elegant"
-                >
-                  {p.thumbnailUrl ? (
-                    <img
-                      src={p.thumbnailUrl}
-                      alt={p.title}
-                      className="h-14 w-14 shrink-0 rounded-xl object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
-                      <Film className="h-5 w-5" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">
-                      {p.title || "Untitled"}
-                    </div>
-                    <div className="truncate text-[11px] text-muted-foreground">
-                      Jump back in
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+        <ProjectsStrip projects={projects} />
 
-        {(() => {
-          const hero = SKILL_BY_ID[FEATURED_MODULES[0].appId];
-          return hero ? (
-            <FeaturedHero skill={hero} tagline={FEATURED_MODULES[0].tagline} />
-          ) : null;
-        })()}
-
-        {(() => {
-          const hero = SKILL_BY_ID["app-ad-creative"];
-          return hero ? (
-            <FeaturedHero
-              skill={hero}
-              tagline="Spin up a short, scroll-stopping ad — bold headline, sharp visual, ready to post."
-            />
-          ) : null;
-        })()}
-
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-display text-lg font-semibold">Featured apps</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {FEATURED_MODULES.slice(1).map((m) => {
-              const skill = SKILL_BY_ID[m.appId];
-              if (!skill) return null;
-              return <FeaturedAppModule key={m.appId} skill={skill} tagline={m.tagline} />;
-            })}
-          </div>
-        </section>
-
+        <FeaturedCarousel />
 
         {APP_GROUPS.map((group) => (
           <AppGroupSection key={group.title} group={group} />
         ))}
-
-        <section className="flex justify-center pb-8">
-          <Link
-            to="/v2/apps"
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold transition hover:border-foreground/40 hover:shadow-elegant"
-          >
-            See all apps <ArrowRight className="h-4 w-4" />
-          </Link>
-        </section>
       </div>
     </main>
   );
 }
 
-function FeaturedHero({ skill, tagline }: { skill: Skill; tagline: string }) {
-  const Icon = skill.icon;
-  const swatch = getAppSwatch(skill.id);
+function TopTabBar() {
   return (
-    <section>
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 className="font-display text-2xl font-semibold">{skill.label}</h2>
-        <Link
-          to="/v2/apps"
-          search={{ app: skill.id }}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition hover:opacity-90"
-        >
-          Try {skill.label} <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex gap-1 rounded-full bg-muted/50 p-1">
+        {TOP_TABS.map((t, i) => (
+          <Link
+            key={t.label}
+            to="/v2/apps"
+            search={t.tab ? { tab: t.tab } : undefined}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition",
+              i === 0
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.label}
+          </Link>
+        ))}
       </div>
-      <div className="overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="flex flex-col gap-5 p-5">
-          <div className="flex items-start gap-3">
-            <div
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-[28%]"
-              style={{ backgroundColor: swatch.bg, color: swatch.fg }}
-            >
-              <Icon className="h-7 w-7" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">{skill.label}</div>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                {tagline}
-              </p>
-            </div>
+      <Link
+        to="/v2/apps"
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+      >
+        <Search className="h-4 w-4" />
+        Search…
+      </Link>
+    </div>
+  );
+}
+
+function HeroSplit({ skill, tagline }: { skill: Skill; tagline: string }) {
+  return (
+    <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <Link
+        to="/v2/apps"
+        search={{ app: skill.id }}
+        className="group relative col-span-1 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-muted/60 to-muted md:col-span-2"
+      >
+        <div className="aspect-[16/9] w-full bg-muted md:aspect-auto md:h-full md:min-h-[320px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-6">
+          <h2 className="font-display text-3xl font-semibold text-white">
+            {skill.label}
+          </h2>
+          <p className="line-clamp-2 max-w-md text-sm text-white/85">
+            {tagline}
+          </p>
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black">
+              Try Now <ArrowRight className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square w-full overflow-hidden rounded-xl bg-muted"
-              />
-            ))}
-          </div>
+        </div>
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1 rounded-full bg-white/60",
+                i === 0 ? "w-6" : "w-1.5 bg-white/40",
+              )}
+            />
+          ))}
+        </div>
+      </Link>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-1">
+        <QuickTile tile={QUICK_TILES[0]} wide />
+        <div className="col-span-2 grid grid-cols-2 gap-3 md:col-span-1">
+          <QuickTile tile={QUICK_TILES[1]} />
+          <QuickTile tile={QUICK_TILES[2]} />
         </div>
       </div>
     </section>
   );
 }
 
+function QuickTile({
+  tile,
+  wide,
+}: {
+  tile: (typeof QUICK_TILES)[number];
+  wide?: boolean;
+}) {
+  const skill = SKILL_BY_ID[tile.appId];
+  const swatch = skill ? getAppSwatch(skill.id) : { bg: "#e5e5e5", fg: "#000" };
+  return (
+    <Link
+      to="/v2/apps"
+      search={skill ? { app: skill.id } : undefined}
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition hover:border-foreground/40 hover:shadow-elegant",
+        wide ? "min-h-[112px]" : "min-h-[112px]",
+      )}
+    >
+      <div
+        className="grid h-8 w-8 place-items-center rounded-full"
+        style={{ backgroundColor: swatch.bg }}
+      />
+      <div className="mt-auto">
+        <div className="text-sm font-semibold leading-tight">{tile.title}</div>
+        <div className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+          {tile.copy}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-function FeaturedAppModule({ skill, tagline }: { skill: Skill; tagline: string }) {
-  const Icon = skill.icon;
-  const swatch = getAppSwatch(skill.id);
+function ProjectsStrip({
+  projects,
+}: {
+  projects: { id: string; title: string; thumbnailUrl?: string | null }[];
+}) {
+  return (
+    <section>
+      <Link
+        to="/v2/projects"
+        className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:underline"
+      >
+        Your Projects <ChevronRight className="h-4 w-4" />
+      </Link>
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {projects.map((p) => (
+          <Link
+            key={p.id}
+            to="/v2/projects/$projectId"
+            params={{ projectId: p.id }}
+            className="group flex w-20 shrink-0 flex-col gap-1.5"
+          >
+            {p.thumbnailUrl ? (
+              <img
+                src={p.thumbnailUrl}
+                alt={p.title}
+                className="h-20 w-20 rounded-xl object-cover transition group-hover:opacity-90"
+              />
+            ) : (
+              <div className="grid h-20 w-20 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
+                <Film className="h-5 w-5" />
+              </div>
+            )}
+            <div className="truncate text-[11px] font-medium text-muted-foreground">
+              {p.title || "Untitled"}
+            </div>
+          </Link>
+        ))}
+        <Link
+          to="/v2/apps"
+          className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border border-dashed border-border text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+        >
+          <Plus className="h-5 w-5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function FeaturedCarousel() {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scroll = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  };
+
+  const cards = FEATURED_MODULES.slice(1)
+    .map((m) => ({ skill: SKILL_BY_ID[m.appId], tagline: m.tagline }))
+    .filter((c) => c.skill);
+
+  return (
+    <section>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h2 className="font-display text-lg font-semibold">Featured Apps</h2>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => scroll(-1)}
+            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll(1)}
+            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
+            aria-label="Next"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div
+        ref={scrollerRef}
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {cards.map((c) => (
+          <FeaturedWideCard
+            key={c.skill!.id}
+            skill={c.skill!}
+            tagline={c.tagline}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FeaturedWideCard({
+  skill,
+  tagline,
+}: {
+  skill: Skill;
+  tagline: string;
+}) {
   return (
     <Link
       to="/v2/apps"
       search={{ app: skill.id }}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-foreground/40 hover:shadow-elegant"
+      className="group flex w-[calc(50%-0.5rem)] min-w-[420px] shrink-0 snap-start gap-5 overflow-hidden rounded-3xl border border-border bg-card p-5 transition hover:border-foreground/40 hover:shadow-elegant"
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-muted" />
-      <div className="flex items-start gap-3 p-4">
-        <div
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-[24%]"
-          style={{ backgroundColor: swatch.bg, color: swatch.fg }}
-        >
-          <Icon className="h-6 w-6" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-semibold leading-tight">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 py-2">
+        <div>
+          <div className="font-display text-2xl font-semibold leading-tight">
             {skill.label}
           </div>
-          <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+          <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
             {tagline}
-          </div>
+          </p>
+        </div>
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-1.5 text-xs font-semibold text-background">
+            Try Now <ArrowRight className="h-3.5 w-3.5" />
+          </span>
         </div>
       </div>
-      <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
-        <span className="text-xs text-muted-foreground">Featured app</span>
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground">
-          Try it <ArrowRight className="h-3.5 w-3.5" />
-        </span>
-      </div>
+      <div className="aspect-square h-44 shrink-0 rounded-2xl bg-muted" />
     </Link>
   );
 }
@@ -333,14 +427,7 @@ function AppCard({ skill }: { skill: Skill }) {
         "group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 transition hover:border-foreground/40 hover:shadow-elegant",
       )}
     >
-      <div
-        className="aspect-video w-full overflow-hidden rounded-xl"
-        style={{ backgroundColor: swatch.bg }}
-      >
-        <div className="grid h-full w-full place-items-center opacity-30">
-          <Icon className="h-10 w-10" style={{ color: swatch.fg }} />
-        </div>
-      </div>
+      <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted" />
       <div className="flex items-start gap-2 px-1 pb-1">
         <div
           className="grid h-9 w-9 shrink-0 place-items-center rounded-[24%]"
