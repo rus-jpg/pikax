@@ -1689,7 +1689,7 @@ export function ProjectTimelinePanel({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(ref);
+                                handleDelete(ref, { leaveGap: e.altKey });
                               }}
                               className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                               aria-label="Delete audio"
