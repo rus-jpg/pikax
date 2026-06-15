@@ -132,11 +132,7 @@ export function AppsWorkspace({
   const navigate = useNavigate();
   const router = useRouter();
   const goBackOrApps = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.history.back();
-    } else {
-      onSelectApp(undefined);
-    }
+    onSelectApp(undefined);
   };
   const qc = useQueryClient();
   const runStart = useServerFn(directGenerateStart);
