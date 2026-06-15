@@ -234,15 +234,16 @@ function ProjectsStrip({ projects }: { projects: ProjectCardData[] }) {
       >
         Your Projects <ChevronRight className="h-4 w-4" />
       </Link>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {projects.slice(0, 6).map((p) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {projects.slice(0, 5).map((p) => (
           <ProjectCard key={p.id} project={p} />
         ))}
         <Link
           to="/v2/apps"
-          className="flex min-h-[112px] items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-sm text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+          aria-label="New project"
+          className="flex min-h-[112px] items-center justify-center rounded-2xl border border-dashed border-border text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
         >
-          <Plus className="h-4 w-4" /> New project
+          <Plus className="h-5 w-5" />
         </Link>
       </div>
     </section>
