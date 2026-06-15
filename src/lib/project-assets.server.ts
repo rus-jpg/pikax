@@ -70,6 +70,9 @@ export async function storeAsset(input: StoreAssetInput): Promise<{
       url,
       label: input.label ?? null,
       attached_to: input.attachedTo ?? null,
+      width: input.width ?? null,
+      height: input.height ?? null,
+      duration: input.duration ?? null,
     })
     .select("id")
     .single();
