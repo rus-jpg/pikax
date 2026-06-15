@@ -777,6 +777,12 @@ export function ProjectTimelinePanel({
     if (!trackEl) return;
     const clipRect = clipEl.getBoundingClientRect();
     const trackRect = trackEl.getBoundingClientRect();
+    // Shift-click = blade split at click X (no drag).
+    if (e.shiftKey) {
+      const xSec = (e.clientX - trackRect.left) / Math.max(1, pxPerSec);
+      splitAtTime(ref, xSec);
+      return;
+    }
     const startClipLeft = clipRect.left - trackRect.left;
     const startClipTop = clipRect.top - trackRect.top;
     const grabOffsetX = e.clientX - clipRect.left;
@@ -792,18 +798,27 @@ export function ProjectTimelinePanel({
       others.push({ ref: en.ref, start: starts[i], end: starts[i] + getDur(en.ref) });
     });
 
-    const computeInsert = (clipLeftPx: number) => {
-      const clipCenterSec = (clipLeftPx + widthPx / 2) / Math.max(1, pxPerSec);
-      for (let i = 0; i < others.length; i++) {
-        const o = others[i];
-        const mid = (o.start + o.end) / 2;
-        if (clipCenterSec < mid) {
-          return { insertIdx: i, insertX: o.start * pxPerSec };
+    // iMovie-style insertion: find the gap edge nearest to the cursor X.
+    // Edges are the boundaries between sibling clips on the same track,
+    // including the track start (0) and the end of the last sibling.
+    const movedDur = getDur(ref);
+    const snapTargets = collectSnapTargets(ref);
+    const computeInsert = (cursorXPx: number) => {
+      const cursorSec = cursorXPx / Math.max(1, pxPerSec);
+      const edges: { x: number; idx: number }[] = [{ x: 0, idx: 0 }];
+      others.forEach((o, i) => {
+        edges.push({ x: o.end, idx: i + 1 });
+      });
+      let best = edges[0];
+      let bestDist = Infinity;
+      for (const e of edges) {
+        const d = Math.abs(cursorSec - e.x);
+        if (d < bestDist) {
+          bestDist = d;
+          best = e;
         }
       }
-      const last = others[others.length - 1];
-      const insertX = (last ? last.end : 0) * pxPerSec;
-      return { insertIdx: others.length, insertX };
+      return { insertIdx: best.idx, insertX: best.x * pxPerSec };
     };
 
     let moved = false;
@@ -824,12 +839,20 @@ export function ProjectTimelinePanel({
       const dy = ev.clientY - (trackRect.top + startClipTop + grabOffsetY);
       if (!moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       moved = true;
-      const ghostLeftPx = Math.max(
+      let ghostLeftPx = Math.max(
         -widthPx / 2,
         ev.clientX - trackRect.left - grabOffsetX,
       );
+      // Snap ghost start to neighbor edges / playhead.
+      const snappedSec = snapTime(
+        ghostLeftPx / Math.max(1, pxPerSec),
+        movedDur,
+        snapTargets.concat([currentTime]),
+      );
+      ghostLeftPx = snappedSec * pxPerSec;
       const ghostTopPx = ev.clientY - trackRect.top - grabOffsetY;
-      const { insertIdx, insertX } = computeInsert(ghostLeftPx);
+      const cursorXPx = ev.clientX - trackRect.left;
+      const { insertIdx, insertX } = computeInsert(cursorXPx);
       latest = { ...latest, ghostLeftPx, ghostTopPx, insertIdx, insertX };
       setDragState(latest);
     };
@@ -891,25 +914,44 @@ export function ProjectTimelinePanel({
         handleDelete(selectedId, { leaveGap: e.altKey });
         return;
       }
-      if (e.key === "ArrowRight" && visualEntries.length) {
+      if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && selectedId) {
         e.preventDefault();
-        const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const ni = Math.min(i + 1, visualEntries.length - 1);
-        const next = visualEntries[ni];
-        if (next) {
-          setSelectedId(next.ref);
-          seekTo(cumStarts[ni] ?? 0);
+        const dir = e.key === "ArrowRight" ? 1 : -1;
+        // Option/Alt = nudge the selected clip by 1 frame (1/30s) via offset.
+        if (e.altKey) {
+          const step = dir * (1 / 30);
+          const cur = getTrim(selectedId);
+          const inVisual = visualEntries.findIndex((v) => v.ref === selectedId);
+          const inAudio = audioEntries.findIndex((v) => v.ref === selectedId);
+          const baseStart =
+            inVisual >= 0
+              ? cumStarts[inVisual] ?? 0
+              : inAudio >= 0
+                ? audioStarts[inAudio] ?? 0
+                : 0;
+          const nextOffset = Math.max(0, baseStart + step);
+          const nextTrims = {
+            ...effectiveTrims,
+            [selectedId]: { ...cur, offset: nextOffset },
+          };
+          commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+          return;
         }
-        return;
-      }
-      if (e.key === "ArrowLeft" && visualEntries.length) {
-        e.preventDefault();
-        const i = visualEntries.findIndex((v) => v.ref === selectedId);
-        const ni = Math.max(i - 1, 0);
-        const next = visualEntries[ni];
+        // Plain arrow: step selection through the merged track list.
+        const merged = [
+          ...visualEntries.map((v, i) => ({ ref: v.ref, start: cumStarts[i] ?? 0 })),
+          ...audioEntries.map((v, i) => ({ ref: v.ref, start: audioStarts[i] ?? 0 })),
+        ];
+        if (merged.length === 0) return;
+        const i = merged.findIndex((m) => m.ref === selectedId);
+        const ni =
+          dir > 0
+            ? Math.min(i + 1, merged.length - 1)
+            : Math.max(i - 1, 0);
+        const next = merged[ni];
         if (next) {
           setSelectedId(next.ref);
-          seekTo(cumStarts[ni] ?? 0);
+          seekTo(next.start);
         }
         return;
       }
@@ -1349,10 +1391,20 @@ export function ProjectTimelinePanel({
               {/* Ruler */}
               <div
                 className="relative mb-1 h-5 cursor-pointer select-none"
-                onClick={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  const x = e.clientX - r.left;
-                  seekTo(x / Math.max(1, pxPerSec));
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  const rulerEl = e.currentTarget;
+                  const r = rulerEl.getBoundingClientRect();
+                  const seek = (clientX: number) =>
+                    seekTo(Math.max(0, (clientX - r.left) / Math.max(1, pxPerSec)));
+                  seek(e.clientX);
+                  const onMove = (ev: PointerEvent) => seek(ev.clientX);
+                  const onUp = () => {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
                 }}
               >
                 {Array.from({
@@ -1482,7 +1534,7 @@ export function ProjectTimelinePanel({
                             onPointerDown={(e) => beginTrim(ref, "start", e)}
                             onClick={(e) => e.stopPropagation()}
                             draggable={false}
-                            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            className="absolute inset-y-0 left-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                             title="Trim start"
                           />
                           <div
@@ -1490,7 +1542,7 @@ export function ProjectTimelinePanel({
                             onPointerDown={(e) => beginTrim(ref, "end", e)}
                             onClick={(e) => e.stopPropagation()}
                             draggable={false}
-                            className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                            className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                             title="Trim end"
                           />
                           <button
@@ -1572,6 +1624,15 @@ export function ProjectTimelinePanel({
                   />
                 )}
 
+                {/* Trim HUD — visual track */}
+                {trimHud && trimHud.kind === "visual" && (
+                  <div
+                    className="pointer-events-none absolute -top-6 z-40 rounded-md bg-foreground px-2 py-0.5 text-[10px] font-medium text-background shadow-lg"
+                    style={{ left: `${trimHud.leftPx + trimHud.widthPx / 2 - 30}px` }}
+                  >
+                    {trimHud.durSec.toFixed(2)}s{trimHud.altPin ? " · pinned" : ""}
+                  </div>
+                )}
                 {/* Playhead */}
                 <div
                   className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
@@ -1584,7 +1645,7 @@ export function ProjectTimelinePanel({
               {/* Audio tracks — absolute positioning by time, one row each */}
               <div
                 className={cn(
-                  "mt-3 space-y-1.5 rounded-lg transition",
+                  "relative mt-3 space-y-1.5 rounded-lg transition",
                   dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -1594,6 +1655,14 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
+                {trimHud && trimHud.kind === "audio" && (
+                  <div
+                    className="pointer-events-none absolute -top-6 z-40 rounded-md bg-foreground px-2 py-0.5 text-[10px] font-medium text-background shadow-lg"
+                    style={{ left: `${trimHud.leftPx + trimHud.widthPx / 2 - 30}px` }}
+                  >
+                    {trimHud.durSec.toFixed(2)}s{trimHud.altPin ? " · pinned" : ""}
+                  </div>
+                )}
                 {audioEntries.map(({ ref, asset: a }, idx) => {
                   const wave = fakeWave(a.id, 96);
                   const dur = getDur(ref);
@@ -1675,14 +1744,14 @@ export function ProjectTimelinePanel({
                               data-trim-handle="start"
                               onPointerDown={(e) => beginTrim(ref, "start", e)}
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              className="absolute inset-y-0 left-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                               title="Trim start"
                             />
                             <div
                               data-trim-handle="end"
                               onPointerDown={(e) => beginTrim(ref, "end", e)}
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute inset-y-0 right-0 z-10 w-1.5 cursor-ew-resize bg-foreground/0 transition group-hover:bg-foreground/40"
+                              className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize bg-foreground/0 transition hover:bg-foreground/50 group-hover:bg-foreground/30"
                               title="Trim end"
                             />
                             <button
