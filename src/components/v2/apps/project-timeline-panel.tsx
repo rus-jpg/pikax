@@ -1205,8 +1205,8 @@ export function ProjectTimelinePanel({
                 })}
               </div>
 
-              {/* Clip strip — absolute positioning by time */}
               <div
+                data-track-kind="visual"
                 className={cn(
                   "relative h-14 rounded-lg transition",
                   dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
@@ -1218,6 +1218,25 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
+                {/* Gaps — click to collapse */}
+                {visualGaps.map((g, i) => (
+                  <button
+                    key={`vgap-${i}`}
+                    type="button"
+                    onClick={() => collapseGap("visual", g.nextRef)}
+                    style={{
+                      left: `${g.start * pxPerSec}px`,
+                      width: `${(g.end - g.start) * pxPerSec}px`,
+                    }}
+                    className="group absolute top-0 h-14 rounded-md border border-dashed border-border/60 bg-foreground/[0.02] transition hover:border-foreground/40 hover:bg-foreground/5"
+                    aria-label="Remove gap"
+                    title="Click to remove gap"
+                  >
+                    <span className="pointer-events-none flex h-full w-full items-center justify-center text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                      Remove gap
+                    </span>
+                  </button>
+                ))}
                 {visualEntries.map(({ ref, asset: a }, idx) => {
                   const isSel = ref === selectedId;
                   const dur = getDur(ref);
