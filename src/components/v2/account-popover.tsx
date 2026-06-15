@@ -46,7 +46,7 @@ export function AccountPopoverV2() {
     setBusy("logout");
     try {
       await supabase.auth.signOut();
-      void navigate({ to: "/login" });
+      void navigate({ to: "/" });
     } finally {
       setBusy(null);
     }
