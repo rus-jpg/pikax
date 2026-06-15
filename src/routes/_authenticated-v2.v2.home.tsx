@@ -128,8 +128,6 @@ function HomePage() {
   return (
     <main className="h-full overflow-y-auto bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-8 py-8">
-        <TopTabBar />
-
         {heroSkill && (
           <HeroSplit skill={heroSkill} tagline={FEATURED_MODULES[0].tagline} />
         )}
