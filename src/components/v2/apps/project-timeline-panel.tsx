@@ -1317,7 +1317,7 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => selectedId && handleDelete(selectedId)}
+                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: e.altKey })}
                 disabled={!selectedId}
                 aria-label="Delete clip"
                 title="Delete (⌫)"
