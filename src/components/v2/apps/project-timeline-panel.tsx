@@ -1142,7 +1142,7 @@ export function ProjectTimelinePanel({
             <button
               type="button"
               onClick={() => setIsPlaying((p) => !p)}
-              disabled={!selected}
+              disabled={!selected && audioEntries.length === 0}
               className="flex h-12 items-center gap-2 rounded-full bg-foreground px-6 text-sm font-semibold text-background shadow-elegant transition hover:opacity-90 disabled:opacity-40"
             >
               {isPlaying ? (
