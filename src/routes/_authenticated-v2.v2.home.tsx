@@ -234,15 +234,16 @@ function ProjectsStrip({ projects }: { projects: ProjectCardData[] }) {
       >
         Your Projects <ChevronRight className="h-4 w-4" />
       </Link>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {projects.slice(0, 6).map((p) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {projects.slice(0, 5).map((p) => (
           <ProjectCard key={p.id} project={p} />
         ))}
         <Link
           to="/v2/apps"
-          className="flex min-h-[112px] items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-sm text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
+          aria-label="New project"
+          className="flex min-h-[112px] items-center justify-center rounded-2xl border border-dashed border-border text-muted-foreground transition hover:border-foreground/40 hover:text-foreground"
         >
-          <Plus className="h-4 w-4" /> New project
+          <Plus className="h-5 w-5" />
         </Link>
       </div>
     </section>
@@ -269,23 +270,15 @@ function ProjectCard({ project }: { project: ProjectCardData }) {
         : "Empty project";
 
   const rotations = ["-rotate-6", "rotate-3", "-rotate-2"];
-  const offsets = ["right-16 top-3", "right-8 top-1", "right-1 top-4"];
+  const offsets = ["left-1 top-3", "left-1/2 top-1 -translate-x-1/2", "right-1 top-3"];
 
   return (
     <Link
       to="/v2/projects/$projectId"
       params={{ projectId: project.id }}
-      className="group relative flex min-h-[112px] items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-card pl-5 pr-3 transition hover:border-foreground/40 hover:shadow-elegant"
+      className="group relative flex min-h-[112px] flex-col gap-2 overflow-hidden rounded-2xl border border-border bg-card p-3 transition hover:border-foreground/40 hover:shadow-elegant"
     >
-      <div className="min-w-0 flex-1 py-4">
-        <div className="truncate text-base font-semibold leading-tight">
-          {project.title || "Untitled"}
-        </div>
-        <div className="mt-1 truncate text-sm text-muted-foreground">
-          {details}
-        </div>
-      </div>
-      <div className="relative h-[88px] w-[120px] shrink-0">
+      <div className="relative h-[64px] w-full">
         {media.length === 0 ? (
           <div className="grid h-full w-full place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
             <Film className="h-5 w-5" />
@@ -297,7 +290,7 @@ function ProjectCard({ project }: { project: ProjectCardData }) {
               src={url}
               alt=""
               className={cn(
-                "absolute h-[72px] w-[64px] rounded-xl border-2 border-background object-cover shadow-sm transition",
+                "absolute h-[56px] w-[44px] rounded-lg border-2 border-background object-cover shadow-sm",
                 rotations[i] ?? "",
                 offsets[i] ?? "right-1 top-2",
               )}
@@ -305,6 +298,14 @@ function ProjectCard({ project }: { project: ProjectCardData }) {
             />
           ))
         )}
+      </div>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-semibold leading-tight">
+          {project.title || "Untitled"}
+        </div>
+        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+          {details}
+        </div>
       </div>
     </Link>
   );
