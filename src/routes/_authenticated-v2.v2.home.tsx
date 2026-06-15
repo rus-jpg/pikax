@@ -230,7 +230,7 @@ function ProjectsStrip({ projects }: { projects: ProjectCardData[] }) {
     <section>
       <Link
         to="/v2/projects"
-        className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-foreground hover:underline"
+        className="mb-4 inline-flex items-center gap-1 font-display text-lg font-semibold text-foreground hover:underline"
       >
         Your Projects <ChevronRight className="h-4 w-4" />
       </Link>
