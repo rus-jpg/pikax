@@ -66,7 +66,10 @@ function LandingNav() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="font-display text-xl tracking-tight">pika</Link>
+        <Link to="/" className="flex items-center gap-2">
+          <BrandMark className="h-6 w-auto" />
+          <span className="font-display text-xl tracking-tight">Pika</span>
+        </Link>
         <nav className="hidden items-center gap-8 text-sm md:flex">
           <a href="#workflows" className="text-muted-foreground hover:text-foreground">Product</a>
           <a href="#research" className="text-muted-foreground hover:text-foreground">Research</a>
