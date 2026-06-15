@@ -1645,7 +1645,7 @@ export function ProjectTimelinePanel({
               {/* Audio tracks — absolute positioning by time, one row each */}
               <div
                 className={cn(
-                  "mt-3 space-y-1.5 rounded-lg transition",
+                  "relative mt-3 space-y-1.5 rounded-lg transition",
                   dropHint === "audio" && "bg-foreground/5 ring-2 ring-foreground/30",
                 )}
                 onDragOver={(e) => {
@@ -1655,6 +1655,14 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "audio")}
               >
+                {trimHud && trimHud.kind === "audio" && (
+                  <div
+                    className="pointer-events-none absolute -top-6 z-40 rounded-md bg-foreground px-2 py-0.5 text-[10px] font-medium text-background shadow-lg"
+                    style={{ left: `${trimHud.leftPx + trimHud.widthPx / 2 - 30}px` }}
+                  >
+                    {trimHud.durSec.toFixed(2)}s{trimHud.altPin ? " · pinned" : ""}
+                  </div>
+                )}
                 {audioEntries.map(({ ref, asset: a }, idx) => {
                   const wave = fakeWave(a.id, 96);
                   const dur = getDur(ref);
