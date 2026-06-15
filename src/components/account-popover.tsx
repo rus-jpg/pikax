@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronUp, LogOut, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useLayoutVersion, getMirrorPath } from "@/hooks/use-layout-version";
 
 export function AccountPopover() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { setVersion } = useLayoutVersion();
   const [user, setUser] = useState<{
@@ -45,8 +47,10 @@ export function AccountPopover() {
   const handleLogout = async () => {
     setBusy("logout");
     try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
       await supabase.auth.signOut();
-      void navigate({ to: "/" });
+      void navigate({ to: "/", replace: true });
     } finally {
       setBusy(null);
     }
