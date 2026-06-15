@@ -757,6 +757,13 @@ export function ProjectTimelinePanel({
     insertX: number; // px where the indicator line should render
   };
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [trimHud, setTrimHud] = useState<null | {
+    durSec: number;
+    leftPx: number;
+    widthPx: number;
+    kind: "visual" | "audio";
+    altPin: boolean;
+  }>(null);
 
   const beginMove = (
     ref: string,
