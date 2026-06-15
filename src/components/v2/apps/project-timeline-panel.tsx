@@ -572,9 +572,23 @@ export function ProjectTimelinePanel({
     return Math.max(0, best);
   };
 
-  // Dragging a clip body REORDERS within its track and lets the timeline
-  // reflow sequentially. Any explicit `offset` on the moved clip is cleared
-  // so it no longer floats independently of its neighbours.
+  // ---- Drag-to-reorder (iMovie-style) ----
+  // While dragging, the clip follows the cursor and a vertical indicator
+  // line shows where it will land. On release, the clip snaps into that
+  // slot and the timeline reflows.
+  type DragState = {
+    ref: string;
+    kind: "visual" | "audio";
+    rowIndex: number; // for audio rows
+    ghostLeftPx: number; // left of ghost relative to track
+    ghostTopPx: number; // top of ghost relative to track row
+    widthPx: number;
+    heightPx: number;
+    insertIdx: number; // insertion index among the OTHER refs of this kind
+    insertX: number; // px where the indicator line should render
+  };
+  const [dragState, setDragState] = useState<DragState | null>(null);
+
   const beginMove = (
     ref: string,
     e: React.PointerEvent,
@@ -582,60 +596,93 @@ export function ProjectTimelinePanel({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    const startX = e.clientX;
+    const clipEl = e.currentTarget as HTMLElement;
+    const trackEl = clipEl.closest<HTMLElement>(`[data-track-kind="${kind}"]`);
+    if (!trackEl) return;
+    const clipRect = clipEl.getBoundingClientRect();
+    const trackRect = trackEl.getBoundingClientRect();
+    const startClipLeft = clipRect.left - trackRect.left;
+    const startClipTop = clipRect.top - trackRect.top;
+    const grabOffsetX = e.clientX - clipRect.left;
+    const grabOffsetY = e.clientY - clipRect.top;
+    const widthPx = clipRect.width;
+    const heightPx = clipRect.height;
+
     const entries = kind === "visual" ? visualEntries : audioEntries;
-    const startIdx = entries.findIndex((x) => x.ref === ref);
-    if (startIdx < 0) return;
-    const durs = entries.map((en) => getDur(en.ref));
-    const seqStart = durs.slice(0, startIdx).reduce((a, b) => a + b, 0);
-    const movingDur = durs[startIdx];
-    const kindRefs = new Set(entries.map((x) => x.ref));
-    const baseOrder = effectiveOrder.slice();
+    const starts = kind === "visual" ? cumStarts : audioStarts;
+    const others: { ref: string; start: number; end: number }[] = [];
+    entries.forEach((en, i) => {
+      if (en.ref === ref) return;
+      others.push({ ref: en.ref, start: starts[i], end: starts[i] + getDur(en.ref) });
+    });
+
+    const computeInsert = (clipLeftPx: number) => {
+      const clipCenterSec = (clipLeftPx + widthPx / 2) / Math.max(1, pxPerSec);
+      for (let i = 0; i < others.length; i++) {
+        const o = others[i];
+        const mid = (o.start + o.end) / 2;
+        if (clipCenterSec < mid) {
+          return { insertIdx: i, insertX: o.start * pxPerSec };
+        }
+      }
+      const last = others[others.length - 1];
+      const insertX = (last ? last.end : 0) * pxPerSec;
+      return { insertIdx: others.length, insertX };
+    };
+
     let moved = false;
-    let latestOrder = baseOrder.slice();
+    let latest: DragState = {
+      ref,
+      kind,
+      rowIndex: kind === "audio" ? audioEntries.findIndex((x) => x.ref === ref) : 0,
+      ghostLeftPx: startClipLeft,
+      ghostTopPx: startClipTop,
+      widthPx,
+      heightPx,
+      insertIdx: -1,
+      insertX: 0,
+    };
 
     const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - startX;
-      if (!moved && Math.abs(dx) < 4) return;
+      const dx = ev.clientX - (trackRect.left + startClipLeft + grabOffsetX);
+      const dy = ev.clientY - (trackRect.top + startClipTop + grabOffsetY);
+      if (!moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
       moved = true;
-      const desiredCenter =
-        seqStart + movingDur / 2 + dx / Math.max(1, pxPerSec);
-      const others = entries.filter((_, i) => i !== startIdx);
-      const otherDurs = others.map((en) => getDur(en.ref));
-      let acc = 0;
-      let newIdx = others.length;
-      for (let i = 0; i < others.length; i++) {
-        const mid = acc + otherDurs[i] / 2;
-        if (desiredCenter < mid) {
-          newIdx = i;
-          break;
-        }
-        acc += otherDurs[i];
-      }
-      const newKindOrder = [
-        ...others.slice(0, newIdx).map((x) => x.ref),
-        ref,
-        ...others.slice(newIdx).map((x) => x.ref),
-      ];
-      let k = 0;
-      latestOrder = baseOrder.map((r) =>
-        kindRefs.has(r) ? newKindOrder[k++] : r,
+      const ghostLeftPx = Math.max(
+        -widthPx / 2,
+        ev.clientX - trackRect.left - grabOffsetX,
       );
-      setLocalOrder(latestOrder);
+      const ghostTopPx = ev.clientY - trackRect.top - grabOffsetY;
+      const { insertIdx, insertX } = computeInsert(ghostLeftPx);
+      latest = { ...latest, ghostLeftPx, ghostTopPx, insertIdx, insertX };
+      setDragState(latest);
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      setDragState(null);
       if (!moved) return; // treat as click
-      // Clear any explicit offset so the moved clip flows sequentially.
+      const kindRefs = new Set(entries.map((x) => x.ref));
+      const otherRefs = others.map((o) => o.ref);
+      const newKindOrder = [
+        ...otherRefs.slice(0, latest.insertIdx),
+        ref,
+        ...otherRefs.slice(latest.insertIdx),
+      ];
+      let k = 0;
+      const newOrder = effectiveOrder.map((r) =>
+        kindRefs.has(r) ? newKindOrder[k++] : r,
+      );
+      // Clear any explicit offset on the moved clip so it flows in its
+      // new sequential slot.
       const nextTrims = { ...effectiveTrims };
       const existing = nextTrims[ref];
       if (existing && typeof existing.offset === "number") {
-        const { offset: _drop, ...rest } = existing;
-        void _drop;
+        const { offset: _o, ...rest } = existing;
+        void _o;
         nextTrims[ref] = rest;
       }
-      commitSnap({ order: latestOrder, trims: nextTrims });
+      commitSnap({ order: newOrder, trims: nextTrims });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -817,14 +864,70 @@ export function ProjectTimelinePanel({
   };
 
   const handleDelete = (ref: string) => {
+    // Preserve the deleted clip's footprint as a gap by pinning the next
+    // clip in the same track to its current start time. The user can click
+    // the gap later to collapse it.
+    const visualIdx = visualEntries.findIndex((e) => e.ref === ref);
+    const audioIdx = audioEntries.findIndex((e) => e.ref === ref);
+    const isVisual = visualIdx >= 0;
+    const entries = isVisual ? visualEntries : audioEntries;
+    const starts = isVisual ? cumStarts : audioStarts;
+    const idx = isVisual ? visualIdx : audioIdx;
+    const nextTrims = { ...effectiveTrims };
+    if (idx >= 0) {
+      const nextEntry = entries[idx + 1];
+      if (nextEntry) {
+        const existing = nextTrims[nextEntry.ref];
+        if (!existing || typeof existing.offset !== "number") {
+          const nextStart = starts[idx + 1];
+          nextTrims[nextEntry.ref] = {
+            ...getTrim(nextEntry.ref),
+            offset: nextStart,
+          };
+        }
+      }
+    }
+    delete nextTrims[ref];
     const next = effectiveOrder.filter((x) => x !== ref);
-    setLocalOrder(next);
     if (selectedId === ref) {
       const remaining = visualEntries.filter((entry) => entry.ref !== ref);
       setSelectedId(remaining[0]?.ref ?? null);
     }
-    persist(next);
+    commitSnap({ order: next, trims: nextTrims });
   };
+
+  // Collapse a gap on a track: clear the explicit offset on the clip that
+  // follows the gap so it (and everything after) flows leftward.
+  const collapseGap = (_kind: "visual" | "audio", nextRef: string) => {
+    const nextTrims = { ...effectiveTrims };
+    const existing = nextTrims[nextRef];
+    if (existing && typeof existing.offset === "number") {
+      const { offset: _o, ...rest } = existing;
+      void _o;
+      nextTrims[nextRef] = rest;
+    }
+    commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+  };
+
+  // Gap segments per track derived from current layout.
+  const visualGaps: { start: number; end: number; nextRef: string }[] = [];
+  {
+    let cursor = 0;
+    visualEntries.forEach((e, i) => {
+      const s = cumStarts[i];
+      if (s > cursor + 0.01) visualGaps.push({ start: cursor, end: s, nextRef: e.ref });
+      cursor = s + getDur(e.ref);
+    });
+  }
+  const audioGaps: { start: number; end: number; nextRef: string }[] = [];
+  {
+    let cursor = 0;
+    audioEntries.forEach((e, i) => {
+      const s = audioStarts[i];
+      if (s > cursor + 0.01) audioGaps.push({ start: cursor, end: s, nextRef: e.ref });
+      cursor = s + getDur(e.ref);
+    });
+  }
 
   const seekTo = (t: number) => {
     const clamped = Math.max(0, Math.min(totalSeconds, t));
@@ -1102,8 +1205,8 @@ export function ProjectTimelinePanel({
                 })}
               </div>
 
-              {/* Clip strip — absolute positioning by time */}
               <div
+                data-track-kind="visual"
                 className={cn(
                   "relative h-14 rounded-lg transition",
                   dropHint === "visual" && "bg-foreground/5 ring-2 ring-foreground/30",
@@ -1115,6 +1218,25 @@ export function ProjectTimelinePanel({
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => handleAppendDrop(e, "visual")}
               >
+                {/* Gaps — click to collapse */}
+                {visualGaps.map((g, i) => (
+                  <button
+                    key={`vgap-${i}`}
+                    type="button"
+                    onClick={() => collapseGap("visual", g.nextRef)}
+                    style={{
+                      left: `${g.start * pxPerSec}px`,
+                      width: `${(g.end - g.start) * pxPerSec}px`,
+                    }}
+                    className="group absolute top-0 h-14 rounded-md border border-dashed border-border/60 bg-foreground/[0.02] transition hover:border-foreground/40 hover:bg-foreground/5"
+                    aria-label="Remove gap"
+                    title="Click to remove gap"
+                  >
+                    <span className="pointer-events-none flex h-full w-full items-center justify-center text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                      Remove gap
+                    </span>
+                  </button>
+                ))}
                 {visualEntries.map(({ ref, asset: a }, idx) => {
                   const isSel = ref === selectedId;
                   const dur = getDur(ref);
@@ -1142,12 +1264,25 @@ export function ProjectTimelinePanel({
                             seekTo(cumStarts[idx] ?? 0);
                             setEditClipFor(ref);
                           }}
-                          style={{ width: widthPx, left: `${leftPx}px` }}
+                          style={
+                            dragState?.ref === ref
+                              ? {
+                                  width: widthPx,
+                                  left: `${dragState.ghostLeftPx}px`,
+                                  top: `${dragState.ghostTopPx}px`,
+                                  zIndex: 40,
+                                  pointerEvents: "none",
+                                  opacity: 0.85,
+                                  boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+                                }
+                              : { width: widthPx, left: `${leftPx}px` }
+                          }
                           className={cn(
                             "group absolute top-0 h-14 cursor-grab overflow-hidden rounded-lg bg-muted transition active:cursor-grabbing",
                             isSel
                               ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
                               : "ring-1 ring-border hover:ring-foreground/40",
+                            dragState && dragState.ref !== ref && "opacity-60",
                           )}
                         >
                           {a.mime.startsWith("image/") ? (
@@ -1253,6 +1388,14 @@ export function ProjectTimelinePanel({
                   </PopoverContent>
                 </Popover>
 
+                {/* Drag insertion indicator */}
+                {dragState && dragState.kind === "visual" && (
+                  <div
+                    className="pointer-events-none absolute -top-1 bottom-0 z-30 w-0.5 rounded-full bg-[oklch(0.7_0.18_45)] shadow-[0_0_8px_oklch(0.7_0.18_45)]"
+                    style={{ left: `${dragState.insertX}px` }}
+                  />
+                )}
+
                 {/* Playhead */}
                 <div
                   className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
@@ -1281,7 +1424,30 @@ export function ProjectTimelinePanel({
                   const widthPx = Math.max(40, dur * pxPerSec);
                   const leftPx = audioStarts[idx] * pxPerSec;
                   return (
-                    <div key={ref} className="relative h-10">
+                    <div key={ref} data-track-kind="audio" className="relative h-10">
+                      {/* Gaps for this audio entry — only show on the row whose nextRef matches */}
+                      {audioGaps
+                        .filter((g) => g.nextRef === ref)
+                        .map((g, gi) => (
+                          <button
+                            key={`agap-${gi}`}
+                            type="button"
+                            onClick={() => collapseGap("audio", g.nextRef)}
+                            style={{
+                              left: `${g.start * pxPerSec}px`,
+                              width: `${(g.end - g.start) * pxPerSec}px`,
+                            }}
+                            className="absolute top-0 h-10 rounded-md border border-dashed border-border/60 bg-foreground/[0.02] transition hover:border-foreground/40 hover:bg-foreground/5"
+                            aria-label="Remove gap"
+                            title="Click to remove gap"
+                          />
+                        ))}
+                      {dragState && dragState.kind === "audio" && dragState.ref === ref && (
+                        <div
+                          className="pointer-events-none absolute -top-1 bottom-0 z-30 w-0.5 rounded-full bg-[oklch(0.7_0.18_45)] shadow-[0_0_8px_oklch(0.7_0.18_45)]"
+                          style={{ left: `${dragState.insertX}px` }}
+                        />
+                      )}
                       <Popover
                         open={editAudioFor === ref}
                         onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
@@ -1298,8 +1464,23 @@ export function ProjectTimelinePanel({
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={(e) => handleDropOnItem(ref, e, "audio")}
                             onClick={() => setEditAudioFor(ref)}
-                            style={{ left: `${leftPx}px`, width: widthPx }}
-                            className="group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing"
+                            style={
+                              dragState?.ref === ref
+                                ? {
+                                    left: `${dragState.ghostLeftPx}px`,
+                                    top: `${dragState.ghostTopPx}px`,
+                                    width: widthPx,
+                                    zIndex: 40,
+                                    pointerEvents: "none",
+                                    opacity: 0.85,
+                                    boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+                                  }
+                                : { left: `${leftPx}px`, width: widthPx }
+                            }
+                            className={cn(
+                              "group absolute top-0 flex h-10 cursor-grab items-center gap-2 overflow-hidden rounded-lg border border-border/60 bg-secondary/60 px-2 text-left transition hover:border-foreground/40 active:cursor-grabbing",
+                              dragState && dragState.ref !== ref && "opacity-60",
+                            )}
                           >
                             <span className="shrink-0 truncate text-[10px] font-medium text-secondary-foreground">
                               {a.label ?? a.name ?? "Audio"}
