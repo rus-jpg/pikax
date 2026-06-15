@@ -363,11 +363,17 @@ export function ProjectTimelinePanel({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
-    visualEntries.find((entry) => entry.ref === selectedId) ?? visualEntries[0] ?? null;
+    visualEntries.find((entry) => entry.ref === selectedId) ??
+    audioEntries.find((entry) => entry.ref === selectedId) ??
+    visualEntries[0] ??
+    audioEntries[0] ??
+    null;
   const selected = selectedEntry?.asset ?? null;
   useEffect(() => {
-    if (!selectedEntry && visualEntries[0]) setSelectedId(visualEntries[0].ref);
-  }, [visualEntries, selectedEntry]);
+    if (!selectedEntry && (visualEntries[0] || audioEntries[0])) {
+      setSelectedId((visualEntries[0] ?? audioEntries[0])!.ref);
+    }
+  }, [visualEntries, audioEntries, selectedEntry]);
 
   // Transport
   const [isPlaying, setIsPlaying] = useState(false);
@@ -527,34 +533,56 @@ export function ProjectTimelinePanel({
     setSelectedId(newRef);
   };
 
-  // ---- Split at playhead ----
+  // ---- Split at playhead (works across visual + audio) ----
   const splitAtPlayhead = () => {
-    if (!visualEntries.length) return;
-    // Find clip under playhead.
-    let idx = -1;
-    let localOffset = 0;
-    for (let i = 0; i < visualEntries.length; i++) {
-      const start = cumStarts[i];
-      const end = start + getDur(visualEntries[i].ref);
-      if (currentTime >= start && currentTime < end) {
-        idx = i;
-        localOffset = currentTime - start;
-        break;
+    type Track = { kind: "visual" | "audio"; entries: typeof visualEntries; starts: number[] };
+    const tracks: Track[] = [
+      { kind: "visual", entries: visualEntries, starts: cumStarts },
+      { kind: "audio", entries: audioEntries, starts: audioStarts },
+    ];
+    let target: { ref: string; assetId: string; local: number } | null = null;
+    for (const t of tracks) {
+      for (let i = 0; i < t.entries.length; i++) {
+        const start = t.starts[i];
+        const end = start + getDur(t.entries[i].ref);
+        if (currentTime >= start && currentTime < end) {
+          target = {
+            ref: t.entries[i].ref,
+            assetId: t.entries[i].asset.id,
+            local: currentTime - start,
+          };
+          break;
+        }
       }
+      if (target) break;
     }
-    if (idx < 0) return;
-    const entry = visualEntries[idx];
-    const trim = getTrim(entry.ref);
+    if (!target) return;
+    performSplit(target.ref, target.assetId, target.local);
+  };
+
+  // Split a specific clip at an absolute timeline time.
+  const splitAtTime = (ref: string, timelineTime: number) => {
+    const inVisual = visualEntries.findIndex((e) => e.ref === ref);
+    const inAudio = audioEntries.findIndex((e) => e.ref === ref);
+    let start: number | null = null;
+    if (inVisual >= 0) start = cumStarts[inVisual];
+    else if (inAudio >= 0) start = audioStarts[inAudio];
+    if (start == null) return;
+    const assetId = assetIdFromTimelineRef(ref);
+    performSplit(ref, assetId, timelineTime - start);
+  };
+
+  const performSplit = (ref: string, assetId: string, localOffset: number) => {
+    const trim = getTrim(ref);
     const cutAt = trim.start + localOffset;
-    // Need at least 0.2s on each side.
     if (cutAt - trim.start < 0.2 || trim.end - cutAt < 0.2) return;
-    const newRef = makeTimelineRef(entry.asset.id);
+    const newRef = makeTimelineRef(assetId);
     const next = effectiveOrder.slice();
-    const orderIdx = next.indexOf(entry.ref);
+    const orderIdx = next.indexOf(ref);
     next.splice(orderIdx + 1, 0, newRef);
     const nextTrims = {
       ...effectiveTrims,
-      [entry.ref]: { start: trim.start, end: cutAt },
+      [ref]: { ...effectiveTrims[ref], start: trim.start, end: cutAt },
       [newRef]: { start: cutAt, end: trim.end },
     };
     commit(next, nextTrims);
@@ -574,32 +602,103 @@ export function ProjectTimelinePanel({
     const baseTrims = { ...effectiveTrims };
     const asset = assetsById.get(assetIdFromTimelineRef(ref));
     const isImage = asset?.mime.startsWith("image/") ?? false;
-    // Images can be held indefinitely; video/audio are capped at the source
-    // asset's natural length when we know it.
+    const probed = asset ? probedDurations[asset.id] : 0;
     const naturalDur =
       typeof asset?.duration === "number" && asset.duration > 0
         ? asset.duration
-        : null;
+        : probed && probed > 0
+          ? probed
+          : null;
     const maxEnd = isImage ? 600 : naturalDur ?? CLIP_SECONDS;
+
+    // Locate this clip on its track to compute its anchored timeline-left.
+    const visIdx = visualEntries.findIndex((x) => x.ref === ref);
+    const audIdx = audioEntries.findIndex((x) => x.ref === ref);
+    const isVisualTrack = visIdx >= 0;
+    const clipStartTime = isVisualTrack ? cumStarts[visIdx] ?? 0 : audioStarts[audIdx] ?? 0;
+    const nextEntry = isVisualTrack ? visualEntries[visIdx + 1] : audioEntries[audIdx + 1];
+    const nextEntryStart = isVisualTrack
+      ? cumStarts[visIdx + 1]
+      : audioStarts[audIdx + 1];
+    const snapTargets = collectSnapTargets(ref).concat([currentTime]);
+    const snapSec = SNAP_PX / Math.max(1, pxPerSec);
+
     let latest = baseTrim;
+    let altPin = false;
     const onMove = (ev: PointerEvent) => {
+      altPin = ev.altKey;
       const dx = ev.clientX - startX;
       const dSec = dx / Math.max(1, pxPerSec);
       let nextStart = baseTrim.start;
       let nextEnd = baseTrim.end;
-      if (edge === "start") {
-        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
-      } else {
+      if (edge === "end") {
         nextEnd = Math.max(Math.min(maxEnd, baseTrim.end + dSec), baseTrim.start + 0.2);
+        // Snap the timeline right-edge to playhead / neighbor edges.
+        const proposedRight = clipStartTime + (nextEnd - baseTrim.start);
+        let best = proposedRight;
+        let bestDist = snapSec;
+        for (const t of snapTargets) {
+          const d = Math.abs(proposedRight - t);
+          if (d < bestDist) {
+            bestDist = d;
+            best = t;
+          }
+        }
+        if (best !== proposedRight) {
+          const snapped = baseTrim.start + (best - clipStartTime);
+          nextEnd = Math.max(Math.min(maxEnd, snapped), baseTrim.start + 0.2);
+        }
+      } else {
+        nextStart = Math.min(Math.max(0, baseTrim.start + dSec), baseTrim.end - 0.2);
+        // Trim-start changes clip duration; the timeline-left stays anchored
+        // at clipStartTime (sequential), so the moving edge is the right edge:
+        // length = end - nextStart. Snap that right edge to neighbors.
+        const proposedRight = clipStartTime + (baseTrim.end - nextStart);
+        let best = proposedRight;
+        let bestDist = snapSec;
+        for (const t of snapTargets) {
+          const d = Math.abs(proposedRight - t);
+          if (d < bestDist) {
+            bestDist = d;
+            best = t;
+          }
+        }
+        if (best !== proposedRight) {
+          const snappedStart = baseTrim.end - (best - clipStartTime);
+          nextStart = Math.min(Math.max(0, snappedStart), baseTrim.end - 0.2);
+        }
       }
       latest = { ...baseTrim, start: nextStart, end: nextEnd };
-      setLocalTrims({ ...baseTrims, [ref]: latest });
+      const nextTrims: Record<string, TimelineTrim> = { ...baseTrims, [ref]: latest };
+      // Alt = "trim in place": pin the next clip so following clips don't
+      // ripple along with this trim.
+      if (altPin && nextEntry && typeof nextEntryStart === "number") {
+        nextTrims[nextEntry.ref] = {
+          ...getTrim(nextEntry.ref),
+          offset: nextEntryStart,
+        };
+      }
+      setLocalTrims(nextTrims);
+      setTrimHud({
+        durSec: latest.end - latest.start,
+        leftPx: clipStartTime * pxPerSec,
+        widthPx: (latest.end - latest.start) * pxPerSec,
+        kind: isVisualTrack ? "visual" : "audio",
+        altPin,
+      });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      const nextTrims = { ...baseTrims, [ref]: latest };
-      commitSnap({ order: effectiveOrder.slice(), trims: nextTrims });
+      const finalTrims: Record<string, TimelineTrim> = { ...baseTrims, [ref]: latest };
+      if (altPin && nextEntry && typeof nextEntryStart === "number") {
+        finalTrims[nextEntry.ref] = {
+          ...getTrim(nextEntry.ref),
+          offset: nextEntryStart,
+        };
+      }
+      setTrimHud(null);
+      commitSnap({ order: effectiveOrder.slice(), trims: finalTrims });
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -658,6 +757,13 @@ export function ProjectTimelinePanel({
     insertX: number; // px where the indicator line should render
   };
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [trimHud, setTrimHud] = useState<null | {
+    durSec: number;
+    leftPx: number;
+    widthPx: number;
+    kind: "visual" | "audio";
+    altPin: boolean;
+  }>(null);
 
   const beginMove = (
     ref: string,
@@ -782,7 +888,7 @@ export function ProjectTimelinePanel({
       }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
         e.preventDefault();
-        handleDelete(selectedId);
+        handleDelete(selectedId, { leaveGap: e.altKey });
         return;
       }
       if (e.key === "ArrowRight" && visualEntries.length) {
@@ -933,10 +1039,7 @@ export function ProjectTimelinePanel({
     setDragId(null);
   };
 
-  const handleDelete = (ref: string) => {
-    // Preserve the deleted clip's footprint as a gap by pinning the next
-    // clip in the same track to its current start time. The user can click
-    // the gap later to collapse it.
+  const handleDelete = (ref: string, opts?: { leaveGap?: boolean }) => {
     const visualIdx = visualEntries.findIndex((e) => e.ref === ref);
     const audioIdx = audioEntries.findIndex((e) => e.ref === ref);
     const isVisual = visualIdx >= 0;
@@ -944,7 +1047,7 @@ export function ProjectTimelinePanel({
     const starts = isVisual ? cumStarts : audioStarts;
     const idx = isVisual ? visualIdx : audioIdx;
     const nextTrims = { ...effectiveTrims };
-    if (idx >= 0) {
+    if (opts?.leaveGap && idx >= 0) {
       const nextEntry = entries[idx + 1];
       if (nextEntry) {
         const existing = nextTrims[nextEntry.ref];
@@ -960,8 +1063,11 @@ export function ProjectTimelinePanel({
     delete nextTrims[ref];
     const next = effectiveOrder.filter((x) => x !== ref);
     if (selectedId === ref) {
-      const remaining = visualEntries.filter((entry) => entry.ref !== ref);
-      setSelectedId(remaining[0]?.ref ?? null);
+      const fallback =
+        (isVisual ? visualEntries : audioEntries).filter((e) => e.ref !== ref)[0] ??
+        (isVisual ? audioEntries : visualEntries)[0] ??
+        null;
+      setSelectedId(fallback?.ref ?? null);
     }
     commitSnap({ order: next, trims: nextTrims });
   };
@@ -1192,7 +1298,7 @@ export function ProjectTimelinePanel({
                 variant="ghost"
                 size="sm"
                 onClick={splitAtPlayhead}
-                disabled={!visualEntries.length}
+                disabled={!visualEntries.length && !audioEntries.length}
                 aria-label="Split at playhead"
                 title="Split at playhead (S)"
               >
@@ -1211,7 +1317,7 @@ export function ProjectTimelinePanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => selectedId && handleDelete(selectedId)}
+                onClick={(e) => selectedId && handleDelete(selectedId, { leaveGap: e.altKey })}
                 disabled={!selectedId}
                 aria-label="Delete clip"
                 title="Delete (⌫)"
@@ -1391,7 +1497,7 @@ export function ProjectTimelinePanel({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(ref);
+                              handleDelete(ref, { leaveGap: e.altKey });
                             }}
                             className="absolute right-1.5 top-0.5 z-20 grid h-5 w-5 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                             aria-label="Delete clip"
@@ -1583,7 +1689,7 @@ export function ProjectTimelinePanel({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(ref);
+                                handleDelete(ref, { leaveGap: e.altKey });
                               }}
                               className="absolute right-1.5 top-0.5 z-20 grid h-4 w-4 place-items-center rounded-md bg-background/80 text-foreground opacity-0 backdrop-blur-sm transition group-hover:opacity-100"
                               aria-label="Delete audio"
