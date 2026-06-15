@@ -1624,6 +1624,15 @@ export function ProjectTimelinePanel({
                   />
                 )}
 
+                {/* Trim HUD — visual track */}
+                {trimHud && trimHud.kind === "visual" && (
+                  <div
+                    className="pointer-events-none absolute -top-6 z-40 rounded-md bg-foreground px-2 py-0.5 text-[10px] font-medium text-background shadow-lg"
+                    style={{ left: `${trimHud.leftPx + trimHud.widthPx / 2 - 30}px` }}
+                  >
+                    {trimHud.durSec.toFixed(2)}s{trimHud.altPin ? " · pinned" : ""}
+                  </div>
+                )}
                 {/* Playhead */}
                 <div
                   className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
