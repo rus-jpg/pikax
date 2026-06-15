@@ -30,6 +30,9 @@ export type StoreAssetInput = {
   label?: string;
   name?: string;
   attachedTo?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
 };
 
 export async function storeAsset(input: StoreAssetInput): Promise<{
