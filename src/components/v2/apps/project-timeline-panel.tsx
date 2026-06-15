@@ -1388,6 +1388,14 @@ export function ProjectTimelinePanel({
                   </PopoverContent>
                 </Popover>
 
+                {/* Drag insertion indicator */}
+                {dragState && dragState.kind === "visual" && (
+                  <div
+                    className="pointer-events-none absolute -top-1 bottom-0 z-30 w-0.5 rounded-full bg-[oklch(0.7_0.18_45)] shadow-[0_0_8px_oklch(0.7_0.18_45)]"
+                    style={{ left: `${dragState.insertX}px` }}
+                  />
+                )}
+
                 {/* Playhead */}
                 <div
                   className="pointer-events-none absolute -top-5 bottom-0 w-px bg-[oklch(0.7_0.18_45)]"
