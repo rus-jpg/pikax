@@ -144,36 +144,6 @@ function HomePage() {
   );
 }
 
-function TopTabBar() {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex gap-1 rounded-full bg-muted/50 p-1">
-        {TOP_TABS.map((t, i) => (
-          <Link
-            key={t.label}
-            to="/v2/apps"
-            search={t.tab ? { tab: t.tab } : undefined}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-medium transition",
-              i === 0
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
-      <Link
-        to="/v2/apps"
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground transition hover:text-foreground"
-      >
-        <Search className="h-4 w-4" />
-        Search…
-      </Link>
-    </div>
-  );
-}
 
 function HeroSplit({ skill, tagline }: { skill: Skill; tagline: string }) {
   return (
