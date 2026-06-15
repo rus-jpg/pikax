@@ -124,15 +124,12 @@ function Hero() {
             <Play className="h-6 w-6 fill-foreground" />
           </button>
         </div>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-          {chips.map((c) => (
-            <span
-              key={c}
-              className="rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted-foreground"
-            >
-              {c}
-            </span>
-          ))}
+        <div className="mt-10">
+          <img
+            src={modelsStrip.url}
+            alt="Powered by the best models in the biz — Pika 2.5, Gemini Omni, Seedance 2.0"
+            className="mx-auto w-full max-w-5xl"
+          />
         </div>
       </div>
     </section>
