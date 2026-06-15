@@ -7,9 +7,8 @@ import s2 from "@/assets/sample-2.jpg";
 import s3 from "@/assets/sample-3.jpg";
 import s4 from "@/assets/sample-4.jpg";
 import {
-  Plus, Play, Sparkles, Wand2, Film, Image as ImageIcon,
-  Layers, Mic, Music, Cpu, Code2, ArrowRight, X,
-  Instagram, Twitter, Youtube, Github,
+  Play, Sparkles, Wand2, Film,
+  Mic, Music, Cpu, Code2, ArrowRight, X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
