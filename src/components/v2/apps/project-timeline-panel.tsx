@@ -1424,7 +1424,30 @@ export function ProjectTimelinePanel({
                   const widthPx = Math.max(40, dur * pxPerSec);
                   const leftPx = audioStarts[idx] * pxPerSec;
                   return (
-                    <div key={ref} className="relative h-10">
+                    <div key={ref} data-track-kind="audio" className="relative h-10">
+                      {/* Gaps for this audio entry — only show on the row whose nextRef matches */}
+                      {audioGaps
+                        .filter((g) => g.nextRef === ref)
+                        .map((g, gi) => (
+                          <button
+                            key={`agap-${gi}`}
+                            type="button"
+                            onClick={() => collapseGap("audio", g.nextRef)}
+                            style={{
+                              left: `${g.start * pxPerSec}px`,
+                              width: `${(g.end - g.start) * pxPerSec}px`,
+                            }}
+                            className="absolute top-0 h-10 rounded-md border border-dashed border-border/60 bg-foreground/[0.02] transition hover:border-foreground/40 hover:bg-foreground/5"
+                            aria-label="Remove gap"
+                            title="Click to remove gap"
+                          />
+                        ))}
+                      {dragState && dragState.kind === "audio" && dragState.ref === ref && (
+                        <div
+                          className="pointer-events-none absolute -top-1 bottom-0 z-30 w-0.5 rounded-full bg-[oklch(0.7_0.18_45)] shadow-[0_0_8px_oklch(0.7_0.18_45)]"
+                          style={{ left: `${dragState.insertX}px` }}
+                        />
+                      )}
                       <Popover
                         open={editAudioFor === ref}
                         onOpenChange={(o) => setEditAudioFor(o ? ref : null)}
