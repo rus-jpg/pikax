@@ -89,7 +89,7 @@ function LandingNav() {
 
 /* ───────── Hero ───────── */
 function Hero() {
-  const chips = ["Text to video", "Image to video", "Lip sync", "Inpaint", "Sound FX", "Upscale"];
+  void heroBg;
   return (
     <section className="relative px-6 pt-32 pb-20">
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-surface)" }} />
